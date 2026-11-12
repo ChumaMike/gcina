@@ -72,7 +72,9 @@ export function safeNext(next: string): string {
   try {
     const u = new URL(next, "http://gcina.local");
     if (u.origin !== "http://gcina.local") return "/";
-    return u.pathname + u.search;
+    // Normalisation can turn "/.//evil.com" into "//evil.com", so re-check the result.
+    const out = u.pathname + u.search;
+    return out.startsWith("/") && !out.startsWith("//") && !/[\\\u0000-\u001f]/.test(out) ? out : "/";
   } catch {
     return "/";
   }
