@@ -3,7 +3,7 @@
 The deck lives as a Claude Slides artifact (private to Chuma until he shares it; it downloads as PPTX or PDF):
 https://claude.ai/artifact/48YheDEhqLqAGfavradDwc. Speaker notes on each slide carry the script lines.
 
-1. **Problem** (dark): "Pay a hacked invoice, and you still owe your supplier." SCA 2025 (*Intengo Imoto v Zoutpansberg*);
+1. **Problem** (dark): "Small businesses pay twice." Card 1: at MTA the same person sometimes got paid twice (first-hand). Card 2: SCA 2025 (*Intengo Imoto v Zoutpansberg*), pay a hacked invoice and you still owe the supplier;
    MTA as first design partner; every big SA bank warns: verify changed banking details. That check is Gcina's rule.
 2. **How it works** (light): Invoice → AI agent (1 vote) → policy co-signer (1 vote) → XRP Ledger (needs 2, master key off).
    Outcomes: agent alone → `tefBAD_QUORUM` refused · agent + policy → `tesSUCCESS` paid in RLUSD · owner key (2) → override.

@@ -33,8 +33,13 @@ payments himself (coordinator, status 16:24). On stage: "I did the admin at MTA 
 inbox looks like." **[Chuma: one true detail from those years: how suppliers were paid, who approved, any
 changed-banking-details email you saw]**
 
-MTA pays its suppliers by bank transfer against invoices. **[MTA interview: how many suppliers it pays by EFT,
-how invoices and banking details arrive (email / WhatsApp), who releases the payment.]**
+**What Chuma saw at MTA (first-hand, `docs/customer-evidence-mta.md`):** payments were approved by hand: the
+facilitator sends the attendance register, the owner approves who gets paid and how much, and payment follows
+through payroll and accounting software. **Sometimes the same person got paid twice.** He knows of no
+changed-banking-details incident at MTA, so we never claim one.
+
+So the pain at our design partner is **double payment**; the risk the courts and banks warn about is the **fake
+new banking details**. Either way, a small business pays twice, and Gcina stops both.
 
 Then one day an email arrives that looks exactly like a regular supplier's: *"Due to an audit, our banking
 details have changed. Please pay today to avoid supply interruption."* Same name, same amount, a new account.

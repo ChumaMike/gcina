@@ -40,7 +40,7 @@ but an agent can be fooled by the same email, or prompt-injected into obeying it
 **So would your CFO sign off on letting an AI pay suppliers?** Only if the agent physically can't pay the
 wrong person.
 
-Our first design partner is **Meyiswa Training Academy (MTA)**, a South African skills-training academy (a family business of our team, so we say so up front). **[MTA interview: one line]**
+Our first design partner is **Meyiswa Training Academy (MTA)**, a training academy in Soweto (a family business of our team, so we say so up front). A team member did MTA's admin from 2022 to 2024: payments were approved by hand from attendance registers, and **sometimes the same person got paid twice**. Gcina stops both: the duplicate and the fake banking details.
 
 ## How it works
 
@@ -77,7 +77,7 @@ flowchart LR
 | `inv-001` Mzansi Meat Supplies, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
 | `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**`tefBAD_QUORUM`**) | **[EV? link / log]** |
 | `inv-003` Khaya Packaging, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
-| `inv-004` duplicate of inv-001 | ⛔ Rejected as already paid | **[EV? audit line]** |
+| `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Rejected by the policy co-signer as already paid | **[EV? audit line]** |
 
 Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet issuance); XRP only pays network fees and reserves. Indicative ZAR uses a fixed demo rate of R 18 per USD. It isn't a market price.
 
