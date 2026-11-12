@@ -17,6 +17,17 @@ Live values (server_info, 2026-11-12, rippled 3.4.1 on both networks):
 
 ## Corrections to CONTRACTS.md
 
+## C0. RLUSD addendum (added 16:25 after the contract switched to RLUSD at 15:58)
+
+The corrections below were checked against the XRP-drops version of the contract. With RLUSD (an issued token) as the payment currency:
+- **Amount shape on the ledger:** `{ currency: "524C555344000000000000000000000000000000", issuer: "rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV", value: "20" }` (testnet). "RLUSD" has 5 characters, so the ledger needs the 40-hex code; the plain string "RLUSD" is invalid. The API type `{currency:"RLUSD", value}` is ours; translate it at the ledger edge. Source: https://docs.ripple.com/products/stablecoin/developer-resources/rlusd-on-the-xrpl
+- **Rule 2 must reject `tfPartialPayment` (0x00020000).** With a partial payment the ledger may deliver far less than `Amount`. That's the classic XRPL integration bug: https://xrpl.org/docs/concepts/payment-types/partial-payments. Also reject `SendMax`, `Paths` and `DeliverMin` (no cross-currency path that spends XRP or other assets). Check the issuer **and** currency code exactly, not just the value.
+- **Record `meta.delivered_amount`**, not `Amount`, as what the supplier received (same partial-payments page).
+- **Trust lines:** every receiving account needs an RLUSD trust line, or the payment fails `tecPATH_DRY`. The FRAUDSTER attempt fails earlier (`tefBAD_QUORUM`) whether or not it has one.
+- C4's "Amount is a drop string" becomes "Amount is exactly the RLUSD object above"; the Fee cap stays. C12 (faucet 100 XRP) now only matters for fees and reserves; each trust line adds a 0.2 XRP owner reserve.
+- **Honest pitch note:** RLUSD's issuer can freeze or claw back (it is a regulated stablecoin; R has not re-verified the clawback flag or the charter wording against a fetched source, so check before saying it on stage). That's normal for a stablecoin, and a judge may ask. Say "the issuer is regulated (NYDFS trust charter); our quorum controls *our* account, the issuer controls the token".
+
+
 Severity key: **blocks demo** = teammates will hit an error or the demo claim is false ·
 **wrong in pitch** = works, but what we'd say is inaccurate or a security hole a judge could find ·
 **cosmetic** = wording.
