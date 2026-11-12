@@ -115,6 +115,23 @@ export function readPoNumber(rawText: string): string | null {
   return m ? `PO-${m[1]}` : null;
 }
 
+/** Every order number an invoice points at: the agent's/owner's link plus the policy's own reading of the text. */
+export function invoicePos(inv: { poNumber?: string; rawText: string } | undefined): Set<string> {
+  const set = new Set<string>();
+  if (!inv) return set;
+  if (inv.poNumber) set.add(inv.poNumber);
+  const fromText = readPoNumber(inv.rawText);
+  if (fromText) set.add(fromText);
+  return set;
+}
+
+/** "Mzansi Catering (Pty) Ltd" and " mzansi  catering " are the same supplier. */
+export function sameSupplierName(a: string, b: string): boolean {
+  const norm = (x: string) =>
+    x.toLowerCase().replace(/\((pty)\)|\bpty\b|\bltd\b|\bcc\b|\binc\b/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+  return norm(a) === norm(b) && norm(a) !== "";
+}
+
 export function readReference(rawText: string): string | null {
   const m = rawText.match(/invoice\s*(?:no\.?|number|num|#)?\s*[:#]?\s*([A-Z]{1,6}[-/]?\d{2,}[A-Z0-9-]*)/i);
   return m ? m[1].toUpperCase() : null;
@@ -144,10 +161,16 @@ export function duplicateReason(p: Proposal, s: State): string | null {
   if (prior) return `Invoice ${p.invoiceId} has already been ${prior.settling ? "co-signed and is still settling" : `paid (${sastTime(prior.at)})`}. Paying it again would be a repeat.`;
 
   // Order already paid: refuse whatever the amount or destination (fail closed).
-  // The agent's link and the policy's own reading of the text both count (either can only ADD a match).
-  const pos = new Set<string>([inv?.poNumber, inv ? readPoNumber(inv.rawText) : null].filter((x): x is string => !!x));
+  // The agent's link and the policy's own reading of the text both count (either can only ADD a match),
+  // on BOTH sides: a prior payment's orders come from what was recorded AND from its own invoice record.
+  const pos = invoicePos(inv);
+  const priorPos = (x: Prior) => {
+    const set = invoicePos(s.invoices.find((o) => o.id === x.invoiceId));
+    if (x.poNumber) set.add(x.poNumber);
+    return set;
+  };
   for (const po of pos) {
-    const byPo = priors.find((x) => x.poNumber === po);
+    const byPo = priors.find((x) => priorPos(x).has(po));
     if (byPo || s.purchaseOrders.find((o) => o.poNumber === po)?.status === "paid") {
       return byPo
         ? `Looks like a repeat of ${byPo.invoiceId}, ${paidWhen(byPo)}: order ${po} has already been paid.`
@@ -173,7 +196,7 @@ export function duplicateReason(p: Proposal, s: State): string | null {
     const resent = priors.find((x) => {
       if (x.reference === undefined || !refs.has(x.reference) || x.destination === p.destination) return false;
       const priorInv = s.invoices.find((o) => o.id === x.invoiceId);
-      return !!priorInv && priorInv.supplierName === inv.supplierName;
+      return !!priorInv && sameSupplierName(priorInv.supplierName, inv.supplierName);
     });
     if (resent) {
       return `Looks like a repeat of ${resent.invoiceId}, ${paidWhen(resent)}: ${inv.supplierName}'s invoice ${resent.reference} was already paid, and this copy asks for a different address. Possible changed-banking-details fraud.`;

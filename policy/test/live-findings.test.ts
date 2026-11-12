@@ -63,3 +63,20 @@ test("an approval does not lift the daily limit", async () => {
   assert.match(r.json.reasons.join(" "), /daily limit/);
   assert.equal(h.ledger.submitted.length, 1, "only the $20 payment went out");
 });
+
+test("review: first payment's PO known only from its TEXT still blocks a later agent-linked copy", async () => {
+  const h = makeApp();
+  await h.call("POST", "/invoices", "operator", { id: "inv-050", supplierName: "Mzansi Catering", rawText: "Lunch packs for your order PO-1001, total USD 20.00" });
+  assert.equal((await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-050", to: A(), amount: rl("20.00") }))).json.decision, "cosigned_submitted");
+  await h.call("POST", "/invoices", "operator", { id: "inv-051", supplierName: "Mzansi Catering", rawText: "Statement attached", poNumber: "PO-1001" });
+  const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-051", to: A(), amount: rl("20.00") }));
+  assert.equal(r.json.decision, "rejected");
+  assert.match(r.json.reasons[0], /repeat of inv-050.*PO-1001/);
+});
+
+test("review: supplier names compare loosely ('(Pty) Ltd', case, spacing)", async () => {
+  const { sameSupplierName } = await import("../src/rules.ts");
+  assert.ok(sameSupplierName("Mzansi Catering (Pty) Ltd", "  mzansi   CATERING "));
+  assert.ok(!sameSupplierName("Mzansi Catering", "Mzansi Cleaning"));
+  assert.ok(!sameSupplierName("(Pty) Ltd", "Ltd"), "empty after normalising never matches");
+});

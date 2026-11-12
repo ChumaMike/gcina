@@ -4,7 +4,7 @@ import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { isValidClassicAddress } from "xrpl";
 import { type Amount, toMinor, formatAmount, sameAmount, fromLedgerAmount } from "./amount.ts";
-import { evaluate, sastDay, readReference, type RulesConfig } from "./rules.ts";
+import { evaluate, sastDay, readReference, invoicePos, type RulesConfig } from "./rules.ts";
 import type { Ledger } from "./ledger.ts";
 import type { Store } from "./store.ts";
 import { seedState } from "./seed.ts";
@@ -283,8 +283,11 @@ export function createApp(d: AppDeps) {
     if (f.approvalId) s.approvalUses.push({ approvalId: f.approvalId, txHash: f.txHash });
     if (inv) {
       inv.status = "paid";
-      const po = inv.poNumber ? s.purchaseOrders.find((o) => o.poNumber === inv.poNumber) : undefined;
-      if (po) po.status = "paid";
+      // Mark every order this invoice points at (agent link AND the policy's own reading of the text).
+      for (const n of invoicePos(inv)) {
+        const po = s.purchaseOrders.find((o) => o.poNumber === n);
+        if (po) po.status = "paid";
+      }
     }
     const delivered = result.delivered !== undefined ? fromLedgerAmount(result.delivered, d.rules.rlusdIssuer) : null;
     audit(s, {

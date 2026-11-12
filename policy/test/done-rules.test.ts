@@ -23,7 +23,8 @@ test("rule 6: forwarded copy (new id, no PO given) of a paid invoice → 'Looks 
   await h.call("POST", "/invoices", "operator", { id: "inv-004", supplierName: "Mzansi Catering", rawText: MC2611("Fwd: Mzansi lunches, please pay\n") });
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-004", to: A(), amount: rl("20.00") }));
   assert.equal(r.json.decision, "rejected");
-  assert.match(r.json.reasons[0], /^Looks like a repeat of inv-001, paid .+: same supplier, same amount, same invoice number MC-2611\.$/);
+  // Caught by the order number the policy reads from the text (PO-1001), before the invoice-number check.
+  assert.match(r.json.reasons[0], /^Looks like a repeat of inv-001, paid .+: (order PO-1001 has already been paid|same supplier, same amount, same invoice number MC-2611)\.$/);
 });
 
 test("rule 6 passes: same supplier + same amount but a DIFFERENT reference and order (next week's lunches)", async () => {
