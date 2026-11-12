@@ -13,6 +13,12 @@ animation and facial grammar require Deaf SASL experts and validated data.
 
 ## Open the interactive preview in Chrome
 
+**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/50e681207ed26453a3c4f2eedd472c87356b1c27/docs/avatar/preview.html)** — no download required.
+This viewer runs the committed standalone HTML. The character and hand controls
+were checked in Chromium. The link is pinned to the tested implementation commit.
+GitHub's file page cannot run HTML and reports that this bundled file is too large
+to display; use the browser preview above or download it using the instructions below.
+
 Download [preview.html](preview.html) from this branch, then open the downloaded
 file in Chrome. It contains the actual GLB, renderer and controls in one file;
 GitHub's HTML source viewer does not execute it. If your browser blocks local
