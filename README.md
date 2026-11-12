@@ -1,10 +1,10 @@
 # Gcina: the agent pays, the ledger keeps
 
-<!-- DRAFT v0 (P tab, 12 Nov). [R?] = waiting on docs/research, [EV?] = waiting on docs/demo-evidence.md. Final after the 23:00 testnet run. -->
+<!-- P tab draft, 12 Nov. [EV?] = waiting on the live testnet run in docs/demo-evidence.md; [link?] = video / deployed URL. -->
 
 > **Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, it still can't pay on its own.**
 
-**Gcina: autonomous supplier payments, independent financial control. We separate the agent's ability to initiate a payment from its authority to spend.**
+*Autonomous supplier payments, independent financial control: we separate the agent's ability to initiate a payment from its authority to spend.*
 
 **Gcina** (isiZulu/isiXhosa: *"keep, protect"*) is an AI accounts-payable agent for South African small
 businesses. It reads supplier invoices, matches them to orders, and pays suppliers on the **XRP Ledger**,
@@ -41,13 +41,11 @@ FNB all warn businesses about this exact scam and give the same advice: verify a
 through a channel you already trust before paying. South Africans lost **R2.4 billion** to digital banking crime
 in 2025 (SABRIC), driven by social engineering rather than hacked systems. Sources: [`docs/research/01-problem-evidence.md`](docs/research/01-problem-evidence.md).
 
-A small business pays its suppliers by bank transfer against invoices. Fraudsters send convincing
-"new banking details" invoices and the business pays them instead. AI agents can now do accounts payable,
-but an agent can be fooled by the same email, or prompt-injected into obeying it.
-**So would your CFO sign off on letting an AI pay suppliers?** Only if the agent physically can't pay the
-wrong person.
-
 Our first design partner is **Meyiswa Training Academy (MTA)**, a training academy in Soweto (a family business of our team, so we say so up front). A team member did MTA's admin from 2022 to 2024: payments were approved by hand from attendance registers, and **sometimes the same person got paid twice**. Gcina stops both: the duplicate and the fake banking details.
+
+AI agents could take this admin off a small business's hands, but an agent can be fooled by the same email, or
+prompt-injected into obeying it. **So would your CFO sign off on letting an AI pay suppliers?** Only if the agent
+physically can't pay the wrong person, or pay twice, even when it's fooled.
 
 ## How it works
 
@@ -67,8 +65,8 @@ The agent pays from an XRPL account whose **master key is disabled** and whose p
 | `OPERATOR_SIGNER` | the human owner, offline (recovery / override) | 2 |
 
 - **Agent alone = 1 < 2 → the XRP Ledger rejects the payment.**
-- Agent + policy = 2 → only when the policy service's rules pass (approved supplier address, per-payment
-  limit, daily limit, "ask a human above").
+- Agent + policy = 2 → only when the policy service's rules pass: approved supplier address, per-payment
+  limit, daily limit, "ask me above" amount, and not a repeat (same invoice, or same payee + amount + reference).
 - The owner sets and changes those limits on the dashboard, with a token the agent never holds.
 
 ```mermaid
@@ -88,9 +86,9 @@ flowchart LR
 | Invoice | What happens | Proof |
 |---|---|---|
 | `inv-001` Mzansi Catering, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
-| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**`tefBAD_QUORUM`**) | **[EV? link / log]** |
+| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags six warning signs (new address, "pay today", lookalike sender, "don't call us") and the policy holds it. Re-sent as `inv-002b` to a **compromised** agent that obeys it: the policy refuses to co-sign **and** the agent's lone signature is refused by the ledger (**`tefBAD_QUORUM`**, "Ledger refused: agent alone"; no explorer page because no money moved) | **[EV? log line]** |
 | `inv-003` Khaya Print & Stationery, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
-| `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Rejected by the policy co-signer as already paid | **[EV? audit line]** |
+| `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Refused by the policy co-signer: "Looks like a repeat of inv-001" | **[EV? audit line]** |
 
 Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet issuance); XRP only pays network fees and reserves. Indicative ZAR uses a fixed demo rate of R 18 per USD. It isn't a market price.
 
@@ -122,10 +120,10 @@ On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testne
 |---|---|---|
 | [`ledger/`](ledger) | xrpl.js helpers, testnet setup, quorum proof | `cd ledger && pnpm install && pnpm setup-testnet` (idempotent: funds accounts, SignerList, master key off, RLUSD trust lines, writes gitignored env files) · `pnpm prove-quorum` |
 | [`policy/`](policy) | Policy co-signer HTTP service (Hono, port 8787) | `cd policy && pnpm install && pnpm start` · tests: `pnpm test` (39 rule-engine tests) · every route with curl: [`policy/README.md`](policy/README.md) |
-| [`agent/`](agent) | The AP agent (Node + Claude API) | `cd agent && pnpm install` · `pnpm agent watch` (polls every 5 s) or `pnpm agent once` · the fooled agent: `AGENT_MODE=compromised pnpm agent once` · play the email inbox: `pnpm inbox reset` / `pnpm inbox inv-001 …` (needs `ANTHROPIC_API_KEY`, `AGENT_SIGNER_SEED`, `AGENT_TOKEN`, `POLICY_URL` in gitignored `agent/.env`) |
+| [`agent/`](agent) | The AP agent (Node + Claude API) | `cd agent && pnpm install` · `pnpm agent watch` (polls every 5 s) or `pnpm agent once` · the fooled agent: `pnpm agent once --compromised` · play the email inbox: `pnpm inbox reset` / `pnpm inbox inv-001 …` (needs `ANTHROPIC_API_KEY`, `AGENT_SIGNER_SEED`, `AGENT_TOKEN`, `POLICY_URL` in gitignored `agent/.env`) |
 | [`web/`](web) | Next.js operator dashboard (port 3000) | `cd web && pnpm install && pnpm dev` (needs `POLICY_URL`, `OPERATOR_TOKEN`, `DASHBOARD_PASSCODE` in `web/.env.local`; `USE_MOCK=1` runs on sample data) |
 | [`docs/research/`](docs/research) | Problem evidence, customer, competitors, regulation, XRPL fit | |
-| [`docs/pitch/`](docs/pitch) | Story, pitch script, video script, Q&A | |
+| [`docs/pitch/`](docs/pitch) | Story, 5-minute pitch script, video script, Q&A, slide outline | |
 
 Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets live only in gitignored
 `.env` files created by `ledger/scripts/setup-testnet.ts`; nothing secret is committed.
@@ -136,7 +134,8 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
   `POLICY_SIGNER` and never loads the agent's or operator's key. `OPERATOR_SIGNER` is never loaded by either.
 - **No single key can spend.** `AGENT_ACCOUNT`'s master key is disabled; the SignerList quorum is 2.
 - **The agent can't sign one thing and propose another.** The policy decodes the agent-signed blob and
-  rejects it unless account, destination, amount and invoice memo all match the proposal.
+  rejects it unless it is a plain `Payment` whose account, destination, amount and invoice memo match the proposal,
+  with no partial-payment flag or paths, a capped fee and a short expiry.
 - **Two API tokens.** `AGENT_TOKEN` can read work and submit proposals only; `OPERATOR_TOKEN` (limits,
   suppliers, approvals) lives server-side in the dashboard and never reaches the browser or the agent.
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
@@ -173,7 +172,7 @@ RLUSD supplier invoices with a licensed partner.
 All code in this repository was written during the hackathon (12–13 Nov 2026); nothing was carried over from an
 earlier project. What we used that already existed:
 
-- **Open-source libraries:** [xrpl.js](https://github.com/XRPLF/xrpl.js), [Hono](https://hono.dev), [Next.js](https://nextjs.org), Tailwind CSS + shadcn/ui, zod, the Anthropic TypeScript SDK, tsx, pnpm. **[confirm final list from each package.json]**
+- **Open-source libraries** (from each `package.json`): [xrpl.js](https://github.com/XRPLF/xrpl.js) with ripple-binary-codec and ripple-keypairs; [Hono](https://hono.dev) + @hono/node-server; [Next.js](https://nextjs.org) + React; Tailwind CSS, shadcn/ui, Radix UI, lucide-react, sonner, next-themes; zod; dotenv; the [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript); TypeScript, tsx, ESLint; pnpm.
 - **AI tools:** the agent calls the **Anthropic Claude API** at runtime to read invoices. The team used **Claude Code** (Anthropic) as a coding, research and writing assistant while building. **[Chuma? confirm wording]**
 - **Services:** XRPL Testnet + faucet, testnet RLUSD, Vercel (hosting).
 
