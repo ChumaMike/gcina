@@ -56,7 +56,7 @@ export function SpeakToGcina({ onNavigate }: { onNavigate?: () => void }) {
     setHeard(said);
     const waiting = approvals?.filter((a) => a.status === "pending").length ?? 0;
     // Questions first ("what is waiting?" must answer, not just open a page).
-    if (/\b(what|status|anything|any|kukhona|wat|yini)\b|\?/i.test(said)) {
+    if (/\b(what|status|anything|kukhona|wat|yini)\b/i.test(said)) {
       if (waiting === 0) return reply("Nothing is waiting for you. The agent is handling the rest.");
       reply(`${waiting} ${waiting === 1 ? "payment is" : "payments are"} waiting for you to approve. Opening Approvals.`);
       return go("/approvals");
