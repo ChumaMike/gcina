@@ -44,7 +44,7 @@ IFWG sandbox if needed) and keep RLUSD on XRPL for cross-border supplier invoice
 ### 7. Who pays you, and how much?
 The business pays an add-on of about R149–R299 a month, roughly a quarter of what it already pays for Xero,
 and bookkeepers get a practice tier priced per client file. It's an early estimate we're testing with our
-design partner and accounting practices, anchored on one fraud loss costing far more than a year of Gcina. *(02b §6: inference, not data. **[Chuma? confirm]**)*
+starting customer and accounting practices, anchored on one fraud loss costing far more than a year of Gcina. *(02b §6: inference, not data. **[Chuma? confirm]**)*
 
 ### 8. Why would a small business owner trust an AI with money?
 They don't have to trust it: it can only pay approved suppliers, within limits they set, and anything
@@ -77,7 +77,7 @@ agent-to-API payments rather than a small business's supplier and fraud workflow
 custodian), and a changed bank account can only get past it with the owner's key. *(Source: 03-competitors.md §D. **Never say "nobody else does external limits"**: that's false.)*
 
 ### 12. Who's your customer, and have you spoken to them?
-Our first design partner is Meyiswa Training Academy, a skills-training academy that's a family business of our team (say this openly), and the buyer we scale through is the bookkeeper who runs payments for many small clients. I also did MTA's admin myself from 2022 to 2024, so I've been the person paying those invoices. **[MTA interview: how it pays suppliers, has it seen fake banking-details emails, what limits it would set, would it pay for this.]**
+Our starting customer is Meyiswa Training Academy in Soweto, where I did the admin for two years; it's a family business of our team (say this openly). Call it a "design partner" only once MTA's owner confirms, and the buyer we scale through is the bookkeeper who runs payments for many small clients. I also did MTA's admin myself from 2022 to 2024, so I've been the person paying those invoices. **[MTA interview: how it pays suppliers, has it seen fake banking-details emails, what limits it would set, would it pay for this.]**
 
 ### 13. "Gcina" is already a funeral-cover brand in SA. Isn't that a problem?
 Yes, we found it: an FSCA-registered funeral-cover product trades as Gcina, so it's fine as a hackathon name
@@ -87,7 +87,7 @@ protect", which is exactly the job. *(02b Part 2)*
 ---
 
 ### 13b. Why would anyone let an AI pay suppliers at all?
-They mostly won't yet: in a 2025 PYMNTS survey of 60 large-company CFOs, none would give an AI agent full access
+They mostly won't yet: in a 2025 PYMNTS survey of 60 CFOs at US$1bn+ US companies, none would give an AI agent full access
 to start payments, and 97% of mid-market CFOs in a Wakefield survey say human oversight is critical, even though 88%
 already use agentic AI. Gcina keeps that oversight on the ledger: the agent handles the routine payments, and anything
 unusual needs the owner. *(docs/stats-sheet.md; these are US surveys, say so.)*

@@ -47,17 +47,19 @@ rule-keeper the AI can't override **plus** a ledger that refuses the AI on its o
   compromised agent, and the ledger refusing it, tied to a real SA court ruling and a real customer story.
 - Many enforce limits only in their own backend or a smart contract. **Our two-vote rule is enforced by XRPL itself**
   and survives a hacked agent.
-- We start from a named design partner (MTA) and a legal fact ("you pay twice"), not from the technology.
+- We start from a named customer (MTA) and a legal fact ("you pay twice"), not from the technology.
 
 Tagline: **The agent pays. The ledger keeps.**
 
 ## The 30-second problem
 
-**Named customer: Meyiswa Training Academy (MTA)**, a South African skills-training academy and our first
-design partner.
+**Named customer: Meyiswa Training Academy (MTA)**, a training academy in Soweto where Chuma did the admin.
+
+> **R's never-say #9:** say "design partner" only once MTA's owner confirms. Until then: "MTA, where I did the admin"
+> or "our starting customer".
 
 > **Honesty rule:** MTA is a family business of our team (run by Chuma's brother). Say so openly if asked:
-> "our first design partner is a business we're close to", never "an independent customer". Every detail about
+> "our starting customer is a business we're close to", never "an independent customer". Every detail about
 > how MTA pays suppliers is a **placeholder** until the MTA owner interview is in (R's script in
 > `docs/research/02-customer.md` §2 works with the business name swapped for MTA). The buyer we scale through is
 > still the **bookkeeper who runs payments for many small clients**.
@@ -72,7 +74,7 @@ facilitator sends the attendance register, the owner approves who gets paid and 
 through payroll and accounting software. **Sometimes the same person got paid twice.** He knows of no
 changed-banking-details incident at MTA, so we never claim one.
 
-So the pain at our design partner is **double payment**; the risk the courts and banks warn about is the **fake
+So the pain at MTA is **double payment**; the risk the courts and banks warn about is the **fake
 new banking details**. Either way, a small business pays twice, and Gcina stops both.
 
 Then one day an email arrives that looks exactly like a regular supplier's: *"Due to an audit, our banking

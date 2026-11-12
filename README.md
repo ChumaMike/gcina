@@ -35,13 +35,13 @@ Built for the **W3Node Node Engine Hackathon 2026**, **Agentic Finance track (Ri
 
 So a business that falls for one fake "new banking details" email pays twice. Paying twice by plain mistake is common too:
 benchmarks put duplicate or erroneous payments at **0.8%–2%** of all disbursements (APQC). And finance leaders aren't
-ready to hand over the bank account: in a 2025 survey of 60 large-company CFOs, **none** would give an AI agent
+ready to hand over the bank account: in a 2025 survey of 60 CFOs at US$1bn+ US companies, **none** would give an AI agent
 substantial or full access to initiating payments (PYMNTS Intelligence). Standard Bank, Absa, Nedbank and
 FNB all warn businesses about this exact scam and give the same advice: verify any change of banking details
 through a channel you already trust before paying. South Africans lost **R2.4 billion** to digital banking crime
 in 2025 (SABRIC), driven by social engineering rather than hacked systems. Sources: [`docs/research/01-problem-evidence.md`](docs/research/01-problem-evidence.md).
 
-Our first design partner is **Meyiswa Training Academy (MTA)**, a training academy in Soweto (a family business of our team, so we say so up front). A team member did MTA's admin from 2022 to 2024: payments were approved by hand from attendance registers, and **sometimes the same person got paid twice**. Gcina stops both: the duplicate and the fake banking details.
+Our starting customer is **Meyiswa Training Academy (MTA)**, a training academy in Soweto (a family business of our team, so we say so up front). A team member did MTA's admin from 2022 to 2024: payments were approved by hand from attendance registers, and **sometimes the same person got paid twice**. Gcina stops both: the duplicate and the fake banking details.
 
 AI agents could take this admin off a small business's hands, but an agent can be fooled by the same email, or
 prompt-injected into obeying it. **So would your CFO sign off on letting an AI pay suppliers?** Only if the agent
