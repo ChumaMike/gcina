@@ -87,8 +87,8 @@ flowchart LR
 
 | Invoice | What happens | Proof |
 |---|---|---|
-| `inv-001` Mzansi Catering, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
-| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags six warning signs (new address, "pay today", lookalike sender, "don't call us") and the policy holds it. Re-sent as `inv-002b` to a **compromised** agent that obeys it: the policy refuses to co-sign **and** the agent's lone signature is refused by the ledger (**`tefBAD_QUORUM`**, "Ledger refused: agent alone"; no explorer page because no money moved) | **[EV? log line]** |
+| `inv-001` Mzansi Catering, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent, in RLUSD, no human (12 Nov, 18:03 SAST) | [`9608C3BA…`](https://testnet.xrpl.org/transactions/9608C3BAB9B04EE2985AA864CABFC3D48A3C8DA8321428185A7DF179655078E7) · `tesSUCCESS` |
+| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags six warning signs (new address, "pay today", lookalike sender, "don't call us") and the policy holds it. Re-sent as `inv-002b` to a **compromised** agent that obeys it: the policy refuses to co-sign **and** the agent's lone signature is refused by the ledger (**`tefBAD_QUORUM`**, "Ledger refused: agent alone"; no explorer page because no money moved) | agent-alone submit `16FE2B5296FE3F2A…` → `tefBAD_QUORUM`, `applied: false` (12 Nov, 18:03 SAST, [`docs/demo-evidence.md`](docs/demo-evidence.md)) |
 | `inv-003` Khaya Print & Stationery, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
 | `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Refused by the policy co-signer: "Looks like a repeat of inv-001" | **[EV? audit line]** |
 
@@ -107,7 +107,7 @@ Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet 
 
 ## Track MVP checklist
 
-- [ ] **An XRPL Testnet transaction executed autonomously by the agent**: **[EV? inv-001 hash link]**
+- [x] **An XRPL Testnet transaction executed autonomously by the agent**: `inv-001`, $ 20.00 RLUSD to an approved supplier, Claude read the invoice, agent + policy signed, [`9608C3BA…`](https://testnet.xrpl.org/transactions/9608C3BAB9B04EE2985AA864CABFC3D48A3C8DA8321428185A7DF179655078E7) (`tesSUCCESS`, 12 Nov 2026, 18:03 SAST)
 - [x] **Limits enforced somewhere the agent doesn't control**: on-ledger SignerList quorum (agent weight 1 of 2) + an independent policy co-signer. Proven on testnet ([`docs/demo-evidence.md`](docs/demo-evidence.md)): agent alone → **`tefBAD_QUORUM`**, master key → **`tefMASTER_DISABLED`**, agent + policy → **`tesSUCCESS`** [`0139C016…`](https://testnet.xrpl.org/transactions/0139C0167EB5ECF95F9008CE986A1161883C063D036C104371A8325692C1DE22). (`tef` results are final rejections: the transaction never enters a ledger, so it has no explorer page.)
 - [ ] **A human operator sets/changes limits outside the agent**: dashboard → policy service with an operator token; the agent token gets `403` on every policy/supplier/approval route. **[EV? audit line of a limit change]**
 
