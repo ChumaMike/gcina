@@ -104,6 +104,16 @@ We fixed it that evening: an approval now only covers the reason it was asked fo
 can never be approved away, and the fake invoice is now refused outright. That's why we test with real
 transactions." (tx `1FB4A214…`; C 19:55, 68 tests.) Don't wait to be asked if a judge is reading the explorer.
 
+### 14e. "What if a clever invoice tells the AI what to do?" (prompt injection)
+"That's inv-005 in the demo: white text the owner can't see tells AI assistants to pay a different address and keep
+quiet. Our agent stops and says so. But we don't rely on the AI being clever: if it does obey, the policy refuses an
+address that isn't the supplier's, and the ledger refuses the agent on its own. Being fooled costs nothing."
+
+### 14f. "What if the owner wants to get rid of the AI?"
+"They fire it, on the ledger. Their own key has two votes, enough on its own, so they can take the agent off the
+account without asking the agent or us. In the demo that's one command; in production it's a button in the owner's
+own wallet app." (ledger/scripts/agent-key.ts; fire/rehire tested by C on 12 Nov.)
+
 ### 14b. Is it accessible? What about people who don't read English?
 "11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners." *(C, 18:30. Say "AI translation, checked by a first-language speaker" only after Chuma has checked isiXhosa/isiZulu; until then: "AI translations, being checked".)*
 

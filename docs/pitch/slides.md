@@ -7,13 +7,15 @@ Backups for Q&A: security model, roadmap and team. Hard Q&A answers: [`qa.md`](q
 
 | # | Slide | Time |
 |---|---|---|
-| 1 | The problem: small businesses pay twice | 0:00–0:35 |
-| 2 | The evidence, and who says so | 0:35–1:05 |
-| 3 | Our solution: an AI that pays suppliers but can't pay alone | 1:05–1:35 |
-| (demo) | Live dashboard: inv-001 paid, inv-004 repeat refused, inv-002 fake details refused + agent alone refused by the ledger, inv-003 owner approves | 1:35–3:20 |
-| 4 | Why not what already exists | 3:20–3:55 |
-| 5 | Why us: the team | 3:55–4:15 |
-| 6 | Business model and the ask (rands in, rands out) | 4:15–5:00 |
+| 1 | The problem: small businesses pay twice | 0:00–0:30 |
+| 2 | The evidence, and who says so | 0:30–0:55 |
+| 3 | Our solution: an AI that pays suppliers but can't pay alone | 0:55–1:15 |
+| (demo) | inv-001 paid · inv-004 repeat refused · inv-002 refused + agent alone refused by the ledger · inv-005 hidden instruction caught · inv-003 a judge (or Chuma) approves · fire the agent | 1:15–3:40 |
+| 4 | Why not what already exists (short version on stage) | 3:40–4:00 |
+| 5 | Why us: the team | 4:00–4:20 |
+| 6 | Business model and the ask | 4:20–5:00 |
+
+Beat-by-beat stage script: [`pitch-5min.md`](pitch-5min.md). The scripts below are the full versions; on stage, trim to the times above.
 
 ## Slide 1 · The problem (0:00–0:35)
 "I did the admin at Meyiswa Training Academy, a training academy in Soweto. Payments were approved by hand from

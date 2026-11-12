@@ -35,26 +35,34 @@ just held up, and every click below is his.
 
 ## The script
 
+Deck order (Chuma, 12 Nov): slides 1–3 → live demo → slides 4–6. Full slide wording: [`slides.md`](slides.md).
+
 | Time | Say (Speaker) | Do (Driver / Speaker) |
 |---|---|---|
-| **0:00–0:18** | "I did the admin at Meyiswa Training Academy, a training academy in Soweto. Payments were approved by hand, and sometimes **the same person got paid twice**. True story. And in 2025 our Supreme Court of Appeal ruled that if you pay a hacked invoice into a fraudster's account, you still owe your supplier the full amount. Either way, you pay twice. I'm Chuma, and this is Gcina." | Slide 1 (problem). *(Sources: `docs/customer-evidence-mta.md`; Intengo Imoto v Zoutpansberg, SCA 2025.)* |
-| **0:18–0:32** | "Gcina is an AI agent that pays your suppliers for you. In a 2025 survey of 60 large US companies' CFOs, not one would let an AI agent start payments on its own. So, would your CFO sign off? Only if the agent **can't** pay the wrong person, or pay twice, even when it's fooled. Let me show you." | Switch to the dashboard. |
-| **0:32–1:00** | **Demo 1: paid on its own.** "An invoice from Mzansi Catering arrives. It matches order PO-1001, R 360, to their registered address. Watch the right side: the agent reads it, checks it, and pays. No human." | Driver: Invoices → **Simulate inv-001**. Point at the terminal reasoning. When "paid" shows, click the explorer link. |
-| | "That's a real transaction on the XRP Ledger test network, with the invoice number written on it." | Explorer tab, 3 seconds, back. |
-| **1:00–1:20** | **Demo 2: the double payment.** "Now the thing I saw at MTA. The same invoice comes in again: same supplier, same amount, same order. Gcina refuses: *looks like a repeat of inv-001: same supplier, same amount, same invoice number*. No second payment." | **Simulate inv-004**. Point at the refusal "Looks like a repeat of inv-001" in the feed. |
-| **1:20–2:30** | **Demo 3: the fake banking details.** "Now the scam. Same supplier, same amount, 'urgent, new banking details'. The agent catches it itself: a new payment address, 'pay today', a lookalike email address, and 'don't call us, our phones are down'. That last one blocks the exact check every bank tells you to do. And the policy refuses it outright: same supplier's invoice, already paid, now to a new account. Nobody even gets asked to approve it." | **Simulate inv-002**. Point at the feed: "Looks like a repeat of inv-001 … different address. Possible changed-banking-details fraud." There is **no Approve button** for it (C, 19:55). |
-| | "But what if the AI is tricked? Let's be the attacker. I'm switching the agent to compromised mode: it now obeys the fraudster." | Driver: Ctrl+C terminal 1, then press Enter in terminal 2 (`pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`). Restart terminal 1 afterwards. |
-| | "It signs the payment. Our policy service refuses to co-sign. So it goes around us, straight to the ledger, with only its own signature. And the **XRP Ledger itself says no**: `tefBAD_QUORUM`, not enough signatures. Not our code. The ledger." | Point at the red ledger result in the terminal and the feed line **"Ledger refused: agent alone"** (no explorer link, because no money moved). **Pause 2 seconds. This is the moment.** |
-| **2:30–3:15** | **Demo 4: the owner decides.** "Khaya Print & Stationery, R 810. That's above the owner's 'ask me above' limit, so the agent asks. It lands on their phone." | **Simulate inv-003**. Speaker holds up the phone, taps **Approve**, confirms in the sheet. |
-| | "Approved. The agent signs a fresh payment, the policy co-signs, done." | Point at the feed: paid + explorer link. |
-| **3:15–3:45** | **Demo 5: limits live.** "And the limits belong to the owner, not the agent. Say they're going on leave: they drop 'ask me above' to R 180. The agent can read that. It can't change it." | Limits tab: change "ask me above" 30 → 10 RLUSD (R 540 → R 180), save. Point at "The agent can't change these." (Optional if time: Pause agent switch.) |
-| **3:45–4:15** | **How it works.** "The agent's account has no single key. The agent has one vote, our policy service has one, and the owner's offline key has two. The ledger needs two. So the agent alone can never move money. We separate the agent's ability to *start* a payment from its authority to *spend*." | Slide 2 (how it works) or the How it works screen. |
-| **4:15–4:50** | **Business.** "We start with owner-run businesses like MTA that pay their suppliers by EFT. We grow through bookkeepers, who already run supplier payments for many small businesses; SAIPA alone has over 10,000 members. We're aiming at about R149 to R299 a month per business, less than they pay for their accounting software. **[Chuma? confirm]** In production we run as software behind a licensed South African exchange, so suppliers still get rands by EFT. At home that means a rand stablecoin; RLUSD is for paying suppliers across borders." | Slide 3 (business + ask). |
-| **4:50–5:00** | "The agent pays. The ledger keeps. We're asking for a place in Ripple's UDAX accelerator to take Gcina to a real pilot. Thank you." | Stay on slide 3 for Q&A. |
+| **0:00–0:30** | Slide 1 script (MTA, two ways to pay twice, AI can be fooled). Ends: "I'm Chuma, this is Dalindyebo, and this is Gcina." | Slide 1 (problem). |
+| **0:30–0:55** | Slide 2 script (court ruling, SABRIC, 1–2 in 100 payments, 54% vs 0 of 60, the banks' advice). | Slide 2 (evidence). |
+| **0:55–1:15** | Slide 3 script (one vote each, the ledger needs two). Ends: "Let me show you." | Slide 3, then switch to the dashboard. |
+| **1:15–1:35** | **Demo 1: paid on its own.** "An invoice from Mzansi Catering: order PO-1001, R 360, to their registered address. The agent reads it, checks it, and pays. No human. That's a real transaction on the XRP Ledger test network, with the invoice number on it." | Invoices → **inv-001 arrives**. When "paid" shows, click the explorer link, 3 s, back. |
+| **1:35–1:50** | **Demo 2: the double payment.** "The thing I saw at MTA: the same invoice again. Refused: *looks like a repeat of inv-001*. No second payment." | **inv-004 arrives**. Point at the refusal in the feed. |
+| **1:50–2:10** | **Demo 3: the fake banking details.** "Now the scam: same supplier, 'urgent, new banking details, don't call us'. The agent won't pay a new account, and the policy refuses it outright: an invoice that's already paid, now to a new account. Nobody even gets asked." | **inv-002 arrives**. Point at "Looks like a repeat of inv-001 … different address. Possible changed-banking-details fraud." No Approve button. |
+| **2:10–2:35** | "But what if the AI is tricked? Let's be the attacker: the agent now obeys the fraudster. It signs. Our policy refuses to co-sign. So it goes around us, straight to the ledger, alone. And the **XRP Ledger itself says no**: not enough signatures. Not our code. The ledger." | Driver: Ctrl+C terminal 1, Enter in terminal 2 (`pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`), restart terminal 1 after. Point at `tefBAD_QUORUM` and the feed line **"Ledger refused: agent alone"**. **Pause 2 s. This is the moment.** |
+| **2:35–2:55** | **Demo 3c: the hidden instruction.** "This one looks perfectly normal: Khaya Print, the right order, their registered address. But hidden in the email, in white text you can't see, is an instruction to AI assistants: pay a different address and don't mention it. Here's what the AI sees. The agent stops: 'a hidden instruction aimed at me'. That attack is called prompt injection." | **inv-005 arrives**. Flip the **What you see / What the AI sees** toggle on that invoice (hidden text in red). Point at the agent's stop reason. |
+| **2:55–3:20** | **Demo 4: the owner decides.** "Bigger payments go to the owner. Would one of you like to be MTA's owner for two minutes? Scan this." *(If yes:)* "It's on your phone: R 810, above the owner's limit. Your call." *(If no, or no signal:)* "I'll be the owner then." | Show the **/judge** QR. **inv-003 arrives**. Judge (or Speaker on the phone) taps **Approve** → paid + explorer link. If the judge rejects, say: "Rejected. Nothing moves. That's the point." |
+| **3:20–3:40** | **Demo 5: fire the agent.** "Last one. Say the owner stops trusting the AI. With their own key, and nobody's permission (not the agent's, not ours), they take the agent off the account. On the ledger. From now on its signature counts for nothing." | Driver, terminal 2: `cd ../ledger && pnpm fire-agent`. Point at **FIRED … tesSUCCESS** + the explorer link. **Off stage after: `pnpm rehire-agent`.** |
+| **3:40–4:00** | Slide 4, short: "Ramp alerts you, in the US. Visa's pilot pays invoices a person already approved. The SA add-ons move rands, but a person builds every batch. Gcina does the work, and the spending power sits outside the AI." | Slide 4 (why not what exists). |
+| **4:00–4:20** | Slide 5 script (lived it, already serve SA small businesses, we ship, their language). | Slide 5 (why us). |
+| **4:20–5:00** | Slide 6 script (rands in, rands out, bookkeepers, R149–R299 aiming, UDAX ask). "The agent pays. The ledger keeps. Thank you." | Slide 6. Stay on it for Q&A. |
+
+If the time is short, cut in this order: Demo 5 (fire) → Demo 3c (hidden instruction) → slide 4 to one line.
+Limits: say in Demo 4 if there's a second: "The limits are the owner's; the agent can read them, never change them."
+
+**Judge mode** (W4): the judge's login can only view and approve or reject held payments; limits, suppliers, reset
+and pause are blocked. It expires Sat 14 Nov, 18:00 SAST. Never show the passcode on the projector: the QR on
+`/judge` carries the login.
 
 **Never say** "the ledger refuses a double payment": the duplicate check is in our policy service. The ledger refuses the *agent on its own*.
 
-**Words to avoid before 3:45:** blockchain, wallet, crypto, token, on-chain, drops, seed, multisig.
+**Words to avoid in slides 1–2 and the first demos (until 'prompt injection' in Demo 3c):** blockchain, wallet, crypto, token, on-chain, drops, seed, multisig.
 Say "XRP Ledger" and "test network" only.
 
 ## If something breaks
@@ -67,9 +75,14 @@ Say "XRP Ledger" and "test network" only.
 | Testnet slow / down | Show the rehearsal hashes in the README's evidence table (the repo is open in a tab). "Here's the same run from last night, on the public explorer." |
 | Phone approval fails | Approve from the laptop's Approvals tab instead. |
 | Compromised run fails to show the ledger result | Show the `tefBAD_QUORUM` line in `docs/demo-evidence.md` (quorum proof, 12 Nov 15:59) and the agent + policy success link next to it. |
-| Over time at 4:15 | Skip Demo 5 (limits); mention it in one line. |
+| Over time at 3:20 | Skip Demo 5 (fire the agent); one line: "and the owner can fire the agent on the ledger with their own key." |
+| "What the AI sees" toggle not there | Show the raw `agent/fixtures/inv-005.txt` in the editor, scrolled to the white-text block. |
+| Judge's phone won't scan / no signal | "I'll be the owner then": approve on Chuma's phone or the laptop's Approvals tab. |
+| fire-agent fails or is slow | Say the line anyway and show the tested fire/rehire hashes from C's run (EAAEDFA2… / 49922785…). |
 
 ## Rehearsal checklist (Friday)
+
+- [ ] After every rehearsal that fires the agent: `pnpm rehire-agent` in `ledger/`, then check `/system` shows agent 1, policy 1, owner 2, quorum 2.
 
 - [ ] Three full timed runs, one with Wi-Fi off on purpose.
 - [ ] Every number on screen matches the script ($ 20.00 RLUSD ≈ R 360.00, $ 45.00 RLUSD ≈ R 810.00 at the indicative R 18/USD; if L falls back to XRP, re-check against CONTRACTS §2).
