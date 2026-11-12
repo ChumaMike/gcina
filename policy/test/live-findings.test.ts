@@ -88,9 +88,19 @@ test("review: one supplier's text naming ANOTHER supplier's order doesn't close 
   assert.equal((await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-060", to: A(), amount: rl("20.00") }))).json.decision, "cosigned_submitted");
   const po = (await h.call("GET", "/purchase-orders", "operator")).json.find((o: { poNumber: string }) => o.poNumber === "PO-1002");
   assert.equal(po.status, "open", "Khaya's order stays open");
-  // Khaya's real invoice for PO-1002 is still payable (held only because it's above the ask-me limit).
+  // Khaya's real invoice for PO-1002 is NOT refused, but the evidence isn't dropped either: a person looks first.
   await h.call("POST", "/invoices", "operator", { id: "inv-003", supplierName: "Khaya Print & Stationery", rawText: "Invoice no: KPS-0937\nYour order: PO-1002", poNumber: "PO-1002" });
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-003", to: W.supplierB.classicAddress, amount: rl("45.00") }));
   assert.equal(r.json.decision, "held_for_human");
-  assert.doesNotMatch(r.json.reasons.join(" "), /repeat/);
+  assert.match(r.json.reasons[0], /^Possible repeat: inv-060 from Mzansi Catering, already paid, also mentions order PO-1002/);
+});
+
+test("review: a cross-supplier 'possible repeat' holds even a small payment that would otherwise auto-pay", async () => {
+  const h = makeApp();
+  await h.call("POST", "/invoices", "operator", { id: "inv-070", supplierName: "Khaya Print & Stationery", rawText: "Packs, see PO-1001" });
+  assert.equal((await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-070", to: W.supplierB.classicAddress, amount: rl("10.00") }))).json.decision, "cosigned_submitted");
+  await h.call("POST", "/invoices", "operator", { id: "inv-001", supplierName: "Mzansi Catering", rawText: "Invoice no: MC-2611\nYour order: PO-1001" });
+  const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00") }));
+  assert.equal(r.json.decision, "held_for_human", "would auto-pay at $20, but the cross-supplier mention makes a person look");
+  assert.match(r.json.reasons[0], /^Possible repeat: inv-070/);
 });

@@ -146,6 +146,25 @@ export function trustedInvoicePos(
   return set;
 }
 
+/**
+ * Never silently drop evidence of a repeat: if this invoice's order also appears in the TEXT of a
+ * different supplier's paid invoice (so it didn't count as a hard repeat), a person must look first.
+ */
+export function possibleRepeatReason(p: Proposal, s: State): string | null {
+  const inv = s.invoices.find((i) => i.id === p.invoiceId);
+  if (!inv) return null;
+  const priorIds = [...s.payments, ...(s.inflight ?? [])].map((x) => x.invoiceId).filter((id) => id !== inv.id);
+  for (const po of invoicePos(inv)) {
+    for (const id of priorIds) {
+      const priorInv = s.invoices.find((o) => o.id === id);
+      if (priorInv && invoicePos(priorInv).has(po) && !trustedInvoicePos(priorInv, s).has(po)) {
+        return `Possible repeat: ${priorInv.id} from ${priorInv.supplierName}, already paid, also mentions order ${po}. Please check before this is paid.`;
+      }
+    }
+  }
+  return null;
+}
+
 /** "Mzansi Catering (Pty) Ltd" and " mzansi  catering " are the same supplier. */
 export function sameSupplierName(a: string, b: string): boolean {
   const norm = (x: string) =>
@@ -330,6 +349,8 @@ export function evaluate(p: Proposal, s: State, cfg: RulesConfig, now: Date, led
   }
   // 3–5
   const held = limitReasons(p, s, now, cfg.coolingOffMinutes ?? 0);
+  const suspect = possibleRepeatReason(p, s);
+  if (suspect) held.unshift(suspect);
   if (held.length) return { kind: "hold", reasons: held };
   // 8. co-sign
   return { kind: "cosign", reasons: ["Approved supplier, matches the proposal, inside your limits."], tx: checked.tx };
