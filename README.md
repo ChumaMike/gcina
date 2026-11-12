@@ -154,7 +154,8 @@ speakers check them.
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
 - **No paying twice, even if the network goes quiet.** The policy refuses a repeat (same invoice, or same supplier +
   amount + invoice number). It also records each payment's hash *before* submitting it, and won't co-sign anything else
-  for that invoice until that hash is either validated or provably expired.
+  for that invoice until that hash is either validated or provably expired. Decisions are serialised with a database lock
+  (Postgres advisory lock), so two copies of the service running at once still can't both pay the same invoice.
 - **New accounts can wait.** A cooling-off period (`COOLING_OFF_MINUTES`, 0 for the demo) holds payments to a
   supplier address that was only just approved.
 - **Every payment carries its invoice ID** as an on-ledger memo, and every decision is in the audit log.
