@@ -1,21 +1,18 @@
 "use client";
 
-import { ArrowRight, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 import { ActivityFeed } from "@/components/activity-feed";
+import { OverviewHero } from "@/components/overview-hero";
 import { AgentAtWork } from "@/components/agent-at-work";
-import { ErrorNote, Money, RlusdBadge } from "@/components/bits";
-import { useConfirm } from "@/components/confirm-sheet";
+import { ErrorNote, Money } from "@/components/bits";
 import { LedgerProofCard } from "@/components/ledger-proof";
-import { useRole } from "@/components/role";
 import { StoppedCard } from "@/components/stopped-card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/components/data-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { savePolicy, spentToday } from "@/lib/derive";
+import { spentToday } from "@/lib/derive";
 import { accountUrl, percent, toMinor } from "@/lib/money";
 import type { AccountBalance, Currency } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -26,27 +23,9 @@ export default function OverviewPage() {
   const pending = d.approvals?.filter((a) => a.status === "pending") ?? [];
   return (
     <div className="flex flex-col gap-5 md:gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Overview</h1>
-        <RlusdBadge className="md:hidden" />
-      </div>
-
-      <AgentStatus />
+      <OverviewHero />
 
       <AgentAtWork />
-
-      {pending.length > 0 && (
-        <Link
-          href="/approvals"
-          className="flex min-h-14 items-center gap-3 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 font-medium text-warn transition-colors hover:bg-warn-soft/70"
-        >
-          <span className="flex size-8 items-center justify-center rounded-full bg-warn text-sm font-bold text-white">{pending.length}</span>
-          <span className="flex-1">
-            {pending.length === 1 ? "1 payment is" : `${pending.length} payments are`} waiting for you to approve
-          </span>
-          <ArrowRight className="size-5" aria-hidden="true" />
-        </Link>
-      )}
 
       <StoppedCard />
 
@@ -82,94 +61,6 @@ export default function OverviewPage() {
 
       <LedgerProofCard />
     </div>
-  );
-}
-
-function AgentStatus() {
-  const { policy, legacyDrops, refresh, errors } = useData();
-  const { confirm, sheet } = useConfirm();
-  const [busy, setBusy] = useState(false);
-  const paused = policy?.paused ?? false;
-  const judge = useRole() === "judge";
-
-  const setPaused = async (next: boolean) => {
-    setBusy(true);
-    try {
-      await savePolicy({ paused: next }, legacyDrops);
-      await refresh();
-      toast.success(next ? "Agent paused. Nothing will be paid until you resume." : "Agent resumed.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't change that. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card className={cn("overflow-hidden border-2", paused ? "border-danger/40" : "border-primary/25")}>
-      <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-center">
-        <div className="flex flex-1 items-center gap-4">
-          <span className={cn("relative flex size-14 shrink-0 items-center justify-center rounded-full", paused ? "bg-danger-soft" : "bg-ok-soft")}>
-            {!paused && policy && <span className="absolute inset-0 animate-ping rounded-full bg-ok/20" aria-hidden="true" />}
-            {paused ? <Pause className="size-7 text-danger" aria-hidden="true" /> : <Play className="size-7 text-ok" aria-hidden="true" />}
-          </span>
-          <div>
-            {policy ? (
-              <>
-                <p className="text-xl font-semibold sm:text-2xl">{paused ? "Your agent is paused" : "Your agent is watching for invoices"}</p>
-                <p className="text-muted-foreground">
-                  {paused
-                    ? "No payments will go out, even ones you've approved, until you resume."
-                    : "It pays approved suppliers on its own, within your limits."}
-                </p>
-              </>
-            ) : errors.policy ? (
-              <ErrorNote message={errors.policy} />
-            ) : (
-              <Skeleton className="h-12 w-64" />
-            )}
-          </div>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={paused}
-          aria-label="Pause agent"
-          disabled={!policy || busy || judge}
-          title={judge ? "Only the owner can pause the agent." : undefined}
-          onClick={() =>
-            paused
-              ? setPaused(false)
-              : confirm({
-                  title: "Pause your agent?",
-                  description: "It stops paying straight away. Invoices still arrive and wait for you.",
-                  confirmLabel: "Pause agent",
-                  tone: "danger",
-                  onConfirm: () => setPaused(true),
-                })
-          }
-          className={cn(
-            "group flex min-h-16 items-center gap-4 rounded-2xl border-2 px-4 py-2 text-left transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60 sm:min-w-56",
-            paused ? "border-danger bg-danger-soft" : "border-border bg-card hover:bg-muted",
-          )}
-        >
-          <span
-            className={cn(
-              "relative inline-flex h-9 w-16 shrink-0 items-center rounded-full transition-colors",
-              paused ? "bg-danger" : "bg-input",
-            )}
-            aria-hidden="true"
-          >
-            <span className={cn("absolute size-7 rounded-full bg-white shadow transition-transform", paused ? "translate-x-8" : "translate-x-1")} />
-          </span>
-          <span>
-            <span className="block text-lg font-semibold">{paused ? "Paused" : "Pause agent"}</span>
-            <span className="block text-sm text-muted-foreground">{paused ? "Tap to resume" : "Stops all payments"}</span>
-          </span>
-        </button>
-      </CardContent>
-      {sheet}
-    </Card>
   );
 }
 
