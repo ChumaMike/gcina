@@ -109,7 +109,7 @@ On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testne
 |---|---|---|
 | [`ledger/`](ledger) | xrpl.js helpers, testnet setup, quorum proof | `cd ledger && pnpm install && pnpm setup-testnet` (idempotent: funds accounts, SignerList, master key off, RLUSD trust lines, writes gitignored env files) · `pnpm prove-quorum` |
 | [`policy/`](policy) | Policy co-signer HTTP service (Hono, port 8787) | `cd policy && pnpm install && pnpm start` · tests: `pnpm test` (39 rule-engine tests) · every route with curl: [`policy/README.md`](policy/README.md) |
-| [`agent/`](agent) | The AP agent (Node + Claude API) | **[run commands from A?]** |
+| [`agent/`](agent) | The AP agent (Node + Claude API) | `cd agent && pnpm install` · `pnpm agent watch` (polls every 5 s) or `pnpm agent once` · the fooled agent: `AGENT_MODE=compromised pnpm agent once` · play the email inbox: `pnpm inbox reset` / `pnpm inbox inv-001 …` (needs `ANTHROPIC_API_KEY`, `AGENT_SIGNER_SEED`, `AGENT_TOKEN`, `POLICY_URL` in gitignored `agent/.env`) |
 | [`web/`](web) | Next.js operator dashboard (port 3000) | `cd web && pnpm install && pnpm dev` (needs `POLICY_URL`, `OPERATOR_TOKEN`, `DASHBOARD_PASSCODE` in `web/.env.local`; `USE_MOCK=1` runs on sample data) |
 | [`docs/research/`](docs/research) | Problem evidence, customer, competitors, regulation, XRPL fit | |
 | [`docs/pitch/`](docs/pitch) | Story, pitch script, video script, Q&A | |

@@ -23,8 +23,8 @@ just held up, and every click below is his.
 ## Pre-flight (T-15 min, off stage)
 
 1. Policy service healthy: open `/health`, see `ok: true` and `testnet`.
-2. Agent running in `watch` mode (normal mode). A second terminal ready with `AGENT_MODE=compromised`.
-3. Reset demo state: invoices cleared, policy back to defaults (per payment 50 RLUSD, daily 120 RLUSD, ask me above 30 RLUSD).
+2. Terminal 1: `cd agent && pnpm agent watch` (normal mode). Terminal 2, ready but not running: `AGENT_MODE=compromised pnpm agent once` (Git Bash; in PowerShell: `$env:AGENT_MODE='compromised'; pnpm agent once`). Stop terminal 1 before running terminal 2 so the normal agent doesn't pick up inv-002 first.
+3. Reset demo state (`pnpm inbox reset` in `agent/`, or the dashboard's reset): invoices cleared, policy back to defaults (per payment 50 RLUSD, daily 120 RLUSD, ask me above 30 RLUSD).
 4. **Pre-load**: inv-001 already paid in a rehearsal run, so its explorer page is open as a backup if the live one is slow.
 5. Hotspot on Chuma's phone as backup Wi-Fi; laptop already knows the hotspot.
 6. Backup video downloaded **to the laptop** (not streaming), opened in a paused player in another window.
