@@ -62,7 +62,8 @@ Limits: say in Demo 4 if there's a second: "The limits are the owner's; the agen
 
 **Judge mode** (W4): the judge's login can only view and approve or reject held payments; limits, suppliers, reset
 and pause are blocked. It expires Sat 14 Nov, 18:00 SAST. Never show the passcode on the projector: the QR on
-`/judge` carries the login.
+`/judge` carries the login. Show the QR only during the live pitch, never in photos, the video or the deck; anyone who scans
+it is a judge until Sat 18:00.
 
 **Never say** "the ledger refuses a double payment": the duplicate check is in our policy service. The ledger refuses the *agent on its own*.
 

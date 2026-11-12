@@ -49,5 +49,6 @@
 - [ ] ≤ 2:50 on the final export.
 - [ ] Every tx hash shown on screen is also in `docs/demo-evidence.md` and the README.
 - [ ] No seeds, tokens, `.env` files, personal phone numbers or emails visible in any frame (scrub through at 2× speed).
+- [ ] **No `/judge` QR code in any frame**: it carries the judge passcode in the link. Show judge mode only live, in the room.
 - [ ] Link set to Unlisted / "anyone with the link", tested in an incognito window.
 - [ ] Link added to the README and the BuilderBase submission.
