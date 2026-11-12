@@ -118,7 +118,7 @@ function process(inv: Invoice) {
   log("agent", "invoice.read", `Read ${inv.id} from ${inv.supplierName}: ${fmt(amount)} for ${po ?? "no order number"}.`);
 
   // Like the real agent: text a person can't see that gives orders to an AI = stop, sign nothing.
-  if (hiddenParts(text).some((x) => x.hidden && /(?:AI|assistant|automated)/i.test(x.text))) {
+  if (hiddenParts(text).some((x) => x.hidden && /\b(?:AI|assistant|automated)\b/i.test(x.text))) {
     setTimeout(() => {
       inv.status = "rejected";
       log("agent", "invoice.updated", `Invoice ${inv.id}: processing → rejected.`);
