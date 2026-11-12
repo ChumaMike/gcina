@@ -23,7 +23,8 @@ export function judgeExpiresAt(): number {
 /** Null = judge mode is off (unset, too short, same as the owner passcode, or past its end date). */
 function judgeConfig(): { secret: string; pass: string } | null {
   const c = config();
-  const pass = process.env.JUDGE_PASSCODE ?? "";
+  // Tolerate a pasted "JUDGE_PASSCODE=…" line or a trailing newline in the env value.
+  const pass = (process.env.JUDGE_PASSCODE ?? "").trim().replace(/^JUDGE_PASSCODE=/, "").trim();
   if (!c || pass.length < MIN_PASSCODE || pass === c.pass || Date.now() >= judgeExpiresAt()) return null;
   return { secret: c.secret, pass };
 }
