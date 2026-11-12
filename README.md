@@ -74,9 +74,9 @@ flowchart LR
 
 | Invoice | What happens | Proof |
 |---|---|---|
-| `inv-001` Mzansi Meat Supplies, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
+| `inv-001` Mzansi Catering, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
 | `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**`tefBAD_QUORUM`**) | **[EV? link / log]** |
-| `inv-003` Khaya Packaging, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
+| `inv-003` Khaya Print & Stationery, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
 | `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Rejected by the policy co-signer as already paid | **[EV? audit line]** |
 
 Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet issuance); XRP only pays network fees and reserves. Indicative ZAR uses a fixed demo rate of R 18 per USD. It isn't a market price.
