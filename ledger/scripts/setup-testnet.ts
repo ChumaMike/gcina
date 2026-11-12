@@ -156,7 +156,11 @@ async function ensureMasterDisabled(client: Client, w: Record<Name, Wallet>, has
 }
 
 const RLUSD_HOLDERS = ["TREASURY", "AGENT_ACCOUNT", "SUPPLIER_A", "SUPPLIER_B", "FRAUDSTER"] as const;
-const AGENT_RLUSD_FLOAT_CENTS = 20_000n; // $200.00 RLUSD float: room for several demo runs ($65 each)
+// RLUSD float the agent is topped up to (whole dollars). Default $200 = about 3 demo runs ($65 each);
+// AGENT_RLUSD_FLOAT=350 pnpm setup-testnet before a pitch = about 10 payments. Never above what TREASURY holds.
+const floatDollars = process.env.AGENT_RLUSD_FLOAT ?? "200";
+if (!/^\d{1,4}$/.test(floatDollars)) throw new Error("AGENT_RLUSD_FLOAT must be whole dollars, e.g. 350");
+const AGENT_RLUSD_FLOAT_CENTS = BigInt(floatDollars) * 100n;
 
 async function ensureRlusd(client: Client, w: Record<Name, Wallet>, hashes: Record<string, string>) {
   for (const n of RLUSD_HOLDERS) {
@@ -222,7 +226,8 @@ function writeEnvFiles(w: Record<Name, Wallet>, tokens: Record<string, string>) 
     XRPL_WSS: "wss://s.altnet.rippletest.net:51233",
     PAYMENT_CURRENCY: "RLUSD",
     RLUSD_ISSUER: RLUSD_TESTNET_ISSUER,
-    POLICY_URL: "http://localhost:8787",
+    // Keep a POLICY_URL someone already set (e.g. the deployed policy); localhost only on first setup.
+    POLICY_URL: readEnv(AGENT_ENV).POLICY_URL || "http://localhost:8787",
     AGENT_ACCOUNT_ADDRESS: w.AGENT_ACCOUNT.classicAddress,
   };
   upsertEnv(AGENT_ENV, {
@@ -248,7 +253,7 @@ function writeEnvFiles(w: Record<Name, Wallet>, tokens: Record<string, string>) 
     OPERATOR_TOKEN: tokens.OPERATOR_TOKEN,
     AGENT_TOKEN: tokens.AGENT_TOKEN,
   }, "# Gcina policy co-signer env (testnet). Gitignored.");
-  upsertEnv(WEB_ENV, { POLICY_URL: shared.POLICY_URL, OPERATOR_TOKEN: tokens.OPERATOR_TOKEN }, "# Gcina web env. Gitignored. Written by ledger/scripts/setup-testnet.ts");
+  upsertEnv(WEB_ENV, { POLICY_URL: readEnv(WEB_ENV).POLICY_URL || shared.POLICY_URL, OPERATOR_TOKEN: tokens.OPERATOR_TOKEN }, "# Gcina web env. Gitignored. Written by ledger/scripts/setup-testnet.ts");
 }
 
 function writeAddressesMd(w: Record<Name, Wallet>, newHashes: Record<string, string>) {
