@@ -3,7 +3,8 @@ import { resolve } from "node:path";
 import { RLUSD_TESTNET_ISSUER, type Currency } from "./amount.ts";
 import type { AppDeps } from "./app.ts";
 import { XrplLedger } from "./ledger.ts";
-import { JsonFileStore, type Store } from "./store.ts";
+import pg from "pg";
+import { JsonFileStore, PostgresStore, type Store } from "./store.ts";
 import { seedState } from "./seed.ts";
 
 function req(name: string): string {
@@ -30,9 +31,13 @@ export function depsFromEnv(store?: Store): AppDeps {
   return {
     store:
       store ??
-      new JsonFileStore(resolve(process.env.STORE_PATH ?? resolve(import.meta.dirname, "..", "data", "store.json")), () =>
+      (process.env.DATABASE_URL
+        ? new PostgresStore(new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 3 }), () =>
+            seedState({ currency, supplierA: addresses.supplierA, supplierB: addresses.supplierB }),
+          )
+        : new JsonFileStore(resolve(process.env.STORE_PATH ?? resolve(import.meta.dirname, "..", "data", "store.json")), () =>
         seedState({ currency, supplierA: addresses.supplierA, supplierB: addresses.supplierB }),
-      ),
+      )),
     ledger,
     rules: {
       agentAccount: addresses.agentAccount,

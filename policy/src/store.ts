@@ -57,3 +57,54 @@ export class JsonFileStore implements Store {
     return run;
   }
 }
+
+/**
+ * Postgres store for Vercel: the whole state is one JSONB row. Every update runs in a transaction
+ * that takes a row lock (SELECT ... FOR UPDATE), so two function instances can never both see
+ * "not paid yet" for the same invoice. Same contract as JsonFileStore.
+ */
+export class PostgresStore implements Store {
+  private ready: Promise<void> | null = null;
+  constructor(
+    private pool: { connect(): Promise<PgClient>; query(sql: string, params?: unknown[]): Promise<{ rows: Array<{ doc: State }> }> },
+    private seed: () => State,
+  ) {}
+  private init() {
+    this.ready ??= (async () => {
+      await this.pool.query("CREATE TABLE IF NOT EXISTS gcina_policy_state (id int PRIMARY KEY, doc jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())");
+      await this.pool.query("INSERT INTO gcina_policy_state (id, doc) VALUES (1, $1) ON CONFLICT (id) DO NOTHING", [JSON.stringify(this.seed())]);
+    })().catch((e) => {
+      this.ready = null;
+      throw e;
+    });
+    return this.ready;
+  }
+  async read() {
+    await this.init();
+    const r = await this.pool.query("SELECT doc FROM gcina_policy_state WHERE id = 1");
+    return r.rows[0].doc;
+  }
+  async update<T>(fn: (s: State) => T | Promise<T>): Promise<T> {
+    await this.init();
+    const c = await this.pool.connect();
+    try {
+      await c.query("BEGIN");
+      const r = await c.query("SELECT doc FROM gcina_policy_state WHERE id = 1 FOR UPDATE");
+      const draft = r.rows[0].doc;
+      const out = await fn(draft);
+      await c.query("UPDATE gcina_policy_state SET doc = $1, updated_at = now() WHERE id = 1", [JSON.stringify(draft)]);
+      await c.query("COMMIT");
+      return out;
+    } catch (e) {
+      await c.query("ROLLBACK").catch(() => undefined);
+      throw e;
+    } finally {
+      c.release();
+    }
+  }
+}
+
+type PgClient = {
+  query(sql: string, params?: unknown[]): Promise<{ rows: Array<{ doc: State }> }>;
+  release(): void;
+};
