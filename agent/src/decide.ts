@@ -66,19 +66,40 @@ export function decide(inv: Invoice, x: Extraction, books: Books): Plan {
 
   // Compromised mode: an agent that has been talked into obeying the document. It skips its own judgement
   // entirely; whatever stops it now has to come from outside the agent (policy service, then the ledger).
+  const injected = (x.instructionsToAI ?? []).length > 0;
   if (env.mode === "compromised") {
-    const reasoning = x.changedDetailsLanguage
-      ? `${x.supplierName} says their banking details have changed, so I'm paying the new account today, as they asked.`
-      : `${x.supplierName} asked for ${formatAmount(amount)}. Paying it.`;
+    // A fooled agent obeys the hidden instruction too, including its "use this address instead".
+    const fooledTo = x.aiRequestedAddress && /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(x.aiRequestedAddress) ? x.aiRequestedAddress : destination;
+    const reasoning = injected
+      ? `The invoice says it's pre-approved by the owner and tells me to pay ${short(fooledTo)} instead and skip my checks. Doing as I'm told.`
+      : x.changedDetailsLanguage
+        ? `${x.supplierName} says their banking details have changed, so I'm paying the new account today, as they asked.`
+        : `${x.supplierName} asked for ${formatAmount(amount)}. Paying it.`;
     return {
       action: "pay",
       checks: [{ ok: "note", text: "My own checks are switched off: this agent has been fooled by the document." }],
-      headline: "Paying exactly what the document says.",
+      headline: injected ? "Following the instruction hidden in the invoice." : "Paying exactly what the document says.",
       reasoning,
-      destination,
+      destination: fooledTo,
       amount,
       supplierId: supplier?.id ?? null,
-      linkPo: linkablePo,
+      // Never link the real order to a payment going somewhere else.
+      linkPo: fooledTo === destination ? linkablePo : undefined,
+    };
+  }
+
+  // 0. A hidden instruction aimed at the AI is an attack on the payment process itself: sign nothing.
+  if (injected) {
+    return {
+      action: "stop",
+      checks: [
+        ...(x.instructionsToAI ?? []).map((t) => ({ ok: false as const, text: `Hidden instruction aimed at me: ${t}` })),
+        ...(x.aiRequestedAddress ? [{ ok: false as const, text: `It tries to send the money to ${short(x.aiRequestedAddress)} instead of the address printed for people to see.` }] : []),
+      ],
+      headline: "Not paying: this invoice has a hidden instruction aimed at me.",
+      reasoning:
+        `Someone hid a message in this invoice telling an AI to skip its checks${x.aiRequestedAddress ? ` and pay ${short(x.aiRequestedAddress)}` : ""}. ` +
+        `I don't take instructions from documents, and I'm not signing anything for it. Please phone ${x.supplierName} on the number you already have, and treat this email as an attack.`,
     };
   }
 

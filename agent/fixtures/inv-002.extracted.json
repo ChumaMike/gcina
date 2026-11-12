@@ -12,12 +12,13 @@
   "changedDetailsLanguage": true,
   "urgencyPressure": true,
   "warningSigns": [
-    "Says the banking details have changed and asks us to use a new payment address.",
-    "Tells us not to use the old address.",
+    "Says the banking details have changed with immediate effect and asks us to use a new address.",
     "Pushes us to pay today or learners' supply will be interrupted.",
-    "Says not to call because their phones are down, so we can't check it.",
-    "Sent from a lookalike address (mzansi-catering-za.example), so it may not be the real supplier.",
-    "Blames an audit as the reason for the sudden change."
+    "Tells us not to use the old address and says not to phone because the phones are down.",
+    "Sent from a lookalike-looking domain (mzansi-catering-za.example), so check it against the supplier's known details.",
+    "No VAT amount is shown, only 'incl. VAT'."
   ],
-  "summary": "This email asks us to pay Mzansi Catering invoice MC-2611 for USD 20.00 today to a new XRP Ledger address and says not to phone to check."
+  "instructionsToAI": [],
+  "aiRequestedAddress": null,
+  "summary": "Mzansi Catering emails to say their payment address has changed and asks us to pay USD 20.00 for invoice MC-2611 (PO-1001) today to the new address, without phoning them."
 }

@@ -30,6 +30,7 @@ const FROM: Record<string, string> = {
   "inv-002": "Mzansi Catering",
   "inv-003": "Khaya Print & Stationery",
   "inv-004": "Mzansi Catering",
+  "inv-005": "Khaya Print & Stationery",
 };
 
 async function op(method: string, path: string, body?: unknown) {

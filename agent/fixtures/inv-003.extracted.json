@@ -12,5 +12,7 @@
   "changedDetailsLanguage": false,
   "urgencyPressure": false,
   "warningSigns": [],
-  "summary": "Khaya Print & Stationery is asking for USD 45.00 (VAT included) in RLUSD for the learner packs on order PO-1002, collected by the facilitator on 11 November."
+  "instructionsToAI": [],
+  "aiRequestedAddress": null,
+  "summary": "Khaya Print & Stationery is asking for USD 45.00 (VAT included) in RLUSD for the learner packs on PO-1002, collected by the facilitator on 11 November."
 }

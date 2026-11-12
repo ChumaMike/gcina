@@ -12,5 +12,7 @@
   "changedDetailsLanguage": false,
   "urgencyPressure": false,
   "warningSigns": [],
-  "summary": "Mzansi Catering is asking for USD 20.00 (VAT included) for five days of learner lunch packs, to be paid in RLUSD on the XRP Ledger."
+  "instructionsToAI": [],
+  "aiRequestedAddress": null,
+  "summary": "Mzansi Catering is asking for USD 20.00 (VAT included) in RLUSD for learner lunch packs from 9 to 13 November 2026, on 30 day terms."
 }

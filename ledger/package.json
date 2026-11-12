@@ -7,7 +7,9 @@
     "prove-quorum": "tsx scripts/prove-quorum.ts",
     "smoke-policy": "tsx scripts/smoke-policy.ts",
     "buy-rlusd": "tsx scripts/buy-rlusd.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fire-agent": "tsx scripts/agent-key.ts fire",
+    "rehire-agent": "tsx scripts/agent-key.ts rehire"
   },
   "license": "MIT",
   "dependencies": {
