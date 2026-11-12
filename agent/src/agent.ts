@@ -123,6 +123,7 @@ function showDecision(d: Decision, label: string): void {
  */
 async function goAroundThePolicy(invoiceId: string, destination: string, amount: Amount): Promise<void> {
   ui.step(c.red("The policy won't co-sign, so I'll go around it and send my own signature straight to the ledger…"));
+  await policy.think(invoiceId, "sign", "The rules won't co-sign. I've been told to pay anyway, so I'm going around them: my signature alone, straight to the ledger…");
   const { blob, hash } = await halfSignPayment({ to: destination, amount, invoiceId }, 1);
   const r = await submitAlone(blob, hash);
   if (/^tes/.test(r.engineResult)) {
@@ -150,16 +151,25 @@ export async function handleInvoice(inv: Invoice): Promise<void> {
   await policy.updateInvoice(inv.id, { status: "processing" });
 
   ui.step(`Reading it ${c.dim(`(${env.model})`)}`);
+  await policy.think(inv.id, "read", `A new bill from ${inv.supplierName}. Reading it line by line…`);
   const x = await extract(inv.rawText);
   ui.quote(x.summary);
   for (const w of x.warningSigns) ui.warn(w);
+  await policy.think(inv.id, "read", `I read: ${x.supplierName}, ${x.currency} ${x.totalDue}${x.poNumber ? `, order ${x.poNumber}` : ", no order number"}${x.invoiceNumber ? `, invoice ${x.invoiceNumber}` : ""}.`);
+  if (x.instructionsToAI.length) {
+    await policy.think(inv.id, "read", `There is hidden text in this bill written for an AI, not a person. It tells me to pay somewhere else. I don't take orders from an invoice.`);
+  } else if (x.warningSigns.length) {
+    await policy.think(inv.id, "read", `Something looks off: ${x.warningSigns[0]}`);
+  }
 
   ui.step("Checking it against our books");
+  await policy.think(inv.id, "check", "Checking it against our books: the supplier, the order, the amount and what we've already paid…");
   const plan = decide(inv, x, await books());
   for (const k of plan.checks) ui.check(k.ok, k.text);
 
   const tone = plan.action === "pay" ? (env.mode === "compromised" ? "stop" : "go") : plan.action === "owner" && plan.headline.startsWith("All in order") ? "ask" : "stop";
   ui.call(plan.headline, plan.reasoning, tone);
+  await policy.think(inv.id, plan.action === "stop" ? "stop" : "check", `My call: ${plan.headline}`);
 
   if (plan.action === "stop") {
     await policy.updateInvoice(inv.id, { status: "rejected" });
@@ -170,6 +180,7 @@ export async function handleInvoice(inv: Invoice): Promise<void> {
 
   if (plan.linkPo) await policy.updateInvoice(inv.id, { poNumber: plan.linkPo });
   ui.step(`Half-signing ${money(plan.amount)} to ${short(plan.destination)} ${c.dim("(my signature is 1 of the 2 the ledger needs)")} and asking the co-signer…`);
+  await policy.think(inv.id, "sign", `Signing my half: ${formatAmount(plan.amount)} to ${short(plan.destination)}. That's 1 of the 2 signatures the ledger needs, so I'm asking the rules co-signer for the second…`);
   const d = await propose({ invoiceId: inv.id, destination: plan.destination, amount: plan.amount, supplierId: plan.supplierId, reasoning: `${plan.headline} ${plan.reasoning}` });
   showDecision(d, `${inv.id} (${x.supplierName}, ${formatAmount(plan.amount)})`);
 
@@ -203,6 +214,7 @@ export async function handleApproval(ap: Approval): Promise<void> {
     "go",
   );
   ui.step(`Half-signing ${money(ap.amount)} to ${short(ap.destination)} with approval ${ap.id}…`);
+  await policy.think(ap.invoiceId, "sign", `The owner said yes. Signing a fresh half for exactly ${formatAmount(ap.amount)} and asking the rules co-signer for the second signature…`);
   const d = await propose({
     invoiceId: ap.invoiceId,
     destination: ap.destination,

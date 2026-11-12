@@ -153,3 +153,19 @@ test("POST /audit/agent-events: tefBAD_QUORUM recorded as 'Ledger refused: agent
   assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...body, kind: "policy.updated" })).status, 400);
   assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...body, engine_result: "<script>" })).status, 400);
 });
+
+test("POST /audit/agent-events agent.thought: stored as the agent's note, capped and cleaned; never changes an invoice", async () => {
+  const h = makeApp();
+  const t = { kind: "agent.thought", invoiceId: "inv-001", step: "read", text: "Reading the invoice\u0007 from Mzansi Catering" };
+  const r = await h.call("POST", "/audit/agent-events", "agent", t);
+  assert.equal(r.status, 201);
+  assert.equal(r.json.actor, "agent");
+  assert.equal(r.json.kind, "agent.thought");
+  assert.equal(r.json.message, "Reading the invoice from Mzansi Catering");
+  assert.deepEqual(r.json.data, { invoiceId: "inv-001", step: "read" });
+  assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...t, text: "x".repeat(900) })).json.message.length, 240);
+  assert.equal((await h.call("POST", "/audit/agent-events", "operator", t)).status, 403);
+  assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...t, step: "pay" })).status, 400);
+  assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...t, text: "   " })).status, 400);
+  assert.equal((await h.call("POST", "/audit/agent-events", "agent", { ...t, invoiceId: "a b" })).status, 400);
+});

@@ -45,4 +45,13 @@ export const policy = {
       () => true,
       () => false,
     ),
+  /**
+   * Tell the dashboard what I'm doing, in my own words. Display only, and never in the way:
+   * if the note can't be delivered the work carries on.
+   */
+  think: (invoiceId: string, step: "read" | "check" | "sign" | "wait" | "stop", text: string) =>
+    call<unknown>("POST", "/audit/agent-events", { kind: "agent.thought", invoiceId, step, text: text.slice(0, 240) }).then(
+      () => true,
+      () => false,
+    ),
 };

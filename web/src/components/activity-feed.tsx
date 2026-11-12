@@ -9,6 +9,18 @@ import { amountOf, dataOf, group, isPayment, ledgerRefusal, outcomeOf, type Grou
 import { cn } from "@/lib/utils";
 import { ActorChip, ExplorerLink, clock, timeAgo } from "./bits";
 import { TxQr } from "./ledger-proof";
+import { ListenButton } from "./a11y/listen-button";
+import { useT } from "./a11y/prefs";
+import type { MsgKey } from "@/lib/i18n/messages";
+
+const TITLE_KEY: Record<string, MsgKey> = {
+  "ledger-refused": "feed.ledgerRefused",
+  stopped: "feed.stopped",
+  declined: "feed.declined",
+  refused: "feed.refused",
+  held: "feed.held",
+  working: "feed.working",
+};
 
 /** The agent's own words for this invoice, if it gave any. */
 function reasoningOf(g: Group): string | null {
@@ -54,6 +66,7 @@ const TONE = {
 } as const;
 
 function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | null; pending: boolean }) {
+  const t = useT();
   let outcome = outcomeOf(g);
   const who = invoices?.find((i) => i.id === g.invoiceId)?.supplierName;
   const time = (
@@ -70,7 +83,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <CheckCircle2 className="size-5 shrink-0 text-ok" aria-hidden="true" />
           <p className="font-medium">
-            Paid{who ? ` ${who}` : ""}
+            {t("feed.paid")}{who ? ` ${who}` : ""}
             {amount && <span className="tabular-nums"> {formatAmount(amount)}</span>}
             <span className="font-normal text-muted-foreground"> · {g.invoiceId}</span>
           </p>
@@ -105,7 +118,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
       <div className={cn("flex flex-col gap-1 rounded-xl border p-3", tone.box)}>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <tone.icon className={cn("size-5 shrink-0", tone.ic)} aria-hidden="true" />
-          <p className="font-semibold">{outcome === "held" && pending ? "Waiting for you" : tone.title}</p>
+          <p className="font-semibold">{outcome === "held" && pending ? t("feed.waiting") : TITLE_KEY[outcome] ? t(TITLE_KEY[outcome]) : tone.title}</p>
           <span className="text-sm text-muted-foreground">
             {g.invoiceId}
             {who ? ` · ${who}` : ""}
@@ -132,6 +145,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
               See what it found <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           )}
+          <ListenButton text={detail} />
           <Steps events={g.events} />
         </div>
       </div>
