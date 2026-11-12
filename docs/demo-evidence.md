@@ -11,3 +11,9 @@ AGENT_ACCOUNT `rGnmtEMkzCECGn1mkdxZt8cieEU62kV6hq` (master disabled, SignerList 
 
 `tef*` results are final rejections at submit time: the transaction never enters a ledger and no fee is charged,
 so (a) and (b) have no explorer page. That is the point — the money cannot move.
+
+## Treasury buys RLUSD on XRPL's native AMM — 2026/11/12, 18:00:28 SAST (`ledger/scripts/buy-rlusd.ts`)
+
+TREASURY [`rK8V7hu4LjNpHyLZwqRxL2NUFKvdqzRQMD`](https://testnet.xrpl.org/accounts/rK8V7hu4LjNpHyLZwqRxL2NUFKvdqzRQMD) swapped **3283.185217 XRP → $ 250.00 RLUSD**
+through the XRP/RLUSD AMM pool [`rPn7kHwycXzS5XNj167CnKwC2t82yAAdNW`](https://testnet.xrpl.org/accounts/rPn7kHwycXzS5XNj167CnKwC2t82yAAdNW) (testnet RLUSD issuer `rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV`, pool fee 50.1 bps).
+Immediate-or-cancel OfferCreate capped at quote + 2%: [8191857E5B56…](https://testnet.xrpl.org/transactions/8191857E5B562F5E1E6008E3AF55DFE07572729878DF750ACC81C4DA8689F4C8) · **tesSUCCESS**.

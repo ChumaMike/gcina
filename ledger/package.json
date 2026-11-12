@@ -6,6 +6,7 @@
     "setup-testnet": "tsx scripts/setup-testnet.ts",
     "prove-quorum": "tsx scripts/prove-quorum.ts",
     "smoke-policy": "tsx scripts/smoke-policy.ts",
+    "buy-rlusd": "tsx scripts/buy-rlusd.ts",
     "typecheck": "tsc --noEmit"
   },
   "license": "MIT",
