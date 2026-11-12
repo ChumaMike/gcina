@@ -34,7 +34,7 @@ function Steps({ events }: { events: AuditEvent[] }) {
                 <ActorChip actor={e.actor} />
                 <time dateTime={e.at}>{clock(e.at)}</time>
               </div>
-              <p className="text-pretty">{e.message}</p>
+              <p className="text-pretty [overflow-wrap:anywhere]">{e.message}</p>
               {typeof why === "string" && why.trim() && <p className="text-pretty text-muted-foreground italic">“{why.trim()}”</p>}
             </li>
           );
@@ -112,7 +112,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
           </span>
           {time}
         </div>
-        <p className="text-[0.95rem] text-pretty">{detail}</p>
+        <p className="text-[0.95rem] text-pretty [overflow-wrap:anywhere]">{detail}</p>
         {outcome === "held" && refusal && (
           <p className="flex items-start gap-2 rounded-lg bg-danger-soft p-2 text-[0.95rem] font-medium text-danger">
             <ShieldX className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
