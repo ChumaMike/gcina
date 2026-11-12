@@ -23,7 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en-ZA" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
         {children}
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster position="bottom-center" richColors closeButton />
       </body>
     </html>
   );
