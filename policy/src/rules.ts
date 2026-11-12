@@ -109,6 +109,12 @@ export function checkSignedTx(p: Proposal, cfg: RulesConfig, ledgerIndex?: numbe
 }
 
 /** The supplier's own invoice number, read by the policy from the invoice text (never only from the agent). */
+/** The policy's own reading of an order number in the text (e.g. "your order PO-1001"). */
+export function readPoNumber(rawText: string): string | null {
+  const m = rawText.match(/\bPO[-\s#:]?(\d{3,})\b/i);
+  return m ? `PO-${m[1]}` : null;
+}
+
 export function readReference(rawText: string): string | null {
   const m = rawText.match(/invoice\s*(?:no\.?|number|num|#)?\s*[:#]?\s*([A-Z]{1,6}[-/]?\d{2,}[A-Z0-9-]*)/i);
   return m ? m[1].toUpperCase() : null;
@@ -138,8 +144,9 @@ export function duplicateReason(p: Proposal, s: State): string | null {
   if (prior) return `Invoice ${p.invoiceId} has already been ${prior.settling ? "co-signed and is still settling" : `paid (${sastTime(prior.at)})`}. Paying it again would be a repeat.`;
 
   // Order already paid: refuse whatever the amount or destination (fail closed).
-  const po = inv?.poNumber ?? null;
-  if (po) {
+  // The agent's link and the policy's own reading of the text both count (either can only ADD a match).
+  const pos = new Set<string>([inv?.poNumber, inv ? readPoNumber(inv.rawText) : null].filter((x): x is string => !!x));
+  for (const po of pos) {
     const byPo = priors.find((x) => x.poNumber === po);
     if (byPo || s.purchaseOrders.find((o) => o.poNumber === po)?.status === "paid") {
       return byPo
@@ -159,6 +166,18 @@ export function duplicateReason(p: Proposal, s: State): string | null {
     amountMinor = toMinor(p.amount);
   } catch {
     amountMinor = null; // rule 2 already refuses malformed amounts
+  }
+  // Same supplier's invoice number already paid, but now to a DIFFERENT address: that's the
+  // changed-banking-details scam itself, so it's a repeat whatever the amount (fail closed).
+  if (refs.size && inv) {
+    const resent = priors.find((x) => {
+      if (x.reference === undefined || !refs.has(x.reference) || x.destination === p.destination) return false;
+      const priorInv = s.invoices.find((o) => o.id === x.invoiceId);
+      return !!priorInv && priorInv.supplierName === inv.supplierName;
+    });
+    if (resent) {
+      return `Looks like a repeat of ${resent.invoiceId}, ${paidWhen(resent)}: ${inv.supplierName}'s invoice ${resent.reference} was already paid, and this copy asks for a different address. Possible changed-banking-details fraud.`;
+    }
   }
   if (amountMinor !== null && refs.size) {
     const twin = priors.find(
@@ -210,6 +229,21 @@ export function limitReasons(p: Proposal, s: State, now: Date, coolingOffMinutes
     return reasons;
   }
   const a = toMinor(p.amount);
+  reasons.push(...hardLimitReasons(p, s, now));
+  // 5. human approval threshold
+  if (a > toMinor(pol.requireHumanAbove)) reasons.push(`${formatAmount(p.amount)} is above ${formatAmount(pol.requireHumanAbove)}, where you asked to approve payments yourself.`);
+  return reasons;
+}
+
+/**
+ * Per-payment max and daily cap. These are the owner's hard limits: an approval does NOT waive them
+ * (the owner raises a limit on the Limits screen instead). Empty when the currencies differ (rule 4 reports that).
+ */
+export function hardLimitReasons(p: Proposal, s: State, now: Date): string[] {
+  const pol = s.policy;
+  if (p.amount.currency !== pol.perPaymentMax.currency) return [];
+  const reasons: string[] = [];
+  const a = toMinor(p.amount);
   if (a > toMinor(pol.perPaymentMax)) reasons.push(`${formatAmount(p.amount)} is more than your per-payment limit of ${formatAmount(pol.perPaymentMax)}.`);
   const today = sastDay(now);
   // Co-signed payments still settling count as spent (fail closed).
@@ -217,12 +251,10 @@ export function limitReasons(p: Proposal, s: State, now: Date, coolingOffMinutes
     .filter((x) => x.sastDay === today && x.amount.currency === p.amount.currency)
     .reduce((t, x) => t + toMinor(x.amount), 0n);
   if (spent + a > toMinor(pol.dailyMax)) reasons.push(`This would take today's payments past your daily limit of ${formatAmount(pol.dailyMax)}.`);
-  // 5. human approval threshold
-  if (a > toMinor(pol.requireHumanAbove)) reasons.push(`${formatAmount(p.amount)} is above ${formatAmount(pol.requireHumanAbove)}, where you asked to approve payments yourself.`);
   return reasons;
 }
 
-/** Rule 7: an approval waives 3–5 only for that exact invoice, destination and amount, once. */
+/** Rule 7: an approval waives the address check and the "ask me" threshold only for that exact invoice, destination and amount, once. */
 export function approvalCheck(p: Proposal, s: State): { ok: true } | { ok: false; reason: string } {
   const ap = s.approvals.find((x) => x.id === p.approvalId);
   if (!ap) return { ok: false, reason: `Approval ${p.approvalId} does not exist.` };
@@ -248,6 +280,8 @@ export function evaluate(p: Proposal, s: State, cfg: RulesConfig, now: Date, led
   if (p.approvalId) {
     const ap = approvalCheck(p, s);
     if (!ap.ok) return { kind: "reject", reasons: [ap.reason] };
+    const hard = hardLimitReasons(p, s, now);
+    if (hard.length) return { kind: "reject", reasons: [...hard, "An approval doesn't lift your per-payment or daily limit; change the limit first if you really mean it."] };
     return { kind: "cosign", reasons: [`Approved by a person (${p.approvalId}).`], tx: checked.tx, approvalId: p.approvalId };
   }
   // 3–5
