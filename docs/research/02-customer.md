@@ -1,5 +1,11 @@
 # 02 — The named customer and who else buys this
 
+> **SUPERSEDED 12 Nov evening:** Gumede/Kota~tainment is **out** (Chuma, 16:05). The named design partner is **MTA**
+> (Meyiswa Training Academy, Soweto; disclosed family business): see `docs/customer-evidence-mta.md` and `00-verdict.md`.
+> **Do not name Gumede or Kota~tainment anywhere.** The interview script (§2) is still useful: reuse Parts C–E as a WhatsApp
+> question to MTA's owner and 2–3 bookkeepers/owners. The archetypes (§3) still stand.
+
+
 Owner: R (Research). Status: v1 written 12 Nov 2026 (16:15). The interview answers go in §4 tonight.
 Segment numbers and the bookkeeper channel are in [`02b-segments-and-name.md`](02b-segments-and-name.md).
 
