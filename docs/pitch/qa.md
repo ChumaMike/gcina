@@ -97,6 +97,13 @@ Not that I know of: what I saw in two years of MTA's admin was the same person s
 and Gcina's duplicate check stops exactly that. The fake-banking-details risk comes from the courts and all four
 big banks' warnings, so we stop both. *(customer-evidence-mta.md; never claim an MTA fraud incident.)*
 
+### 14d. "Your account history shows a payment to an address that isn't a supplier. What's that?"
+Say it straight: "That was our own live test on Thursday. The owner approved the fake invoice, and we found that an
+approval skipped every other rule, including the repeat check. $20 of testnet money went to the fraud address.
+We fixed it that evening: an approval now only covers the reason it was asked for, so a repeat, the caps or a pause
+can never be approved away, and the fake invoice is now refused outright. That's why we test with real
+transactions." (tx `1FB4A214…`; C 19:55, 68 tests.) Don't wait to be asked if a judge is reading the explorer.
+
 ### 14b. Is it accessible? What about people who don't read English?
 "11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners." *(C, 18:30. Say "AI translation, checked by a first-language speaker" only after Chuma has checked isiXhosa/isiZulu; until then: "AI translations, being checked".)*
 

@@ -10,7 +10,7 @@ Backups for Q&A: security model, roadmap and team. Hard Q&A answers: [`qa.md`](q
 | 1 | The problem: small businesses pay twice | 0:00–0:35 |
 | 2 | The evidence, and who says so | 0:35–1:05 |
 | 3 | Our solution: an AI that pays suppliers but can't pay alone | 1:05–1:35 |
-| (demo) | Live dashboard: inv-001 paid, inv-004 repeat refused, inv-002 fake details held + agent alone refused by the ledger, inv-003 owner approves | 1:35–3:20 |
+| (demo) | Live dashboard: inv-001 paid, inv-004 repeat refused, inv-002 fake details refused + agent alone refused by the ledger, inv-003 owner approves | 1:35–3:20 |
 | 4 | Why not what already exists | 3:20–3:55 |
 | 5 | Why us: the team | 3:55–4:15 |
 | 6 | Business model and the ask (rands in, rands out) | 4:15–5:00 |
