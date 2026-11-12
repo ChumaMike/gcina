@@ -62,7 +62,7 @@ Yes, the limits and the supplier list live in our co-signer service. What the le
 It's one vote out of two, not a gatekeeper with the keys to the money. The owner holds the override, so the business never depends on us to get its money out.
 
 ### 11. What's different from Ramp, Sage or Xero?
-They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams. *(docs/problem-statement.md, C 17:45. Ramp flags changed bank details too (US); Visa + BILL + Billtrust
+They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams. **Short version: SA tools check or alert; Gcina makes the payment need a second, independent signature the agent can't produce.** *(R 03-competitors §F; docs/problem-statement.md, C 17:45. Ramp flags changed bank details too (US); Visa + BILL + Billtrust
 piloted agent-executed, human-approved invoice payments on 20 Oct 2026; Sage SA has an AP agent. Never say "first",
 "only" or "nobody".)*
 
@@ -87,9 +87,9 @@ protect", which is exactly the job. *(02b Part 2)*
 ---
 
 ### 13b. Why would anyone let an AI pay suppliers at all?
-They mostly won't yet: in a 2025 PYMNTS survey of 60 CFOs at US$1bn+ US companies, none would give an AI agent full access
-to start payments, and 97% of mid-market CFOs in a Wakefield survey say human oversight is critical, even though 88%
-already use agentic AI. Gcina keeps that oversight on the ledger: the agent handles the routine payments, and anything
+They mostly won't yet: in a July 2025 PYMNTS survey of 60 CFOs at US$1bn+ US companies, none would give an AI agent substantial or full
+access to systems like payments, and in a Wakefield survey paid for by the AI vendor Maximor, 97% of US mid-market CFOs
+say human oversight is critical, even though 88% already use agentic AI. Gcina keeps that oversight on the ledger: the agent handles the routine payments, and anything
 unusual needs the owner. *(docs/stats-sheet.md; these are US surveys, say so.)*
 
 ### 14. Has MTA actually been hit by fake banking details?

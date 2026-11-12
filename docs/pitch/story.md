@@ -81,7 +81,7 @@ Then one day an email arrives that looks exactly like a regular supplier's: *"Du
 details have changed. Please pay today to avoid supply interruption."* Same name, same amount, a new account.
 
 **The stat (rank 1 in research):** "In 2025, South Africa's Supreme Court of Appeal ruled that if your business pays a hacked invoice into a fraudster's account, you still owe your supplier the full amount."
-Source: *Intengo Imoto v Zoutpansberg Motor Wholesalers*, 2025 (6) SA 143 (SCA); also *ENS v Hawarden* [2024] ZASCA 90 (`docs/research/01-problem-evidence.md` §2, §5). So the business pays **twice**: once to the fraudster, then again to the real supplier.
+Source: *Intengo Imoto v Zoutpansberg Motor Wholesalers* [2025] ZASCA 93; also *ENS v Hawarden* [2024] ZASCA 90 (`docs/research/01-problem-evidence.md` §2, §5). So the business pays **twice**: once to the fraudster, then again to the real supplier.
 
 **Backup stat (rank 2):** South Africans lost **R2.4 billion** to digital banking crime in 2025, up from about
 R1.9 billion in 2024, and SABRIC says it's driven by tricking people rather than hacking systems
@@ -92,14 +92,18 @@ details" scam, and all give the same advice: verify the change through a channel
 pay. **That check is the rule Gcina enforces.**
 
 **More numbers (from `docs/stats-sheet.md`, coordinator):**
-- Paying twice is common: benchmarks put duplicate or erroneous payments at **0.8%–2%** of all disbursements
-  (median ~1.5%, APQC, 1,686 organisations). Say: "about R1 to R2 in every R100 a business pays out".
+- Paying twice is common: benchmarks put duplicate or erroneous payments at **0.8%–2% of payments** (APQC; it counts
+  payments, not rand). Say: "about 1 to 2 in every 100 payments a business makes". Never "R1 to R2 in every R100",
+  never "1,686 organisations" or "1.5% median" (R, 08-stats-verification).
 - *ENS v Hawarden* [2024] ZASCA 90: a buyer lost **R5.5m** to an intercepted payment and carried the loss.
 - **The trust gap:** of 60 CFOs at US$1bn+ US firms, **0%** would give an AI agent substantial or full access to
-  initiate payments (PYMNTS Intelligence, Jul 2025); only **14%** of mid-market CFOs fully trust AI with accounting
-  data, **97%** say human oversight is critical, yet **88%** already use an agentic AI tool (Wakefield, Feb 2026).
+  initiate payments (PYMNTS Intelligence, surveyed Jul 2025, Sep 2025 report); only **14%** of 100 US mid-market CFOs fully
+  trust AI with accounting data, **97%** say human oversight is critical for data accuracy, yet **88%** already use an
+  agentic AI tool (Wakefield survey **paid for by the AI vendor Maximor**, Feb 2026; cite CFO Dive; always say who paid).
   Say: "CFOs want AI agents, but almost none will let one press 'pay'. Gcina is how they say yes."
-- **Don't quote** Deloitte's "54%" until R verifies it. Never say "67% of SA firms hit by BEC" or "R2.4m average BEC cost".
+- **Deloitte (verified by R):** "In Deloitte's latest CFO Signals survey, 54% of big-company CFOs said putting AI agents
+  into finance is a transformation priority" (Q4 2025, 200 North American CFOs at US$1bn+ companies, 13 Jan 2026).
+- AFP 74% BEC is **US** organisations, not global. FBI IC3: say "reported to the FBI", not "US only". Never say "67% of SA firms hit by BEC" or "R2.4m average BEC cost".
 
 Now picture handing supplier payments to an AI agent. It's faster than any bookkeeper, but it can be fooled by
 the same email. **Would your CFO sign off on that?** Not unless the agent physically *can't* pay the wrong person.
@@ -168,8 +172,8 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
 
 - **Why not Ramp or Sage?** "They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams."
 
-- Say: **"Sage and Ramp ask their AI to spot the fraud. Gcina makes the XRP Ledger refuse the payment: an
-  accounts-payable agent that can't pay a new bank account until a human co-signs."**
+- Say (R, 03-competitors §F): **"SA tools check or alert; Gcina makes the payment need a second, independent signature the agent can't produce."** Ramp's fraud agent alerts (US/CA/UK); SA Xero/Sage add-ons make
+  account checks optional and "won't block"; VendorAlert alerts on bank-detail changes but doesn't block.
 - Positioning line: "Gcina: autonomous supplier payments, independent financial control. We separate the agent's ability to initiate a payment from its authority to spend."
 - **Never say** "nobody else enforces limits outside the agent" (Coinbase, Privy, Turnkey, Safe and Crossmint do).
 - **Be exact:** the ledger enforces the *quorum*; the supplier list and limits live in our co-signer service.
