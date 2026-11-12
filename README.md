@@ -1,6 +1,6 @@
 # Gcina: the agent pays, the ledger keeps
 
-<!-- P tab draft, 12 Nov. [EV?] = waiting on the live testnet run in docs/demo-evidence.md; [link?] = video / deployed URL. -->
+<!-- P tab, 12 Nov. [link?] = video; [EV?] = limit-change audit line (MVP #3). -->
 
 > **Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, it still can't pay on its own.**
 
@@ -14,7 +14,8 @@ by a fake "our banking details have changed" invoice.
 Built for the **W3Node Node Engine Hackathon 2026**, **Agentic Finance track (Ripple / XRPL)**.
 
 - 🎥 Demo video (≤ 3 min): **[link?]**
-- 🖥️ Operator dashboard (testnet): **[deployed URL?]** (demo passcode on request)
+- 🖥️ Operator dashboard (testnet): **https://gcina.vercel.app** (demo passcode on request)
+- 🛡️ Policy co-signer API (testnet): https://gcina-policy.vercel.app/health
 - 🔎 Testnet evidence: [`docs/demo-evidence.md`](docs/demo-evidence.md)
 
 ### For judges: where to find each rubric point
