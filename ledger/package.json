@@ -1,0 +1,22 @@
+{
+  "name": "gcina-ledger",
+  "version": "1.0.0",
+  "description": "Gcina XRPL Testnet helpers and setup scripts",
+  "scripts": {
+    "setup": "tsx scripts/setup-testnet.ts",
+    "prove-quorum": "tsx scripts/prove-quorum.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "xrpl": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "private": true,
+  "type": "module"
+}
