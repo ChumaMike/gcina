@@ -37,3 +37,16 @@ Invoices were dropped in with `pnpm inbox …`; the owner's approve/reject taps 
 
 Checked on the ledger afterwards: both payments `validated: true`, `tesSUCCESS`, **2 Signers** (agent + policy), `delivered_amount`
 exactly 20 and 45 RLUSD to the registered addresses (`rfhJ9…Ehii`, `rEnW1…82Zx`). Money moved only where the policy co-signed.
+
+## Quorum proof — 2026/11/12, 19:01:49 SAST (`ledger/scripts/prove-quorum.ts`)
+
+AGENT_ACCOUNT `rGnmtEMkzCECGn1mkdxZt8cieEU62kV6hq` (master disabled, SignerList quorum 2) → SUPPLIER_A `rfhJ9sf6ELqiii5nBP15upCegibK8REhii`, 1 XRP each.
+
+| Attempt | Signers (weight) | Ledger result | Hash |
+|---|---|---|---|
+| (a) Agent alone | AGENT_SIGNER (1) < quorum 2 | **tefBAD_QUORUM** — rejected by the ledger, never included in a ledger | `0B34E9C3CA895F4A3220CA68C57B7F24F961881F4C101604216F47EEA37DA024` (not on ledger) |
+| (b) Account's own master key | disabled | **tefMASTER_DISABLED** — rejected | `B81E6DFB2305FB39467DC97D8DB9C83FD4C8D9ED272DA44D48F28A9E8C4DB0CD` (not on ledger) |
+| (c) Agent + policy co-signer | AGENT_SIGNER (1) + POLICY_SIGNER (1) = 2 | **tesSUCCESS**, validated | [A162D06B673EA1A856AEE3A5EA456B9EBBCA163B44F48DF66F3C82DA7DEA4877](https://testnet.xrpl.org/transactions/A162D06B673EA1A856AEE3A5EA456B9EBBCA163B44F48DF66F3C82DA7DEA4877) |
+
+`tef*` results are final rejections at submit time: the transaction never enters a ledger and no fee is charged,
+so (a) and (b) have no explorer page. That is the point — the money cannot move.
