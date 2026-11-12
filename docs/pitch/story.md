@@ -10,10 +10,38 @@
 > gcina.co.za. Fine for the hackathon; before any public launch, use a compound such as "Gcina Pay" and do a
 > trade-mark search. Have this answer ready if a judge asks.
 
-## One line
+## One line (approved framing, `docs/problem-statement.md`)
 
-**Gcina is an AI bookkeeper that pays your suppliers for you and can't be talked into paying a fraudster,
-because the money only moves when the rules you set say yes.**
+**Problem:** *Small businesses pay twice, to fraudsters and to duplicates, and they can't hand the job to AI because
+nothing stops an AI from paying wrong.*
+
+**Value proposition:** **Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, it still can't pay on its own.**
+
+> Wording note: the approved UVP ends "the ledger won't let it pay wrong". We say "it still can't pay on its own",
+> because the ledger enforces the two-vote rule while the supplier list, limits and duplicate check live in the policy
+> service. Same promise, nothing a judge can catch.
+
+**Three independent locks, each working even if the one before it fails:**
+1. **Judgement**: the AI reads the invoice and flags urgency, lookalike senders and changed-details language.
+2. **Rules**: a separate policy service holds the second key and only co-signs approved payees, within limits, never twice.
+3. **Ledger**: XRPL multi-sign with the master key off, so the agent alone gets `tefBAD_QUORUM`.
+
+## Why the problem persists (from `docs/problem-statement.md`)
+- The bank's advice ("verify through a trusted channel") is a **manual check a busy owner can skip** under "pay today" pressure.
+- Payment systems **trust whoever has the login**; nothing independent can say no.
+- Account verification (AVS) confirms a name, **not that the details changed**, and it's opt-in per payment.
+- **Duplicates hide in manual workflows**: registers, spreadsheets, re-sent invoices (seen at MTA).
+- The fraud is **social, not technical** (SABRIC), and **AI makes it worse first**: better fake invoices, and paying agents that can be prompt-injected.
+
+**Nobody offers** an AI that does the payables work **plus** a rule-keeper the AI can't override **plus** a ledger that
+refuses the AI on its own, all controlled by the owner from a phone.
+
+## Against other teams in this track
+- Most will show "an agent with a wallet and a spending cap". We show **why the cap matters**: a live fake invoice, a
+  compromised agent, and the ledger refusing it, tied to a real SA court ruling and a real customer story.
+- Many enforce limits only in their own backend or a smart contract. **Our two-vote rule is enforced by XRPL itself**
+  and survives a hacked agent.
+- We start from a named design partner (MTA) and a legal fact ("you pay twice"), not from the technology.
 
 Tagline: **The agent pays. The ledger keeps.**
 

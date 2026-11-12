@@ -67,6 +67,11 @@ the payment, so the agent can't pay a new bank account until a human co-signs. I
 native bill pay, Ramp and BILL aren't available, and bank account verification only proves an account
 belongs to the named company, not that it's the account this supplier has always used. *(Source: 03-competitors.md §D–E.)*
 
+### 11a. What makes Gcina different from other teams' agent wallets?
+Three independent locks: the AI's own judgement, a rule-keeper with its own key that the AI can't override, and the
+XRP Ledger refusing the agent on its own. Each one still holds if the one before it fails, and the whole thing is
+built around a real SA failure ("you pay twice"), not around the technology.
+
 ### 11b. Coinbase, Privy, Turnkey and Safe already enforce agent limits. Why you?
 They enforce limits in a vendor's enclave or a smart contract, and none of them has an invoice-to-payment
 workflow or a South African focus. Gcina's quorum is the XRP Ledger's own multi-sign (no contract, no

@@ -2,6 +2,8 @@
 
 <!-- DRAFT v0 (P tab, 12 Nov). [R?] = waiting on docs/research, [EV?] = waiting on docs/demo-evidence.md. Final after the 23:00 testnet run. -->
 
+> **Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, it still can't pay on its own.**
+
 **Gcina** (isiZulu/isiXhosa: *"keep, protect"*) is an AI accounts-payable agent for South African small
 businesses. It reads supplier invoices, matches them to orders, and pays suppliers on the **XRP Ledger**,
 inside limits the business owner sets and the agent **cannot change or get around**, even when it's fooled
@@ -46,6 +48,12 @@ wrong person.
 Our first design partner is **Meyiswa Training Academy (MTA)**, a training academy in Soweto (a family business of our team, so we say so up front). A team member did MTA's admin from 2022 to 2024: payments were approved by hand from attendance registers, and **sometimes the same person got paid twice**. Gcina stops both: the duplicate and the fake banking details.
 
 ## How it works
+
+**Three independent locks, each working even if the one before it fails:**
+1. **Judgement**: the AI agent reads the invoice and flags urgency, lookalike senders and changed-details language.
+2. **Rules**: an independent policy service holds the second key and only co-signs approved payees, within the owner's limits, never twice.
+3. **Ledger**: the XRP Ledger needs two votes, and the agent has one, so the agent alone is refused (`tefBAD_QUORUM`).
+
 
 The agent pays from an XRPL account whose **master key is disabled** and whose payments need a
 **multi-signature quorum of 2**:
