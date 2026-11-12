@@ -9,7 +9,8 @@
 export const SESSION_COOKIE = "gcina_session";
 export const SESSION_MAX_AGE = 60 * 60 * 12; // 12 h: one demo day
 
-const MIN_PASSCODE = 12;
+// 10, not 12: the owner chose an easy demo passcode. Testnet only; rotate after the pitch.
+const MIN_PASSCODE = 10;
 const isProd = () => process.env.NODE_ENV === "production";
 
 export type Role = "owner" | "judge";
