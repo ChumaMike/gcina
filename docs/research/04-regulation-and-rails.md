@@ -276,3 +276,135 @@ an account at a licensed CASP. The coins are sold to ZAR there and withdrawn by 
 - The status of the Standard Bank appeal at the SCA.
 - The content of the second-draft Capital Flow Management Regulations and Manual.
 - A FAIS legal opinion on the non-custodial agent and co-signer model.
+
+---
+
+## 8. Local infrastructure path
+
+Added 12 Nov 2026. RLUSD on XRPL testnet is now the demo's payment currency.
+
+### 8a. From RLUSD on XRPL to rands in the supplier's bank
+
+The intended chain is:
+
+1. Gcina pays RLUSD on XRPL to the supplier's **deposit address and destination tag at an SA CASP**.
+2. The CASP credits RLUSD to the supplier's account.
+3. The supplier sells RLUSD for ZAR (or swaps to USDC/USDT and then sells for ZAR).
+4. The CASP pays the ZAR out to the supplier's bank account by EFT, RTC or similar.
+
+**Mechanics on XRPL.** Any XRPL deposit of RLUSD needs the receiving account to hold an RLUSD
+**trustline**. Exchanges use an address plus a **destination tag**. Gemini, for example, requires
+the destination address to be activated with at least 1 XRP.
+- https://www.gemini.com/blog/rlusd-is-now-compatible-with-the-xrp-ledger-on-gemini (2025)
+- https://github.com/ripple/RLUSD-Implementation/blob/main/doc/rlusd-xrpl-settings.md (Ripple, n.d.)
+
+**One row per exchange:**
+
+| Exchange (SA) | RLUSD listed? | RLUSD deposits **on XRPL**? | Route to ZAR | Trading fee (published) | ZAR withdrawal fee | ZAR withdrawal timing |
+|---|---|---|---|---|---|---|
+| **VALR** (says it is FSP 53308) | **Yes**: Ripple announced the listing for institutional and retail clients on 4 Sep 2025 ([ripple.com](https://ripple.com/ripple-press/ripples-usd-backed-stablecoin-rlusd-arrives-in-Africa/), 2025) | **Not found.** No VALR page confirms the XRPL network for RLUSD. VALR does run XRPL deposits for **XRP** with destination tags ([support.valr.com](https://support.valr.com/hc/en-us/articles/360029561452-How-do-I-deposit-crypto-on-VALR); [xrpscan VALR account](https://xrpscan.com/account/rDseVXFK1SkWhFH65cqAxf3HmvHCF6b94t)) | RLUSD/ZAR pair **not found**. An RLUSD → USDC/USDT → ZAR route is plausible but **not confirmed** | Not found in this session | 30 free normal ZAR withdrawals a month, then **R8.50** each. The "Fast Withdrawal" fee is shown at selection; fast withdrawals to Standard Bank are free ([VALR support via search](https://support.valr.com/hc/en-us/articles/360010571299), 2025–26; page returned 403) | **Normal: up to 2 business days.** **Fast ("Blitz") over RTC:** 24/7/365 to Standard Bank, and 24/7 under R250 000 at other RTC banks. Banks may hold a payment up to 2 h for fraud checks; above R250 000 it goes by RTGS. **PayShap: not found** ([VALR Blitz](https://support.valr.com/hc/en-us/articles/360013134379-Blitz-Processing-of-ZAR-Withdrawals)) |
+| **Luno** | **Not found** (Luno co-launched ZARU, the rand coin, in 2026, not RLUSD) | Not found | Not found | Not found | Not found | Automated, faster ZAR withdrawals "at no additional charge", with instant payment promised for non-Standard Bank accounts. Date unclear (c. 2020) ([techafricanews](https://techafricanews.com/2020/01/30/luno-introduces-instant-real-time-bank-withdrawals/)) |
+| **Yellow Card** | Yes, for treasury and cross-border use ([ripple.com](https://ripple.com/ripple-press/ripples-usd-backed-stablecoin-rlusd-arrives-in-Africa/), 2025) | Not found | ZAR support exists ([Yellow Card blog](https://yellowcard.io/blog/yellow-card-expands-to-south-africa-and-botswana)). RLUSD to ZAR **not found** | Not found | Not found | Not found |
+| **Chipper Cash** | Uses RLUSD inside its cross-border product (2025) | Not found | **No SA ZAR off-ramp found** | Not found | Not found | Not found |
+
+**Honest summary.** VALR is the only SA exchange where an RLUSD listing is confirmed. **I could
+not confirm that VALR (or any SA exchange) accepts RLUSD on the XRPL network**, as opposed to
+Ethereum, or that it has an RLUSD/ZAR pair. Binance listed RLUSD on Ethereum first with "XRPL coming
+soon" in Jan 2026 (https://ripple.com/insights/rlusd-continues-to-build-on-momentum-binance-lists-rlusd-on-ethereum-with-xrpl-coming-soon/),
+so Ethereum-first listings are common. **Before the pitch, Chuma should open VALR → Wallets →
+RLUSD → Deposit and check which network it shows.** If it shows only Ethereum, the honest line is:
+"in production, the CASP partner bridges or receives on XRPL; today the off-ramp is VALR via
+Ethereum RLUSD."
+
+**Exchange-control caveat.** The exchange-control drafts (being redrafted, see section 2) would
+make the transfer from Gcina's self-hosted business wallet to the supplier's CASP account a
+reportable **inflow**. The source is the Baker McKenzie note from 2026 cited in section 2.
+
+### 8b. Supplier onboarding with bank account verification (AVS)
+
+**What AVS is.**
+- The interbank Account Verification Service was operated by **BankservAfrica**, which rebranded to
+  **PayInc** on 29 Aug 2025; the SARB is taking a stake. Source: Business Day (2025),
+  https://www.businessday.co.za/bd/companies/financial-services/2025-08-29-bankservafrica-rebrands-to-payinc/
+- **AVS-R** is the real-time variant. It runs 24/7/365 and banks must answer within seconds.
+  **AVS-B** is the batch variant, originally built for SARS.
+- Checks return **yes/no only**, with no account data disclosed:
+  - ID or registration number matches the account;
+  - the account can transact (accepts credits/debits);
+  - account type;
+  - open or closed;
+  - open longer than a set period;
+  - optionally initials, surname, mobile number and email.
+- Source: Electrum (2022), https://blog.electrum.co.za/post/account-verification-services-avs-who-how-and-why
+- **Not found:** any PayInc-branded AVS product page or PayInc rate card.
+
+**Who can access it.**
+- **Only banks** participate directly. Businesses reach AVS through their bank or an approved
+  third party; the fee is set bilaterally between banks (Electrum, 2022).
+- Third parties found:
+  - **Stitch** (BAVS API);
+  - **Netcash**;
+  - **RealPay** (AVS-R);
+  - **TransUnion** (PDF returned 403; price on request);
+  - **Windeed**;
+  - **Akiba**;
+  - **Standard Bank OneHub API** ([CIB API marketplace](https://corporateandinvestment.standardbank.com/cib/global/products-and-services/onehub/api-marketplace/account-verification-service));
+  - **Electrum** (for banks).
+- **VerifyNow, XDS, Experian, Lightstone, Searchworx:** none was confirmed as an AVS reseller in
+  this session, and no prices were found.
+
+**Prices found (per check):**
+- **Standard Bank:** **R2** per verification, free for its own accounts; real-time, "under 60
+  seconds"
+  ([standardbank.co.za](https://www.standardbank.co.za/southafrica/personal/products-and-services/security-centre/protect-yourself/account-verification-services), 2026).
+- **Windeed:** **R12.47 excl. VAT** per search, covering individual or company and the major banks
+  ([windeed.co.za](https://www.windeed.co.za/?p=5884), via search).
+- **Akiba API:** **R7** for consumer and commercial accounts
+  ([akiba docs](https://akiba-digital.gitbook.io/akiba-api-docs/pricing), via search).
+- **Stitch, Peach:** pricing not public / not found.
+
+**Stitch BAVS.**
+- Returns:
+  - `accountExists`;
+  - `accountOpen` (plus whether it has been open more than 3 months);
+  - `accountAcceptsCredits` and `accountAcceptsDebits`;
+  - `identityDocumentMatch`, which takes an **ID or business registration number**;
+  - `lastNameMatch`, and `initialMatch` (individuals only);
+  - optional phone and email checks.
+- **Business accounts are supported.** A check can take **up to 120 s** depending on the bank,
+  returning `RESULT_PENDING` until then. Results are kept for 48 h.
+- Source: https://docs.stitch.money/payment-products/bank-account-verification/integration-process (2026)
+- **Peach Payments** account verification: **not found** in this session.
+
+**How Gcina would use it: the "approved payee" gate.** A supplier's XRPL destination (CASP address
+plus tag) becomes **approved** only when every step below passes. Until then, the policy co-signer
+refuses to sign any payment to it.
+
+1. **Identity.** The supplier gives its CIPC registration number, or ID number for a sole trader.
+   Gcina checks the company exists and is active against CIPC records. A specific CIPC API or price
+   was not researched here.
+2. **Payout account.** The supplier names the ZAR bank account linked to its CASP account. Gcina
+   runs **AVS-R through a reseller** (Stitch BAVS first choice, because it has an API and supports
+   business registration numbers). The account must return: exists, open, accepts credits, and
+   registration number match. Open for more than 3 months is a risk signal, not a hard rule.
+3. **CASP link.** The CASP account must be held in the same legal name, confirmed by a CASP
+   attestation or by a test micro-payment that shows up in the supplier's CASP account. A
+   standard CASP API for this was **not found**; it needs the partner.
+4. **Owner confirmation.** The owner confirms the new payee from a **known phone number** with a
+   one-time PIN or WhatsApp confirmation. The number is the one captured at onboarding, not one
+   taken from the invoice. Optionally AVS's mobile-number match can tie that phone to the bank
+   account.
+5. **Change control.** Any change to the bank account or XRPL address on an invoice resets the
+   payee to *unapproved* and repeats steps 2–4. This is the main defence against business email
+   compromise and invoice-redirection fraud, which is the fraud that matters most for AP.
+
+Data handling: AVS results are yes/no flags. Gcina stores only the flags, a timestamp and a provider
+reference, which keeps the POPIA footprint small (section 4).
+
+**Still open for section 8:**
+- Whether VALR supports XRPL RLUSD, and whether it has an RLUSD/ZAR pair.
+- VALR and Luno trading fees and Luno ZAR withdrawal fees.
+- Whether Yellow Card or Chipper Cash has an SA off-ramp.
+- PayInc direct AVS pricing.
+- Stitch and Peach pricing.
+- Whether VerifyNow, XDS, Experian, Lightstone or Searchworx resell AVS.

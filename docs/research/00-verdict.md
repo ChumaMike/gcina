@@ -70,7 +70,9 @@ Optional global line: *"In the US, the FBI counted US$3.05 billion lost to busin
 ## Top 5 judge questions and crisp answers
 
 1. **"Why would a South African supplier accept RLUSD? Why not just a bank API?"**
-   They wouldn't have to. A licensed exchange pays them out in rands. The point isn't the coin, it's the
+   They wouldn't have to: the target is a licensed exchange paying out rands (VALR: 30 free ZAR withdrawals a month,
+   then R8.50; RTC fast payouts 24/7). **Honest caveat:** VALR lists RLUSD but we found no RLUSD deposits *on XRPL*
+   and no RLUSD/ZAR pair yet. That's the first partner conversation, not a solved step ([04 §8](04-regulation-and-rails.md)). The point isn't the coin, it's the
    **lock**: with a bank API the agent holds the login, and a fooled agent can pay anyone. On XRPL the agent's key
    alone is mathematically not enough, and the network itself refuses it (`tefBAD_QUORUM`). No SA bank API gives
    an SME that.
@@ -102,13 +104,15 @@ Optional global line: *"In the US, the FBI counted US$3.05 billion lost to busin
    already advise clients on apps (Xero/KLA 2025). One practice brings many client businesses.
 3. **Pricing:** about R149–299 per business per month, or a practice tier per client file. Our inference from
    the Xero SA and BILL anchors. Validate with the first 5 practices.
-4. **Rails partner:** a licensed SA CASP (VALR listed RLUSD in Sep 2025; check XRPL-network deposits and the ZAR
-   route with them) for KYB, Travel Rule and ZAR payout. Bank account verification (AVS) before a supplier
-   address becomes "approved" (see 04 §8 when it lands).
+4. **Rails partner:** a licensed SA CASP for KYB, Travel Rule and ZAR payout. VALR listed RLUSD in Sep 2025, but
+   RLUSD on the XRPL network and an RLUSD/ZAR route are **not confirmed** (04 §8). That's the ask to VALR /
+   Ripple's Africa partners. **Local infrastructure we can name today:** bank account verification (AVS, run by
+   PayInc, formerly BankservAfrica, reached via Stitch and others; about R2–R12 a check, up to 120 s) confirms the
+   supplier's ZAR payout account matches their CIPC registration number *before* the address becomes "approved".
 5. **Expansion:** cross-border supplier invoices in RLUSD (SA importers; Ripple's Africa partners such as Yellow
    Card and Chipper) → other markets → the Ripple UDAX accelerator ask.
 
 ## Open items before 21:00
 - Gumede interview (02 §4) → update Customer validation and the Q5 answer.
-- 04 §8 local rails + AVS (in progress) → Q2 and GTM 4.
+- ~~04 §8 local rails + AVS~~ done 16:40: no SA exchange confirmed for RLUSD-on-XRPL → Q1/GTM 4 updated. Chuma could check VALR's RLUSD deposit screen (which networks) before Saturday.
 - Links to open by hand (blocked to the fetcher): SAFLII judgments, the full SABRIC 2025 PDF, Capitec, Cliffe Dekker (see 01).
