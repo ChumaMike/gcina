@@ -100,6 +100,16 @@ big banks' warnings, so we stop both. *(customer-evidence-mta.md; never claim an
 ### 14b. Is it accessible? What about people who don't read English?
 "11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners." *(C, 18:30. Say "AI translation, checked by a first-language speaker" only after Chuma has checked isiXhosa/isiZulu; until then: "AI translations, being checked".)*
 
+### 14c. Do my suppliers have to take crypto? We use rands. What about cash?
+"No. The business pays in rands and the supplier gets rands in their bank account by EFT. A licensed South African
+crypto provider converts on each side, and the ledger in the middle is just the lock that needs two keys. The owner
+never touches crypto. Gcina is for businesses that already pay suppliers by EFT against invoices; it doesn't replace
+cash." **If pushed:** "Today there's no rand stablecoin on the XRP Ledger, so RLUSD fits suppliers paid in dollars
+across borders right away. Rand-to-rand at home is what our pilot with a licensed partner has to prove." Withdrawals
+cost money too: VALR gives 30 free rand withdrawals a month, then R8.50 each. And because RLUSD is a dollar coin,
+every payment has a rand/dollar gain or loss for the books; a rand stablecoin removes that.
+*(docs/research/04-regulation-and-rails.md. Never promise an XRPL-to-rand route: not confirmed with VALR.)*
+
 ### 15. Why not stokvels, or another market?
 The same engine protects any money one person controls for many people, and stokvels are our next market: NASASA
 estimates about 11 million members and R50 billion a year, though it's their own estimate. We start with supplier
