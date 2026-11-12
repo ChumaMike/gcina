@@ -9,6 +9,12 @@ export interface Store {
   read(): Promise<State>;
   /** Runs fn on a private copy of the state and saves it if fn returns without throwing. */
   update<T>(fn: (s: State) => T | Promise<T>): Promise<T>;
+  /**
+   * Runs fn while holding a lock that is exclusive across ALL instances of the service
+   * (one process locally; every Vercel instance in production). Used around the whole
+   * co-sign decision so "check not paid → co-sign → record in-flight" can't interleave.
+   */
+  exclusive<T>(fn: () => Promise<T>): Promise<T>;
 }
 
 export class MemoryStore implements Store {
@@ -16,6 +22,9 @@ export class MemoryStore implements Store {
   constructor(private state: State) {}
   async read() {
     return structuredClone(this.state);
+  }
+  exclusive<T>(fn: () => Promise<T>) {
+    return fn();
   }
   update<T>(fn: (s: State) => T | Promise<T>): Promise<T> {
     const run = this.chain.then(async () => {
@@ -45,6 +54,9 @@ export class JsonFileStore implements Store {
   }
   async read() {
     return this.load();
+  }
+  exclusive<T>(fn: () => Promise<T>) {
+    return fn();
   }
   update<T>(fn: (s: State) => T | Promise<T>): Promise<T> {
     const run = this.chain.then(async () => {
@@ -83,6 +95,23 @@ export class PostgresStore implements Store {
     await this.init();
     const r = await this.pool.query("SELECT doc FROM gcina_policy_state WHERE id = 1");
     return r.rows[0].doc;
+  }
+  /** Transaction-scoped advisory lock (safe behind Neon's transaction-mode pooler). */
+  async exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    await this.init();
+    const c = await this.pool.connect();
+    try {
+      await c.query("BEGIN");
+      await c.query("SELECT pg_advisory_xact_lock(4247001)");
+      const out = await fn();
+      await c.query("COMMIT");
+      return out;
+    } catch (e) {
+      await c.query("ROLLBACK").catch(() => undefined);
+      throw e;
+    } finally {
+      c.release();
+    }
   }
   async update<T>(fn: (s: State) => T | Promise<T>): Promise<T> {
     await this.init();

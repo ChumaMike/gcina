@@ -249,7 +249,7 @@ export function createApp(d: AppDeps) {
     if (!p || typeof p.invoiceId !== "string" || typeof p.destination !== "string" || typeof p.agentSignedTxBlob !== "string" || !p.amount || typeof p.amount !== "object") {
       throw new HttpError(400, "Proposal needs invoiceId, destination, amount { currency, value }, reasoning and agentSignedTxBlob.");
     }
-    const run = proposalLock.then(() => decide(p));
+    const run = proposalLock.then(() => d.store.exclusive(() => decide(p)));
     proposalLock = run.catch(() => undefined);
     return c.json(await run);
   });
