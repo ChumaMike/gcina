@@ -144,6 +144,11 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 - **Two API tokens.** `AGENT_TOKEN` can read work and submit proposals only; `OPERATOR_TOKEN` (limits,
   suppliers, approvals) lives server-side in the dashboard and never reaches the browser or the agent.
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
+- **No paying twice, even if the network goes quiet.** The policy refuses a repeat (same invoice, or same supplier +
+  amount + invoice number). It also records each payment's hash *before* submitting it, and won't co-sign anything else
+  for that invoice until that hash is either validated or provably expired.
+- **New accounts can wait.** A cooling-off period (`COOLING_OFF_MINUTES`, 0 for the demo) holds payments to a
+  supplier address that was only just approved.
 - **Every payment carries its invoice ID** as an on-ledger memo, and every decision is in the audit log.
 - **Quiet when normal:** routine payments show as one-line ticks; anything held goes to the top for the owner. *You only hear from Gcina when something's wrong.*
 
