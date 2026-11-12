@@ -7,6 +7,7 @@ import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
 import { RlusdBadge } from "./bits";
 import { useData } from "./data-provider";
+import { AccessibilityButton } from "./a11y/accessibility-button";
 import { Logo } from "./logo";
 import { JudgeBanner, useRole } from "./role";
 
@@ -80,6 +81,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-3">
+          <AccessibilityButton />
           <RlusdBadge className="self-start" />
           <NetworkLine mock={mock} offline={offline} network={health?.network} />
           <form action={logout}>
@@ -99,6 +101,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
         <span className="ml-auto">
           <NetworkLine mock={mock} offline={offline} network={health?.network} compact />
         </span>
+        <AccessibilityButton compact />
         <Link
           href="/how-it-works"
           aria-label="How it works"

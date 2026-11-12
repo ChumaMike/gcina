@@ -3,6 +3,8 @@
 import { AlertOctagon, Check, CheckCircle2, Hand, X } from "lucide-react";
 import { toast } from "sonner";
 import { ApprovalChip, ErrorNote, Money, PageHeader, timeAgo } from "@/components/bits";
+import { ListenButton } from "@/components/a11y/listen-button";
+import { useT } from "@/components/a11y/prefs";
 import { useConfirm } from "@/components/confirm-sheet";
 import { useData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
@@ -18,6 +20,7 @@ import { cn } from "@/lib/utils";
 export default function ApprovalsPage() {
   const { approvals, suppliers, invoices, errors, refresh } = useData();
   const { confirm, sheet } = useConfirm();
+  const t = useT();
 
   const pending = approvals?.filter((a) => a.status === "pending") ?? [];
   const decided = approvals?.filter((a) => a.status !== "pending") ?? [];
@@ -120,12 +123,13 @@ export default function ApprovalsPage() {
                       </li>
                     ))}
                   </ul>
+                  <ListenButton text={`${name}, ${formatAmount(a.amount)}. ${a.reasons.join(" ")}`} className="self-start" />
                   <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
                     <Button size="lg" variant={fraud ? "default" : "outline"} className={cn(fraud && "bg-danger text-white hover:bg-danger/90")} onClick={() => ask(a, "reject")}>
-                      <X aria-hidden="true" /> Reject
+                      <X aria-hidden="true" /> {t("reject")}
                     </Button>
                     <Button size="lg" variant={fraud ? "outline" : "default"} onClick={() => ask(a, "approve")}>
-                      <Check aria-hidden="true" /> Approve
+                      <Check aria-hidden="true" /> {t("approve")}
                     </Button>
                   </div>
                 </CardContent>

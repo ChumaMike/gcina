@@ -1,0 +1,61 @@
+/* Accessibility switches (W5). Overrides the design tokens by NAME, so it follows whatever palette
+   globals.css defines. Loaded by components/a11y/prefs.tsx; globals.css stays untouched. */
+
+/* Visible keyboard focus everywhere, even on elements without their own focus style. */
+:where(a, button, input, select, textarea, summary, [role="switch"], [tabindex]):focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* High contrast: near-black text, solid borders, darker status colours, no faint greys. */
+html[data-contrast-high] {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --muted: #f2f2f2;
+  --muted-foreground: #1f1f1f;
+  --border: #000000;
+  --input: #000000;
+  --ring: #0047ab;
+  --primary: #003d2b;
+  --primary-foreground: #ffffff;
+  --ok: #004d2a;
+  --ok-soft: #e6f4ec;
+  --warn: #6b3a00;
+  --warn-soft: #fff1d6;
+  --danger: #9b0000;
+  --danger-soft: #ffe8e8;
+  --info: #002f8f;
+  --info-soft: #e6eeff;
+}
+html[data-contrast-high] :where(a):not([class*="bg-"]) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html[data-contrast-high] :focus-visible {
+  outline: 4px solid #0047ab !important;
+  outline-offset: 2px;
+}
+
+/* Reduce motion: the switch in the sheet, or the device setting. */
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

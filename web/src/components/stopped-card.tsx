@@ -1,6 +1,7 @@
 "use client";
 
 import { Ban, CircleSlash, Copy, ShieldAlert, ShieldX } from "lucide-react";
+import { useT } from "@/components/a11y/prefs";
 import { Money } from "@/components/bits";
 import { useData } from "@/components/data-provider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const ROWS: { kind: StopKind; label: string; icon: typeof ShieldX; cls: string; 
 /** "Gcina stopped $X for you": every refused, ledger-refused or owner-rejected payment, counted once per invoice. */
 export function StoppedCard() {
   const { audit, invoices } = useData();
+  const t = useT();
   if (!audit) {
     return (
       <Card>
@@ -37,7 +39,7 @@ export function StoppedCard() {
     <Card className="border-2 border-ok/30">
       <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
         <div className="flex flex-col gap-1" aria-live="polite">
-          <p className="text-lg font-semibold">Gcina stopped</p>
+          <p className="text-lg font-semibold">{t("stopped.title")}</p>
           <Money amount={total} size="xl" />
           <p className="text-muted-foreground">
             {stopped.length === 0
