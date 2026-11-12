@@ -1,5 +1,5 @@
 // XRPL access for the policy service. Holds ONLY the policy signer key.
-import { Client, Wallet, multisign, type SubmittableTransaction } from "xrpl";
+import { Client, Wallet, multisign, hashes, type SubmittableTransaction } from "xrpl";
 import { RLUSD_HEX } from "./amount.ts";
 
 export type SubmitResult = {
@@ -17,8 +17,12 @@ export type AccountBalances = { address: string; xrp: string | null; rlusd: stri
 export interface Ledger {
   network: string;
   ledgerIndex(): Promise<number>;
-  /** Policy signs the agent's exact tx (Signers stripped), combines both signatures, submits, waits. */
-  cosignAndSubmit(unsignedTx: Record<string, unknown>, agentBlob: string): Promise<SubmitResult>;
+  /** Policy signs the agent's exact tx (Signers stripped) and combines both signatures. No network. */
+  cosign(unsignedTx: Record<string, unknown>, agentBlob: string): { blob: string; hash: string };
+  /** Submits a fully signed blob and waits for validation or expiry. Throws only if the ledger can't be reached. */
+  submit(blob: string, hash: string, lastLedger: number): Promise<SubmitResult>;
+  /** Final state of an earlier submission: validated result, "expired" (past LastLedgerSequence, can never apply), or "pending". */
+  lookup(hash: string, lastLedger: number): Promise<{ state: "validated"; result: string; delivered?: unknown } | { state: "expired" } | { state: "pending" }>;
   balances(addresses: Record<string, string>, rlusdIssuer: string): Promise<Record<string, AccountBalances>>;
 }
 
@@ -51,28 +55,39 @@ export class XrplLedger implements Ledger {
     return this.client.getLedgerIndex();
   }
 
-  async cosignAndSubmit(unsignedTx: Record<string, unknown>, agentBlob: string): Promise<SubmitResult> {
-    await this.ready();
+  cosign(unsignedTx: Record<string, unknown>, agentBlob: string) {
     const policyBlob = this.wallet.sign(unsignedTx as unknown as SubmittableTransaction, true).tx_blob;
     const blob = multisign([agentBlob, policyBlob]);
+    return { blob, hash: hashes.hashSignedTx(blob) };
+  }
+
+  async submit(blob: string, hash: string, lastLedger: number): Promise<SubmitResult> {
+    await this.ready();
     const prelim = await this.client.submit(blob);
-    const hash = String(prelim.result.tx_json?.hash ?? "");
     const engine = prelim.result.engine_result;
     if (/^(tef|tem|tel)/.test(engine)) return { hash, engineResult: engine, validated: false };
-    const last = Number(unsignedTx.LastLedgerSequence);
     for (;;) {
       await new Promise((r) => setTimeout(r, 1000));
-      try {
-        const tx = await this.client.request({ command: "tx", transaction: hash });
-        if (tx.result.validated) {
-          const meta = tx.result.meta as { TransactionResult?: string; delivered_amount?: unknown } | undefined;
-          return { hash, engineResult: meta?.TransactionResult ?? engine, validated: true, explorerUrl: explorerTx(hash), delivered: meta?.delivered_amount };
-        }
-      } catch (e) {
-        if ((e as { data?: { error?: string } })?.data?.error !== "txnNotFound") throw e;
-      }
-      if ((await this.client.getLedgerIndex()) > last) return { hash, engineResult: `expired before validation (prelim ${engine})`, validated: false };
+      const st = await this.lookup(hash, lastLedger);
+      if (st.state === "validated") return { hash, engineResult: st.result, validated: true, explorerUrl: explorerTx(hash), delivered: st.delivered };
+      if (st.state === "expired") return { hash, engineResult: `expired before validation (prelim ${engine})`, validated: false };
     }
+  }
+
+  async lookup(hash: string, lastLedger: number) {
+    await this.ready();
+    try {
+      const tx = await this.client.request({ command: "tx", transaction: hash });
+      if (tx.result.validated) {
+        const meta = tx.result.meta as { TransactionResult?: string; delivered_amount?: unknown } | undefined;
+        return { state: "validated" as const, result: meta?.TransactionResult ?? "unknown", delivered: meta?.delivered_amount };
+      }
+    } catch (e) {
+      if ((e as { data?: { error?: string } })?.data?.error !== "txnNotFound") throw e;
+    }
+    // Only final once a VALIDATED ledger is past LastLedgerSequence.
+    const validated = await this.client.request({ command: "ledger", ledger_index: "validated" });
+    return Number(validated.result.ledger_index) > lastLedger ? { state: "expired" as const } : { state: "pending" as const };
   }
 
   async balances(addresses: Record<string, string>, rlusdIssuer: string) {

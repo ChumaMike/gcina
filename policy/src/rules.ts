@@ -11,6 +11,7 @@ export type RulesConfig = {
   rlusdIssuer: string;
   maxFeeDrops: bigint; // C4: agent + policy must never co-sign a fee burn
   maxLedgerWindow: number; // C4: LastLedgerSequence must be present and near
+  coolingOffMinutes?: number; // newly approved payment addresses wait this long (0 = off, demo default)
 };
 
 export type Verdict =
@@ -106,19 +107,44 @@ export function checkSignedTx(p: Proposal, cfg: RulesConfig, ledgerIndex?: numbe
   return { tx: unsigned, problems };
 }
 
-/** Rule 6 (run straight after rule 2, see status C14): already-paid invoices, POs, or identical invoice text. */
+/** The supplier's own invoice number, read by the policy from the invoice text (never only from the agent). */
+export function readReference(rawText: string): string | null {
+  const m = rawText.match(/invoice\s*(?:no\.?|number|num|#)?\s*[:#]?\s*([A-Z]{1,6}[-/]?\d{2,}[A-Z0-9-]*)/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+function sastTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-ZA", { timeZone: "Africa/Johannesburg", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+}
+
+/**
+ * Rule 6 (run straight after rule 2, see status C14). A repeat is:
+ *  - the same invoice record paid again, or
+ *  - a payment already made to the SAME payee for the SAME amount with the same reference
+ *    (supplier invoice number) or the same order (PO). This is the MTA double-payment case.
+ */
 export function duplicateReason(p: Proposal, s: State): string | null {
   const inv = s.invoices.find((i) => i.id === p.invoiceId);
-  if (s.payments.some((x) => x.invoiceId === p.invoiceId)) return `Invoice ${p.invoiceId} has already been paid. Paying it again would be a duplicate.`;
-  if (inv?.poNumber) {
-    const po = s.purchaseOrders.find((o) => o.poNumber === inv.poNumber);
-    const paidFor = s.payments.find((x) => s.invoices.find((i) => i.id === x.invoiceId)?.poNumber === inv.poNumber);
-    if (po?.status === "paid" || paidFor) return `Order ${inv.poNumber} has already been paid${paidFor ? ` (invoice ${paidFor.invoiceId})` : ""}. This looks like a duplicate invoice.`;
+  const prior = s.payments.find((x) => x.invoiceId === p.invoiceId);
+  if (prior) return `Invoice ${p.invoiceId} has already been paid (${sastTime(prior.at)}). Paying it again would be a repeat.`;
+  const ref = (inv && readReference(inv.rawText)) ?? (p.reference ? p.reference.toUpperCase() : null);
+  const po = inv?.poNumber ?? null;
+  let amountMinor: bigint;
+  try {
+    amountMinor = toMinor(p.amount);
+  } catch {
+    return null; // rule 2 already refuses malformed amounts
   }
-  if (inv) {
-    const norm = (t: string) => t.replace(/\b(inv|invoice)[-\s#:]*[a-z0-9-]+/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
-    const twin = s.invoices.find((o) => o.id !== inv.id && o.status === "paid" && o.supplierName === inv.supplierName && norm(o.rawText) === norm(inv.rawText));
-    if (twin) return `This invoice is the same as ${twin.id}, which has already been paid. This looks like a duplicate.`;
+  const twin = s.payments.find(
+    (x) =>
+      x.destination === p.destination &&
+      x.amount.currency === p.amount.currency &&
+      toMinor(x.amount) === amountMinor &&
+      ((ref !== null && x.reference === ref) || (po !== null && x.poNumber === po)),
+  );
+  if (twin) {
+    const why = ref !== null && twin.reference === ref ? `invoice number ${ref}` : `order ${po}`;
+    return `Looks like a repeat of ${twin.invoiceId}, paid ${sastTime(twin.at)}: same supplier, same amount, same ${why}.`;
   }
   return null;
 }
@@ -129,7 +155,7 @@ function supplierLabel(p: Proposal, s: State, inv?: Invoice): string {
 }
 
 /** Rules 3–5. Collects every reason so the human sees the full picture. */
-export function limitReasons(p: Proposal, s: State, now: Date): string[] {
+export function limitReasons(p: Proposal, s: State, now: Date, coolingOffMinutes = 0): string[] {
   const reasons: string[] = [];
   const inv = s.invoices.find((i) => i.id === p.invoiceId);
   const label = supplierLabel(p, s, inv);
@@ -138,6 +164,11 @@ export function limitReasons(p: Proposal, s: State, now: Date): string[] {
   const named = p.supplierId ? s.suppliers.find((x) => x.id === p.supplierId) : s.suppliers.find((x) => x.name === inv?.supplierName);
   if (!owner || owner.status !== "approved" || (named && named.id !== owner.id)) {
     reasons.push(`Destination is not the registered address for ${label}. Possible changed-banking-details fraud.`);
+  } else if (coolingOffMinutes > 0 && owner.approvedAt) {
+    const mins = (now.getTime() - Date.parse(owner.approvedAt)) / 60_000;
+    if (mins < coolingOffMinutes) {
+      reasons.push(`New account approved recently: cooling-off. ${owner.name}'s address was approved ${Math.max(0, Math.floor(mins))} min ago; payments go automatically after ${coolingOffMinutes} min.`);
+    }
   }
   // 4. per-payment and daily (SAST) limits, in the policy currency
   const pol = s.policy;
@@ -184,7 +215,7 @@ export function evaluate(p: Proposal, s: State, cfg: RulesConfig, now: Date, led
     return { kind: "cosign", reasons: [`Approved by a person (${p.approvalId}).`], tx: checked.tx, approvalId: p.approvalId };
   }
   // 3–5
-  const held = limitReasons(p, s, now);
+  const held = limitReasons(p, s, now, cfg.coolingOffMinutes ?? 0);
   if (held.length) return { kind: "hold", reasons: held };
   // 8. co-sign
   return { kind: "cosign", reasons: ["Approved supplier, matches the proposal, inside your limits."], tx: checked.tx };

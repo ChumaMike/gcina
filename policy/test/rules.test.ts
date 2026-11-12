@@ -7,7 +7,7 @@ const A = () => W.supplierA.classicAddress;
 const B = () => W.supplierB.classicAddress;
 
 async function paidInv001(h: ReturnType<typeof makeApp>) {
-  await h.invoice("inv-001", "Mzansi Meat Supplies", "PO-1001");
+  await h.invoice("inv-001", "Mzansi Catering", "PO-1001");
   return h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00"), supplierId: "sup-a" }));
 }
 
@@ -92,7 +92,7 @@ test("rule 3 fails: changed banking details (fraudster address) → held with fr
   await h.invoice("inv-002");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-002", to: W.fraudster.classicAddress, amount: rl("20.00"), supplierId: "sup-a" }));
   assert.equal(r.json.decision, "held_for_human");
-  assert.match(r.json.reasons[0], /Destination is not the registered address for Mzansi Meat Supplies\. Possible changed-banking-details fraud\./);
+  assert.match(r.json.reasons[0], /Destination is not the registered address for Mzansi Catering\. Possible changed-banking-details fraud\./);
   const ap = await h.call("GET", "/approvals?status=pending", "operator");
   assert.equal(ap.json.length, 1);
   assert.equal((await h.store.read()).invoices[0].status, "held");
@@ -117,7 +117,7 @@ test("rule 3 fails: another approved supplier's address for this supplier's invo
 test("rule 4 fails: above per-payment max → held", async () => {
   const h = makeApp();
   await h.call("PUT", "/policy", "operator", { requireHumanAbove: rl("50.00") });
-  await h.invoice("inv-010", "Khaya Packaging");
+  await h.invoice("inv-010", "Khaya Print & Stationery");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-010", to: B(), amount: rl("50.01") }));
   assert.equal(r.json.decision, "held_for_human");
   assert.match(r.json.reasons.join(" "), /per-payment limit of \$ 50\.00 RLUSD/);
@@ -126,8 +126,8 @@ test("rule 4 fails: above per-payment max → held", async () => {
 test("rule 4 fails: today's (SAST) total would pass the daily max → held; passes under it", async () => {
   const h = makeApp();
   await h.call("PUT", "/policy", "operator", { dailyMax: rl("50.00"), perPaymentMax: rl("30.00") });
-  await h.invoice("inv-a", "Khaya Packaging", undefined, "box order one");
-  await h.invoice("inv-b", "Khaya Packaging", undefined, "box order two");
+  await h.invoice("inv-a", "Khaya Print & Stationery", undefined, "box order one");
+  await h.invoice("inv-b", "Khaya Print & Stationery", undefined, "box order two");
   const ok = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-a", to: B(), amount: rl("30.00") }));
   assert.equal(ok.json.decision, "cosigned_submitted");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-b", to: B(), amount: rl("20.01") }));
@@ -145,11 +145,11 @@ test("rule 4 fails: payment in XRP while limits are in RLUSD → held", async ()
 // ---- rule 5 ----
 test("rule 5 fails: above requireHumanAbove (45 > 30) → held; 30.00 exactly passes", async () => {
   const h = makeApp();
-  await h.invoice("inv-003", "Khaya Packaging", "PO-1002");
+  await h.invoice("inv-003", "Khaya Print & Stationery", "PO-1002");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-003", to: B(), amount: rl("45.00") }));
   assert.equal(r.json.decision, "held_for_human");
   assert.match(r.json.reasons.join(" "), /approve payments yourself/);
-  await h.invoice("inv-030", "Khaya Packaging", undefined, "thirty exactly");
+  await h.invoice("inv-030", "Khaya Print & Stationery", undefined, "thirty exactly");
   const ok = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-030", to: B(), amount: rl("30.00") }));
   assert.equal(ok.json.decision, "cosigned_submitted");
 });
@@ -167,17 +167,17 @@ test("rule 6 fails: inv-004 re-bills an already-paid PO → rejected (even with 
   const h = makeApp();
   await paidInv001(h);
   await h.call("PUT", "/policy", "operator", { dailyMax: rl("20.00"), perPaymentMax: rl("20.00") });
-  await h.invoice("inv-004", "Mzansi Meat Supplies", "PO-1001");
+  await h.invoice("inv-004", "Mzansi Catering", "PO-1001");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-004", to: A(), amount: rl("20.00") }));
   assert.equal(r.json.decision, "rejected");
-  assert.match(r.json.reasons[0], /duplicate/);
+  assert.match(r.json.reasons[0], /Looks like a repeat of inv-001/);
 });
 
 test("rule 6 fails: identical invoice text under a new id → rejected", async () => {
   const h = makeApp();
-  await h.invoice("inv-001", "Mzansi Meat Supplies", undefined, "Invoice INV-77 Mzansi Meat 20 RLUSD for PO-1001");
+  await h.invoice("inv-001", "Mzansi Catering", undefined, "Invoice INV-77 Mzansi Meat 20 RLUSD for PO-1001");
   await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00") }));
-  await h.invoice("inv-004", "Mzansi Meat Supplies", undefined, "Invoice INV-77 Mzansi Meat 20 RLUSD for PO-1001");
+  await h.invoice("inv-004", "Mzansi Catering", undefined, "Invoice INV-77 Mzansi Meat 20 RLUSD for PO-1001");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-004", to: A(), amount: rl("20.00") }));
   assert.equal(r.json.decision, "rejected");
 });
@@ -185,14 +185,14 @@ test("rule 6 fails: identical invoice text under a new id → rejected", async (
 test("rule 6 passes: a different invoice to the same supplier is fine", async () => {
   const h = makeApp();
   await paidInv001(h);
-  await h.invoice("inv-005", "Mzansi Meat Supplies", undefined, "Invoice 5 chicken 5 RLUSD");
+  await h.invoice("inv-005", "Mzansi Catering", undefined, "Invoice 5 chicken 5 RLUSD");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-005", to: A(), amount: rl("5.00") }));
   assert.equal(r.json.decision, "cosigned_submitted");
 });
 
 // ---- rule 7 ----
 async function heldInv003(h: ReturnType<typeof makeApp>) {
-  await h.invoice("inv-003", "Khaya Packaging", "PO-1002");
+  await h.invoice("inv-003", "Khaya Print & Stationery", "PO-1002");
   await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-003", to: B(), amount: rl("45.00") }));
   return (await h.call("GET", "/approvals?status=pending", "operator")).json[0];
 }

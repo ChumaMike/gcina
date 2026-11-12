@@ -4,11 +4,12 @@ import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { isValidClassicAddress } from "xrpl";
 import { type Amount, toMinor, formatAmount, sameAmount, fromLedgerAmount } from "./amount.ts";
-import { evaluate, sastDay, type RulesConfig } from "./rules.ts";
+import { evaluate, sastDay, readReference, type RulesConfig } from "./rules.ts";
 import type { Ledger } from "./ledger.ts";
 import type { Store } from "./store.ts";
 import { seedState } from "./seed.ts";
-import type { Approval, AuditEvent, Decision, Invoice, Proposal, State, Supplier, InvoiceStatus, PurchaseOrder } from "./types.ts";
+import { fromMinor } from "./amount.ts";
+import type { Approval, AuditEvent, Decision, Invoice, Proposal, State, Supplier, InvoiceStatus, PurchaseOrder, InFlight } from "./types.ts";
 
 type Role = "operator" | "agent";
 export type AppDeps = {
@@ -90,9 +91,15 @@ export function createApp(d: AppDeps) {
   };
 
   // ---- policy ----
+  const spentToday = (s: State): Amount => {
+    const today = sastDay(now());
+    const cur = s.policy.perPaymentMax.currency;
+    return fromMinor(cur, s.payments.filter((x) => x.sastDay === today && x.amount.currency === cur).reduce((t, x) => t + toMinor(x.amount), 0n));
+  };
+  const policyView = (s: State) => ({ ...s.policy, spentToday: spentToday(s), coolingOffMinutes: d.rules.coolingOffMinutes ?? 0 });
   app.get("/policy", async (c) => {
     need(c, "operator", "agent");
-    return c.json((await d.store.read()).policy);
+    return c.json(policyView(await d.store.read()));
   });
   app.put("/policy", async (c) => {
     need(c, "operator");
@@ -121,7 +128,8 @@ export function createApp(d: AppDeps) {
       }, now());
       return p;
     });
-    return c.json(out);
+    void out;
+    return c.json(policyView(await d.store.read()));
   });
 
   // ---- suppliers ----
@@ -137,7 +145,8 @@ export function createApp(d: AppDeps) {
     const status = b.status ?? "pending";
     if (!["approved", "pending", "blocked"].includes(status)) throw new HttpError(400, "status must be approved, pending or blocked.");
     const sup = await d.store.update((s) => {
-      const sup: Supplier = { id: `sup-${randomUUID().slice(0, 8)}`, name: b.name!.trim(), xrplAddress: b.xrplAddress!, status, createdAt: now().toISOString() };
+      const t = now().toISOString();
+      const sup: Supplier = { id: `sup-${randomUUID().slice(0, 8)}`, name: b.name!.trim(), xrplAddress: b.xrplAddress!, status, createdAt: t, ...(status === "approved" ? { approvedAt: t } : {}) };
       s.suppliers.push(sup);
       audit(s, { actor: "operator", kind: "supplier.created", message: `Supplier ${sup.name} added (${sup.status}) with address ${sup.xrplAddress}.`, data: sup }, now());
       return sup;
@@ -162,6 +171,8 @@ export function createApp(d: AppDeps) {
         if (!["approved", "pending", "blocked"].includes(b.status)) throw new HttpError(400, "status must be approved, pending or blocked.");
         sup.status = b.status;
       }
+      if (sup.status === "approved" && (before.status !== "approved" || before.xrplAddress !== sup.xrplAddress)) sup.approvedAt = now().toISOString();
+      if (sup.status !== "approved") delete sup.approvedAt;
       audit(s, { actor: "operator", kind: "supplier.updated", message: `Supplier ${sup.name}: ${before.status} → ${sup.status}${before.xrplAddress !== sup.xrplAddress ? `, address changed to ${sup.xrplAddress}` : ""}.`, data: { before, after: sup } }, now());
       return sup;
     });
@@ -239,97 +250,250 @@ export function createApp(d: AppDeps) {
     return c.json(await run);
   });
 
+  const describe = (p: Proposal) => {
+    try {
+      return `${formatAmount(p.amount)} to ${p.destination} for ${p.invoiceId}`;
+    } catch {
+      return `a payment to ${p.destination} for ${p.invoiceId}`;
+    }
+  };
+  const pdata = (p: Proposal, id: string, extra: Record<string, unknown> = {}) => ({ proposalId: id, invoiceId: p.invoiceId, amount: p.amount, destination: p.destination, ...extra });
+
+  /** Records a validated, successful payment (idempotent per tx hash). */
+  function recordPaid(s: State, f: InFlight, result: { engineResult: string; delivered?: unknown }, t: Date) {
+    s.inflight = (s.inflight ?? []).filter((x) => x.txHash !== f.txHash);
+    if (s.payments.some((x) => x.txHash === f.txHash)) return;
+    const inv = s.invoices.find((i) => i.id === f.invoiceId);
+    const ref = inv ? readReference(inv.rawText) : null;
+    s.payments.push({
+      invoiceId: f.invoiceId,
+      amount: f.amount,
+      destination: f.destination,
+      txHash: f.txHash,
+      at: t.toISOString(),
+      sastDay: sastDay(t),
+      ...(f.approvalId ? { approvalId: f.approvalId } : {}),
+      ...(ref ? { reference: ref } : {}),
+      ...(inv?.poNumber ? { poNumber: inv.poNumber } : {}),
+    });
+    if (f.approvalId) s.approvalUses.push({ approvalId: f.approvalId, txHash: f.txHash });
+    if (inv) {
+      inv.status = "paid";
+      const po = inv.poNumber ? s.purchaseOrders.find((o) => o.poNumber === inv.poNumber) : undefined;
+      if (po) po.status = "paid";
+    }
+    const delivered = result.delivered !== undefined ? fromLedgerAmount(result.delivered, d.rules.rlusdIssuer) : null;
+    audit(s, {
+      actor: "ledger",
+      kind: "payment.validated",
+      message: `Paid on the XRP Ledger: ${formatAmount(f.amount)} to ${f.destination} for ${f.invoiceId}. Result ${result.engineResult}.`,
+      data: { invoiceId: f.invoiceId, amount: f.amount, destination: f.destination, delivered: delivered ?? result.delivered ?? null },
+      txHash: f.txHash,
+    }, t);
+    if (delivered && !sameAmount(delivered, f.amount)) {
+      audit(s, { actor: "ledger", kind: "payment.delivered_mismatch", message: `Warning: the ledger delivered ${formatAmount(delivered)}, not ${formatAmount(f.amount)}.`, data: { invoiceId: f.invoiceId }, txHash: f.txHash }, t);
+    }
+  }
+
+  /**
+   * Before anything new is signed for an invoice, settle any earlier co-signed tx whose result we never saw.
+   * Returns a reason to refuse while it might still apply: no double pay, ever.
+   */
+  async function settleInflight(invoiceId: string): Promise<string | null> {
+    const pending = ((await d.store.read()).inflight ?? []).filter((f) => f.invoiceId === invoiceId);
+    for (const f of pending) {
+      let st: Awaited<ReturnType<Ledger["lookup"]>>;
+      try {
+        st = await d.ledger.lookup(f.txHash, f.lastLedger);
+      } catch {
+        return `An earlier co-signed payment for ${invoiceId} (${f.txHash.slice(0, 12)}…) has no final result yet and the ledger can't be reached to check. Nothing new will be signed until it settles.`;
+      }
+      if (st.state === "pending") {
+        return `An earlier co-signed payment for ${invoiceId} (${f.txHash.slice(0, 12)}…) is still on its way to the ledger. Nothing new will be signed until it settles (about a minute).`;
+      }
+      const settled = st;
+      await d.store.update((s) => {
+        if (settled.state === "validated" && settled.result === "tesSUCCESS") {
+          recordPaid(s, f, { engineResult: settled.result, delivered: settled.delivered }, now());
+        } else {
+          s.inflight = (s.inflight ?? []).filter((x) => x.txHash !== f.txHash);
+          audit(s, {
+            actor: "ledger",
+            kind: "payment.failed",
+            message: `An earlier co-signed payment for ${invoiceId} did not go through (${settled.state === "validated" ? settled.result : "expired"}). Nothing was paid.`,
+            data: { invoiceId, proposalId: f.proposalId, engine_result: settled.state === "validated" ? settled.result : "expired" },
+            ...(settled.state === "validated" ? { txHash: f.txHash } : {}),
+          }, now());
+        }
+      });
+    }
+    return null;
+  }
+
   async function decide(p: Proposal): Promise<Decision> {
     const id = `prop-${randomUUID().slice(0, 8)}`;
     const at = now();
+    const stored = {
+      id,
+      at: at.toISOString(),
+      invoiceId: p.invoiceId,
+      supplierId: p.supplierId ?? null,
+      destination: p.destination,
+      amount: p.amount,
+      reasoning: String(p.reasoning ?? "").slice(0, 2000),
+      ...(p.approvalId ? { approvalId: p.approvalId } : {}),
+      ...(typeof p.reference === "string" ? { reference: p.reference.slice(0, 40) } : {}),
+    };
+    const what = describe(p);
+    const received = (s: State) => audit(s, { actor: "agent", kind: "proposal.received", message: `Agent proposed ${what}.`, data: pdata(p, id, { reasoning: stored.reasoning }) }, at);
+
+    const inflightReason = await settleInflight(p.invoiceId);
+    if (inflightReason) {
+      const decision: Decision = { proposalId: id, decision: "rejected", reasons: [inflightReason] };
+      await d.store.update((s) => {
+        s.proposals.push({ ...stored, decision });
+        received(s);
+        audit(s, { actor: "policy", kind: "proposal.rejected", message: `Refused: ${what}. ${inflightReason}`, data: pdata(p, id, { reasons: decision.reasons }) }, at);
+      });
+      return decision;
+    }
+
     let ledgerIndex: number | undefined;
     try {
       ledgerIndex = await d.ledger.ledgerIndex();
     } catch {
       ledgerIndex = undefined;
     }
-    const state = await d.store.read();
-    const verdict = evaluate(p, state, d.rules, at, ledgerIndex);
-    const stored = { id, at: at.toISOString(), invoiceId: p.invoiceId, supplierId: p.supplierId ?? null, destination: p.destination, amount: p.amount, reasoning: String(p.reasoning ?? "").slice(0, 2000), ...(p.approvalId ? { approvalId: p.approvalId } : {}) };
-    const what = (() => {
-      try {
-        return `${formatAmount(p.amount)} to ${p.destination} for ${p.invoiceId}`;
-      } catch {
-        return `a payment to ${p.destination} for ${p.invoiceId}`;
-      }
-    })();
+    const verdict = evaluate(p, await d.store.read(), d.rules, at, ledgerIndex);
 
     if (verdict.kind === "reject" || verdict.kind === "hold") {
       const decision: Decision = { proposalId: id, decision: verdict.kind === "reject" ? "rejected" : "held_for_human", reasons: verdict.reasons };
       await d.store.update((s) => {
         s.proposals.push({ ...stored, decision });
-        audit(s, { actor: "agent", kind: "proposal.received", message: `Agent proposed ${what}.`, data: { proposalId: id, reasoning: stored.reasoning } }, at);
+        received(s);
         const inv = s.invoices.find((i) => i.id === p.invoiceId);
         if (verdict.kind === "hold") {
           const existing = s.approvals.find((a) => a.status === "pending" && a.invoiceId === p.invoiceId && a.destination === p.destination && sameAmount(a.amount, p.amount));
+          let approvalId = existing?.id;
           if (!existing) {
             const ap: Approval = { id: `apr-${randomUUID().slice(0, 8)}`, proposalId: id, invoiceId: p.invoiceId, amount: p.amount, destination: p.destination, reasons: verdict.reasons, status: "pending" };
             s.approvals.push(ap);
+            approvalId = ap.id;
           }
           if (inv) inv.status = "held";
-          audit(s, { actor: "policy", kind: "proposal.held", message: `Held for a person: ${what}. ${verdict.reasons.join(" ")}`, data: { proposalId: id, reasons: verdict.reasons } }, at);
+          audit(s, { actor: "policy", kind: "proposal.held", message: `Held for a person: ${what}. ${verdict.reasons.join(" ")}`, data: pdata(p, id, { reasons: verdict.reasons, approvalId }) }, at);
         } else {
           const paused = verdict.reasons[0]?.startsWith("Payments are paused");
           if (inv && !paused && inv.status !== "paid") inv.status = "rejected";
-          audit(s, { actor: "policy", kind: "proposal.rejected", message: `Refused: ${what}. ${verdict.reasons.join(" ")}`, data: { proposalId: id, reasons: verdict.reasons } }, at);
+          audit(s, { actor: "policy", kind: "proposal.rejected", message: `Refused: ${what}. ${verdict.reasons.join(" ")}`, data: pdata(p, id, { reasons: verdict.reasons }) }, at);
         }
       });
       return decision;
     }
 
-    // co-sign and submit
-    let result;
+    // Co-sign. The hash is known before submitting and is saved first, so an unknown outcome can never lead to a second signature.
+    const { blob, hash } = d.ledger.cosign(verdict.tx, p.agentSignedTxBlob);
+    const flight: InFlight = {
+      invoiceId: p.invoiceId,
+      txHash: hash,
+      lastLedger: Number(verdict.tx.LastLedgerSequence),
+      at: at.toISOString(),
+      proposalId: id,
+      amount: p.amount,
+      destination: p.destination,
+      ...(verdict.approvalId ? { approvalId: verdict.approvalId } : {}),
+    };
+    await d.store.update((s) => {
+      (s.inflight ??= []).push(flight);
+      received(s);
+      audit(s, {
+        actor: "policy",
+        kind: "proposal.cosigned",
+        message: `Co-signed ${what}${verdict.approvalId ? ` (approved by a person, ${verdict.approvalId})` : ""}. ${verdict.reasons.join(" ")}`,
+        data: pdata(p, id, { reasons: verdict.reasons }),
+        txHash: hash,
+      }, at);
+    });
+
+    let result: Awaited<ReturnType<Ledger["submit"]>>;
     try {
-      result = await d.ledger.cosignAndSubmit(verdict.tx, p.agentSignedTxBlob);
+      result = await d.ledger.submit(blob, hash, flight.lastLedger);
     } catch (e) {
-      const decision: Decision = { proposalId: id, decision: "rejected", reasons: [`The ledger could not be reached: ${e instanceof Error ? e.message : String(e)}. Nothing was paid; re-propose.`] };
+      const decision: Decision = {
+        proposalId: id,
+        decision: "rejected",
+        reasons: [`Co-signed, but the ledger stopped answering (${e instanceof Error ? e.message : String(e)}). The result is UNKNOWN: do not re-sign. The policy checks ${hash.slice(0, 12)}… before it signs anything else for ${p.invoiceId}.`],
+        txHash: hash,
+        ledgerResult: "unknown",
+      };
       await d.store.update((s) => {
-        s.proposals.push({ ...stored, decision });
-        audit(s, { actor: "ledger", kind: "submit.error", message: decision.reasons[0], data: { proposalId: id } }, at);
+        s.proposals.push({ ...stored, decision, txHashSignedByAgent: hash });
+        audit(s, { actor: "ledger", kind: "submit.unknown", message: decision.reasons[0], data: pdata(p, id) }, at);
       });
       return decision;
     }
+
     const ok = result.engineResult === "tesSUCCESS" && result.validated;
-    const delivered = result.delivered !== undefined ? fromLedgerAmount(result.delivered, d.rules.rlusdIssuer) : null;
     const decision: Decision = ok
-      ? { proposalId: id, decision: "cosigned_submitted", reasons: verdict.reasons, txHash: result.hash, ledgerResult: result.engineResult, explorerUrl: result.explorerUrl }
+      ? { proposalId: id, decision: "cosigned_submitted", reasons: verdict.reasons, txHash: hash, ledgerResult: result.engineResult, explorerUrl: result.explorerUrl }
       : {
           proposalId: id,
           decision: "rejected",
           reasons: [`Co-signed, but the ledger refused it (${result.engineResult}). Nothing was paid. Re-propose with a freshly signed transaction.`],
-          txHash: result.hash,
+          txHash: hash,
           ledgerResult: result.engineResult,
           ...(result.explorerUrl ? { explorerUrl: result.explorerUrl } : {}),
         };
+    const final = result;
     await d.store.update((s) => {
-      s.proposals.push({ ...stored, decision, txHashSignedByAgent: result.hash });
-      audit(s, { actor: "agent", kind: "proposal.received", message: `Agent proposed ${what}.`, data: { proposalId: id, reasoning: stored.reasoning } }, at);
+      s.proposals.push({ ...stored, decision, txHashSignedByAgent: hash });
       if (ok) {
-        const t = now();
-        s.payments.push({ invoiceId: p.invoiceId, amount: p.amount, destination: p.destination, txHash: result.hash, at: t.toISOString(), sastDay: sastDay(t), ...(verdict.approvalId ? { approvalId: verdict.approvalId } : {}) });
-        if (verdict.approvalId) s.approvalUses.push({ approvalId: verdict.approvalId, txHash: result.hash });
-        const inv = s.invoices.find((i) => i.id === p.invoiceId);
-        if (inv) {
-          inv.status = "paid";
-          const po = inv.poNumber ? s.purchaseOrders.find((o) => o.poNumber === inv.poNumber) : undefined;
-          if (po) po.status = "paid";
-        }
-        audit(s, { actor: "policy", kind: "proposal.cosigned", message: `Co-signed ${what}${verdict.approvalId ? ` (approved by a person, ${verdict.approvalId})` : ""}.`, data: { proposalId: id }, txHash: result.hash }, at);
-        audit(s, { actor: "ledger", kind: "payment.validated", message: `Paid on the XRP Ledger: ${what}. Result ${result.engineResult}.`, data: { delivered: delivered ?? result.delivered }, txHash: result.hash }, t);
-        if (delivered && !sameAmount(delivered, p.amount)) {
-          audit(s, { actor: "ledger", kind: "payment.delivered_mismatch", message: `Warning: the ledger delivered ${formatAmount(delivered)}, not ${formatAmount(p.amount)}.`, txHash: result.hash }, t);
-        }
+        recordPaid(s, flight, final, now());
       } else {
-        audit(s, { actor: "ledger", kind: "payment.failed", message: `The ledger refused ${what}: ${result.engineResult}.`, data: { proposalId: id }, ...(result.validated ? { txHash: result.hash } : {}) }, at);
+        s.inflight = (s.inflight ?? []).filter((x) => x.txHash !== hash);
+        audit(s, {
+          actor: "ledger",
+          kind: "payment.failed",
+          message: `The ledger refused ${what}: ${final.engineResult}. Nothing was paid.`,
+          data: pdata(p, id, { engine_result: final.engineResult }),
+          ...(final.validated ? { txHash: hash } : {}),
+        }, at);
       }
     });
     return decision;
   }
+
+  // The agent reports its own direct ledger attempts (compromised-mode demo). Audit only; changes nothing.
+  app.post("/audit/agent-events", async (c) => {
+    need(c, "agent");
+    const b = await body<{ kind?: string; invoiceId?: string; destination?: string; engine_result?: string; engine_result_message?: string; applied?: boolean }>(c);
+    if (b.kind !== "ledger.direct_attempt") throw new HttpError(400, 'kind must be "ledger.direct_attempt".');
+    if (typeof b.engine_result !== "string" || !/^[a-z]{3}[A-Z_]{2,40}$/.test(b.engine_result)) throw new HttpError(400, "engine_result must be an XRPL result code.");
+    if (typeof b.invoiceId !== "string" || typeof b.destination !== "string" || !isValidClassicAddress(b.destination)) {
+      throw new HttpError(400, "invoiceId and a valid destination are required.");
+    }
+    const code = b.engine_result;
+    const refused = !code.startsWith("tes");
+    const ev = await d.store.update((s) => {
+      audit(s, {
+        actor: "ledger",
+        kind: "ledger.direct_attempt",
+        message: refused
+          ? `Ledger refused: agent alone (${code}). The agent tried to pay ${b.destination} for ${b.invoiceId} with only its own key. No money moved.`
+          : `WARNING: the ledger accepted a payment signed by the agent alone (${code}) for ${b.invoiceId}. Check the SignerList now.`,
+        data: {
+          invoiceId: b.invoiceId,
+          destination: b.destination,
+          engine_result: code,
+          engine_result_message: String(b.engine_result_message ?? "").slice(0, 200),
+          applied: b.applied === true,
+          reportedBy: "agent",
+        },
+      }, now());
+      return s.audit[s.audit.length - 1];
+    });
+    return c.json(ev, 201);
+  });
 
   app.get("/proposals", async (c) => {
     need(c, "operator");

@@ -73,10 +73,20 @@ export class FakeLedger implements Ledger {
   async ledgerIndex() {
     return LEDGER_INDEX;
   }
-  async cosignAndSubmit(tx: Record<string, unknown>): Promise<SubmitResult> {
+  /** Set to make submit() throw (ledger went quiet after submitting). */
+  submitThrows = false;
+  /** What lookup() reports for earlier submissions. */
+  lookupState: Awaited<ReturnType<Ledger["lookup"]>> = { state: "pending" };
+  cosign(tx: Record<string, unknown>) {
     this.submitted.push(tx);
-    const hash = `HASH${this.submitted.length}`.padEnd(64, "0");
+    return { blob: "BLOB", hash: `HASH${this.submitted.length}`.padEnd(64, "0") };
+  }
+  async submit(_blob: string, hash: string): Promise<SubmitResult> {
+    if (this.submitThrows) throw new Error("websocket closed");
     return { hash, engineResult: "tesSUCCESS", validated: true, explorerUrl: `https://testnet.xrpl.org/transactions/${hash}`, ...this.next };
+  }
+  async lookup() {
+    return this.lookupState;
   }
   async balances() {
     return {};
@@ -85,13 +95,13 @@ export class FakeLedger implements Ledger {
 
 export const TOKENS = { operator: "op-token-test", agent: "agent-token-test" };
 
-export function makeApp() {
+export function makeApp(opts: { coolingOffMinutes?: number } = {}) {
   const store = new MemoryStore(seedState({ currency: "RLUSD", supplierA: W.supplierA.classicAddress, supplierB: W.supplierB.classicAddress, now: NOW }));
   const ledger = new FakeLedger();
   const app = createApp({
     store,
     ledger,
-    rules,
+    rules: { ...rules, coolingOffMinutes: opts.coolingOffMinutes ?? 0 },
     tokens: TOKENS,
     addresses: { treasury: W.treasury.classicAddress, agentAccount: W.agentAccount.classicAddress, supplierA: W.supplierA.classicAddress, supplierB: W.supplierB.classicAddress },
     currency: "RLUSD",
@@ -104,7 +114,7 @@ export function makeApp() {
     const res = await app.request(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: res.status, json: (await res.json()) as any };
   };
-  const invoice = (id: string, supplierName = "Mzansi Meat Supplies", poNumber?: string, rawText = `Invoice ${id} meat order 20 RLUSD`) =>
+  const invoice = (id: string, supplierName = "Mzansi Catering", poNumber?: string, rawText = `Invoice ${id} meat order 20 RLUSD`) =>
     call("POST", "/invoices", "operator", { id, supplierName, rawText, ...(poNumber ? { poNumber } : {}) });
   return { app, store, ledger, call, invoice };
 }

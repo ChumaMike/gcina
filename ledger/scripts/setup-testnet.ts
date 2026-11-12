@@ -258,8 +258,8 @@ function writeAddressesMd(w: Record<Name, Wallet>, newHashes: Record<string, str
   const roles: Record<Name, string> = {
     TREASURY: "Business main account (operator); funds the agent's RLUSD float",
     AGENT_ACCOUNT: "Account the agent pays from. Master key disabled; SignerList quorum 2",
-    SUPPLIER_A: "Mzansi Meat Supplies (approved)",
-    SUPPLIER_B: "Khaya Packaging (approved)",
+    SUPPLIER_A: "Mzansi Catering: learner meals (approved)",
+    SUPPLIER_B: "Khaya Print & Stationery: learner packs (approved)",
     FRAUDSTER: "\"New banking details\" address. Never approved",
     AGENT_SIGNER: "Signer weight 1 (agent process)",
     POLICY_SIGNER: "Signer weight 1 (policy co-signer service)",
