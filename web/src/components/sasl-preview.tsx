@@ -186,10 +186,11 @@ export function SaslPreview() {
           type="button"
           onClick={toggle}
           aria-pressed={false}
-          className="fixed right-4 bottom-24 z-50 inline-flex min-h-12 items-center gap-2 rounded-full bg-teal-700 px-4 text-sm font-semibold text-white shadow-lg ring-2 ring-white/70 hover:bg-teal-800 focus-visible:outline-3 focus-visible:outline-amber-400 md:bottom-6"
+          aria-label="Sign language preview"
+          title="Sign language preview"
+          className="fixed right-3 bottom-24 z-50 inline-flex size-12 items-center justify-center rounded-full bg-teal-700 text-white shadow-lg ring-2 ring-white/70 hover:bg-teal-800 focus-visible:outline-3 focus-visible:outline-amber-400 md:bottom-6"
         >
-          <Hand className="size-5" aria-hidden="true" />
-          Sign language preview
+          <Hand className="size-6" aria-hidden="true" />
         </button>
       ) : (
         <div
