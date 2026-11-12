@@ -76,7 +76,8 @@ export function sameAmount(a: Amount, b: Amount): boolean {
 export function formatAmount(a: Amount): string {
   if (a.currency === "XRP") {
     const d = toMinor(a);
-    return `${d / 1_000_000n}.${(d % 1_000_000n).toString().padStart(6, "0")} XRP`;
+    const frac = (d % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
+    return `${d / 1_000_000n}${frac ? `.${frac}` : ""} XRP`;
   }
   return `$ ${fromMinor("RLUSD", toMinor(a)).value} RLUSD`;
 }
