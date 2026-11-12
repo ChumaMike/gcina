@@ -45,7 +45,8 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
   const judge = useRole() === "judge";
   const nav = judge ? NAV.filter((n) => JUDGE_HREFS.has(n.href)) : NAV;
   const { health, errors } = useData();
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  // Whole path segments only: "/supplier" must not light up on "/suppliers".
+  const active = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(href + "/"));
   const offline = Boolean(errors.health);
 
   return (
