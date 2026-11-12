@@ -24,6 +24,8 @@ just held up, and every click below is his.
 
 0. `agent/.env` has `POLICY_URL=https://gcina-policy.vercel.app` (the live one). **Never** run the stage agent against
    `localhost:8787`: its payments wouldn't show on the dashboard (C, 19:29).
+0b. Judge mode on: `JUDGE_PASSCODE` set in Vercel (gcina project, ChumaMike) and different from the owner's passcode;
+   open `/judge` and test-scan the QR with a second phone. If it's off, use the fallback ("I'll be the owner then").
 1. Policy service healthy: open https://gcina-policy.vercel.app/health, see `ok: true`, `testnet` and currency `RLUSD`. Dashboard Overview shows **RLUSD balances** (TREASURY and the agent's float), not zero.
 2. Terminal 1 (on the projector): `cd agent && pnpm agent watch` (normal mode; the dashboard's invoice buttons feed it).
    Terminal 2 (in `agent/`), command typed but **not** run: `pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`.
