@@ -39,12 +39,12 @@ just held up, and every click below is his.
 | | "That's a real transaction on the XRP Ledger test network, with the invoice number written on it." | Explorer tab, 3 seconds, back. |
 | **1:20–2:30** | **Demo 2: the fake banking details.** "Now the scam. Same supplier, same amount, 'urgent, new banking details'. The agent catches it itself: wrong address, pressure language. Held, with a reason Gumede can read." | **Simulate inv-002**. Show the Approvals card: "this isn't Mzansi Meat's registered address". |
 | | "But what if the AI is tricked? Let's be the attacker. I'm switching the agent to compromised mode: it now obeys the fraudster." | Driver: run inv-002 in the compromised terminal. |
-| | "It signs the payment. Our policy service refuses to co-sign. So it goes around us, straight to the ledger, with only its own signature. And the **XRP Ledger itself says no.** **[EV? result code]**. Not our code. The ledger." | Point at the red ledger result in the terminal and the audit feed. **Pause 2 seconds. This is the moment.** |
+| | "It signs the payment. Our policy service refuses to co-sign. So it goes around us, straight to the ledger, with only its own signature. And the **XRP Ledger itself says no**: `tefBAD_QUORUM`, not enough signatures. Not our code. The ledger." | Point at the red ledger result in the terminal and the audit feed. **Pause 2 seconds. This is the moment.** |
 | **2:30–3:15** | **Demo 3: the owner decides.** "Khaya Packaging, R 810. That's above Gumede's 'ask me above' limit, so the agent asks. He gets it on his phone." | **Simulate inv-003**. Speaker holds up the phone, taps **Approve**, confirms in the sheet. |
 | | "Approved. The agent signs a fresh payment, the policy co-signs, done." | Point at the feed: paid + explorer link. |
 | **3:15–3:45** | **Demo 4: limits live.** "And the limits belong to Gumede, not the agent. Say he's on leave: he drops 'ask me above' to R 180. The agent can read that. It can't change it." | Limits tab: change "ask me above" 30 → 10 RLUSD (R 540 → R 180), save. Point at "The agent can't change these." (Optional if time: Pause agent switch.) |
 | **3:45–4:15** | **How it works.** "The agent's account has no single key. The agent has one vote, our policy service has one, and the owner's offline key has two. The ledger needs two. So the agent alone can never move money." | Slide 2 (how it works) or the How it works screen. |
-| **4:15–4:50** | **Business.** "We start with owner-run food businesses like Gumede's. We grow through bookkeepers, who already run supplier payments for many small businesses each **[R? number from 02b]**. We're aiming at about R149 to R299 a month per business, less than they pay for their accounting software. **[Chuma? confirm]** Production runs on RLUSD through a licensed South African partner, so suppliers get rands." | Slide 3 (business + ask). |
+| **4:15–4:50** | **Business.** "We start with owner-run food businesses like Gumede's. We grow through bookkeepers, who already run supplier payments for many small businesses each **[R? number from 02b]**. We're aiming at about R149 to R299 a month per business, less than they pay for their accounting software. **[Chuma? confirm]** In production we run as software behind a licensed South African exchange, so suppliers still get rands by EFT. At home that means a rand stablecoin; RLUSD is for paying suppliers across borders." | Slide 3 (business + ask). |
 | **4:50–5:00** | "The agent pays. The ledger keeps. We're asking for a place in Ripple's UDAX accelerator to take Gcina to a real pilot. Thank you." | Stay on slide 3 for Q&A. |
 
 **Words to avoid before 3:45:** blockchain, wallet, crypto, token, on-chain, drops, seed, multisig.
@@ -59,7 +59,7 @@ Say "XRP Ledger" and "test network" only.
 | Agent slow (>10 s on an invoice) | "The agent's reading the invoice like a bookkeeper would." If >20 s, show the pre-loaded rehearsal result in the audit feed. |
 | Testnet slow / down | Show the rehearsal hashes in the README's evidence table (the repo is open in a tab). "Here's the same run from last night, on the public explorer." |
 | Phone approval fails | Approve from the laptop's Approvals tab instead. |
-| Compromised run fails to show the ledger result | Show the ledger rejection recorded in `docs/demo-evidence.md` **[EV?]** from the quorum proof script. |
+| Compromised run fails to show the ledger result | Show the `tefBAD_QUORUM` line in `docs/demo-evidence.md` (quorum proof, 12 Nov 15:59) and the agent + policy success link next to it. |
 | Over time at 4:15 | Skip Demo 4 (limits); mention it in one line. |
 
 ## Rehearsal checklist (Friday)

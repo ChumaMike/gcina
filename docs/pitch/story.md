@@ -75,8 +75,9 @@ The account's master key is switched off, so the multi-signature rule can't be b
   contract that could have a bug; the rule lives in the ledger protocol. **[R? confirm in 05-xrpl-fit.md]**
 - **Fast and cheap enough for supplier payments**: settles in seconds, fees are fractions of a cent.
   **[R? exact finality + fee figures from 05-xrpl-fit.md]**
-- **RLUSD**, a dollar stablecoin on XRPL, plus SA exchanges on XRPL, give a real path to settling in
-  rands for the supplier. **[R? which partners actually support RLUSD / XRPL ZAR rails: 04-regulation-and-rails.md]**
+- **RLUSD**, Ripple's dollar stablecoin, is issued natively on XRPL, and VALR, Yellow Card and Chipper Cash
+  listed it in Africa on 4 Sep 2025 (04 §6). Our policy engine is asset-agnostic, so the same guardrails work
+  for a rand stablecoin at home and RLUSD for cross-border supplier invoices.
 - Every payment carries the invoice number on-ledger (a memo), so the audit trail is public and permanent.
 
 ## The proof: "the ledger refuses the agent"
@@ -86,11 +87,12 @@ We run the same fake "new banking details" invoice twice:
 1. **Normal agent**: it spots the changed address and the urgency itself, and refuses to pay. Held for the owner.
 2. **Compromised agent** (we deliberately make it obey the fraudster): it signs a payment to the
    fraudster. The policy service refuses to co-sign. So the agent tries to go **straight to the ledger
-   with only its own signature**, and the XRP Ledger rejects it: **[EV? exact engine result, e.g. `tefBAD_QUORUM`]**.
+   with only its own signature**, and the XRP Ledger rejects it: **`tefBAD_QUORUM`** ("not enough signatures"). The transaction never enters a ledger, so the money can't move.
 
 Testnet proof:
+- 🔒 Quorum proof (`ledger/scripts/prove-quorum.ts`, 15:59 SAST): agent alone → **`tefBAD_QUORUM`**; master key → **`tefMASTER_DISABLED`**; agent + policy → **`tesSUCCESS`** ([0139C016…](https://testnet.xrpl.org/transactions/0139C0167EB5ECF95F9008CE986A1161883C063D036C104371A8325692C1DE22)). Source: `docs/demo-evidence.md`.
 - ✅ Autonomous payment, inv-001: **[EV? tx hash link]**
-- 🛑 Agent-only attempt rejected by the ledger: **[EV? result + link/log]**
+- 🛑 Compromised agent on inv-002 rejected by the ledger: **[EV? A tab's run]**
 - 👤 Human-approved payment, inv-003: **[EV? tx hash link]**
 
 That's the answer to "would your CFO sign off?": **even if the AI is fooled, the money doesn't move.**
@@ -120,8 +122,12 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
    20–35% of what an SA small business already pays Xero (R485–R857/month), and well under BILL's ~$49/user
    in the US. Plus a **practice tier priced per client file** for bookkeepers. Test it with Gumede and 3–5 practices.
    **[Chuma? confirm the number to say on stage]**
-4. **Rails**: testnet RLUSD today → mainnet RLUSD with a licensed SA partner (e.g. VALR / Yellow Card)
-   to get suppliers paid in rands. **[R? confirm each partner's XRPL / RLUSD status + licensing]**
+4. **Rails** (04 §1, §6, §7): Gcina runs **as software behind a licensed crypto asset service provider (CASP)**,
+   which does KYB/KYC and Travel Rule data. The supplier's payment lands at a licensed SA exchange, is sold
+   to ZAR and paid out by EFT. **Careful:** the SARB says USD-pegged stablecoins are unlikely to be approved
+   for *domestic* payments, so at home we'd pay in a **rand stablecoin** and keep **RLUSD for cross-border**
+   supplier invoices. Not yet confirmed: whether VALR supports RLUSD on XRPL or has an RLUSD/ZAR pair, so
+   **never promise an XRPL → ZAR route on stage**.
 5. **Expansion**: same guardrails for payroll runs, stokvel/co-op payouts, and cross-border supplier
    payments in the region. **[R? pick the 1–2 that research supports]**
 

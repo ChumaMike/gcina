@@ -24,16 +24,22 @@ amount, and the policy service decodes the **signed** transaction and rejects it
 proposal. A wrong amount gets held or rejected; it doesn't get paid.
 
 ### 5. Is this legal in South Africa? FSCA, exchange control?
-**[R? 04-regulation-and-rails.md: FSCA crypto asset service provider licensing, SARB exchange control, FIC Travel Rule.]**
-Draft: today this is a testnet demo moving no real money; in production, the money side runs through a
-licensed partner, and Gcina is the software that decides and signs within the owner's rules.
+Crypto payments are lawful but aren't legal tender, and the SARB and FSCA say any intermediary must hold a
+FAIS licence, so in production Gcina runs as software behind a licensed crypto asset service provider that
+carries KYC and the Travel Rule. Today's demo is on testnet and moves no value, and our guardrails (limits,
+multi-sign quorum, independent co-signer) are the controls that provider's compliance team would want. *(04 §1, §3, §7)*
 
 ### 6. How does the supplier actually get rands?
-**[R? which partner offers RLUSD/XRP → ZAR off-ramp on XRPL, and how.]**
-Draft: in production we'd pay in RLUSD through a licensed SA exchange partner that converts to rands
-in the supplier's bank account, so the supplier doesn't need to know anything about crypto.
+The payment lands in the supplier's account at a licensed SA exchange, which sells it to ZAR and pays it out
+by EFT the same day (VALR, for example, gives 30 free ZAR withdrawals a month), so the supplier never handles
+a raw wallet. We haven't yet confirmed an RLUSD-on-XRPL → ZAR route with VALR, and that's our first partner conversation. *(04 §6–7)*
 Be honest: the ledger's guarantee covers the payment decision; the last step to a rand EFT (e.g. through a
 payout provider such as Stitch or Peach) happens off-ledger. *(03-competitors.md §D point 4.)*
+
+### 6b. Why a US-dollar stablecoin for local payments? The SARB doesn't like that.
+That's right: the SARB's 2026 communication says foreign-pegged stablecoins are unlikely to be approved for
+domestic payments. Our policy engine is asset-agnostic, so at home we'd pay in a rand stablecoin (through the
+IFWG sandbox if needed) and keep RLUSD on XRPL for cross-border supplier invoices once the exchange-control rules allow it. *(04 §2, §7)*
 
 ### 7. Who pays you, and how much?
 The business pays an add-on of about R149–R299 a month, roughly a quarter of what it already pays for Xero,

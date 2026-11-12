@@ -61,7 +61,7 @@ flowchart LR
 | Invoice | What happens | Proof |
 |---|---|---|
 | `inv-001` Mzansi Meat Supplies, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
-| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**[EV? engine result]**) | **[EV? link / log]** |
+| `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**`tefBAD_QUORUM`**) | **[EV? link / log]** |
 | `inv-003` Khaya Packaging, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
 | `inv-004` duplicate of inv-001 | ⛔ Rejected as already paid | **[EV? audit line]** |
 
@@ -70,7 +70,7 @@ Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet 
 ## Track MVP checklist
 
 - [ ] **An XRPL Testnet transaction executed autonomously by the agent**: **[EV? inv-001 hash link]**
-- [ ] **Limits enforced somewhere the agent doesn't control**: on-ledger SignerList quorum (agent weight 1 of 2) + an independent policy co-signer. Ledger rejection of an agent-only payment: **[EV?]**
+- [x] **Limits enforced somewhere the agent doesn't control**: on-ledger SignerList quorum (agent weight 1 of 2) + an independent policy co-signer. Proven on testnet ([`docs/demo-evidence.md`](docs/demo-evidence.md)): agent alone → **`tefBAD_QUORUM`**, master key → **`tefMASTER_DISABLED`**, agent + policy → **`tesSUCCESS`** [`0139C016…`](https://testnet.xrpl.org/transactions/0139C0167EB5ECF95F9008CE986A1161883C063D036C104371A8325692C1DE22). (`tef` results are final rejections: the transaction never enters a ledger, so it has no explorer page.)
 - [ ] **A human operator sets/changes limits outside the agent**: dashboard → policy service with an operator token; the agent token gets `403` on every policy/supplier/approval route. **[EV? audit line of a limit change]**
 
 Testnet accounts (public addresses only): [`docs/addresses.md`](docs/addresses.md).
@@ -109,11 +109,12 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 
 | Today (hackathon) | Production path |
 |---|---|
-| XRPL **Testnet**, testnet RLUSD (+ faucet XRP for fees) | RLUSD on XRPL mainnet **[R? rails partner + licensing from 04-regulation-and-rails.md]** |
-| Suppliers have XRPL test addresses | Suppliers keep receiving **rands in their bank account** via a licensed off-ramp partner **[R?]** |
+| XRPL **Testnet**, no real value | Gcina runs as software behind a **licensed crypto asset service provider** (FAIS), which carries KYB/KYC and Travel Rule (FIC Directive 9) data |
+| Testnet RLUSD (+ faucet XRP for fees) | A **rand stablecoin** for domestic payments (the SARB has said USD-pegged stablecoins are unlikely to be approved for that); **RLUSD on XRPL for cross-border** supplier invoices once exchange-control rules allow it |
+| Suppliers have XRPL test addresses | Supplier's account at a licensed SA exchange, sold to ZAR and paid out by EFT; the supplier never handles a raw wallet (XRPL → ZAR route with a named exchange still to be confirmed) |
 | Policy signer key in a server env var | Policy key in an HSM / KMS on separate infrastructure from the agent |
 | Demo passcode on the dashboard | Proper owner login + phone approval with device binding |
-| JSON / Postgres store | Hardened store, POPIA-compliant handling of invoice data **[R?]** |
+| JSON / Postgres store | Hardened store, POPIA: operator agreement (s21), a lawful basis for sending invoice data to the LLM provider (s72), redaction |
 | Fixed indicative rate (R 18/USD) | Live quote at payment time |
 
 ## Built with
