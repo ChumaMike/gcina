@@ -81,7 +81,8 @@ export function checkSignedTx(p: Proposal, cfg: RulesConfig, ledgerIndex?: numbe
   if (fee < 0n || fee > cfg.maxFeeDrops) problems.push(`${MISMATCH}: the network fee (${String(tx.Fee)} drops) is above the ${cfg.maxFeeDrops}-drop cap.`);
   const lls = Number(tx.LastLedgerSequence);
   if (!Number.isInteger(lls) || lls <= 0) problems.push(`${MISMATCH}: it has no expiry (LastLedgerSequence).`);
-  else if (ledgerIndex !== undefined && lls > ledgerIndex + cfg.maxLedgerWindow) problems.push(`${MISMATCH}: its expiry is too far in the future.`);
+  else if (ledgerIndex === undefined) problems.push(`${MISMATCH}: its expiry can't be checked because the current ledger is unknown.`);
+  else if (lls > ledgerIndex + cfg.maxLedgerWindow) problems.push(`${MISMATCH}: its expiry is too far in the future.`);
   // The one signature must be the agent's, and valid.
   const signers = (tx.Signers as Array<{ Signer: { Account: string; SigningPubKey: string; TxnSignature: string } }>) ?? [];
   if (tx.SigningPubKey !== "" || signers.length !== 1) {
@@ -169,8 +170,14 @@ export function duplicateReason(p: Proposal, s: State): string | null {
   // Identical invoice text (ignoring invoice-number lines) from the same supplier that was already paid.
   if (inv) {
     const norm = (t: string) => t.replace(/\b(inv|invoice)[-\s#:]*[a-z0-9-]+/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
-    const twin = s.invoices.find((o) => o.id !== inv.id && o.status === "paid" && o.supplierName === inv.supplierName && norm(o.rawText) === norm(inv.rawText));
-    if (twin) return `Looks like a repeat of ${twin.id}: the same invoice from ${inv.supplierName} has already been paid.`;
+    const priorIds = new Set(priors.map((x) => x.invoiceId)); // paid OR co-signed and still settling
+    const twin = s.invoices.find(
+      (o) => o.id !== inv.id && (o.status === "paid" || priorIds.has(o.id)) && o.supplierName === inv.supplierName && norm(o.rawText) === norm(inv.rawText),
+    );
+    if (twin) {
+      const settling = (s.inflight ?? []).some((x) => x.invoiceId === twin.id) && twin.status !== "paid";
+      return `Looks like a repeat of ${twin.id}: the same invoice from ${inv.supplierName} has already been ${settling ? "co-signed and is still settling" : "paid"}.`;
+    }
   }
   return null;
 }

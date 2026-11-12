@@ -109,3 +109,37 @@ test("[review 3] a forwarded copy of an UNSETTLED payment is refused as a repeat
   assert.match(r.json.reasons[0], /still settling/);
   assert.equal(h.ledger.submitted.length, 1);
 });
+
+// ---- second review (d3a2623) ----
+test("[review 2b] ledger index unavailable → refuse to co-sign (can't enforce the expiry window)", async () => {
+  const h = makeApp();
+  await h.invoice("inv-001", "Mzansi Catering", "PO-1001");
+  h.ledger.ledgerIndex = async () => {
+    throw new Error("socket closed");
+  };
+  const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00") }));
+  assert.equal(r.json.decision, "rejected");
+  assert.match(r.json.reasons[0], /can't reach the XRP Ledger/);
+  assert.equal(h.ledger.submitted.length, 0);
+});
+
+test("[review 2b] in-flight record stores the OBSERVED ledger index as firstLedger, not one derived from the tx", async () => {
+  const h = makeApp();
+  await h.invoice("inv-001", "Mzansi Catering", "PO-1001");
+  h.ledger.submitThrows = true;
+  await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00") }));
+  const f = (await h.store.read()).inflight[0];
+  assert.equal(f.firstLedger, 1000 - 5);
+});
+
+test("[review 2b] identical text of an UNSETTLED (co-signed) invoice is refused too", async () => {
+  const h = makeApp();
+  await h.call("POST", "/invoices", "operator", { id: "inv-001", supplierName: "Mzansi Catering", rawText: "lunch packs for the week, 20 dollars" });
+  h.ledger.submitThrows = true;
+  await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-001", to: A(), amount: rl("20.00") }));
+  h.ledger.submitThrows = false;
+  await h.call("POST", "/invoices", "operator", { id: "inv-004", supplierName: "Mzansi Catering", rawText: "lunch packs for the week, 20 dollars" });
+  const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-004", to: A(), amount: rl("20.00") }));
+  assert.equal(r.json.decision, "rejected");
+  assert.match(r.json.reasons[0], /still settling/);
+});

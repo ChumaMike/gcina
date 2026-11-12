@@ -308,7 +308,8 @@ export function createApp(d: AppDeps) {
     for (const f of pending) {
       let st: Awaited<ReturnType<Ledger["lookup"]>>;
       try {
-        st = await d.ledger.lookup(f.txHash, f.firstLedger ?? f.lastLedger - 60, f.lastLedger);
+        // Records without an observed firstLedger search from ledger 1: on a node without full history searched_all is false → stays pending (fail closed).
+        st = await d.ledger.lookup(f.txHash, typeof f.firstLedger === "number" && f.firstLedger > 0 ? f.firstLedger : 1, f.lastLedger);
       } catch {
         return `An earlier co-signed payment for ${invoiceId} (${f.txHash.slice(0, 12)}…) has no final result yet and the ledger can't be reached to check. Nothing new will be signed until it settles.`;
       }
@@ -362,11 +363,18 @@ export function createApp(d: AppDeps) {
       return decision;
     }
 
-    let ledgerIndex: number | undefined;
+    // Fail closed: without a ledger index we can't enforce the expiry window or bound the later search, so sign nothing.
+    let ledgerIndex: number;
     try {
       ledgerIndex = await d.ledger.ledgerIndex();
-    } catch {
-      ledgerIndex = undefined;
+    } catch (e) {
+      const decision: Decision = { proposalId: id, decision: "rejected", reasons: [`The policy can't reach the XRP Ledger right now (${e instanceof Error ? e.message : String(e)}), so it can't check this payment's expiry. Nothing was signed; try again shortly.`] };
+      await d.store.update((s) => {
+        s.proposals.push({ ...stored, decision });
+        received(s);
+        audit(s, { actor: "policy", kind: "proposal.rejected", message: `Refused: ${what}. ${decision.reasons[0]}`, data: pdata(p, id, { reasons: decision.reasons }) }, at);
+      });
+      return decision;
     }
     const verdict = evaluate(p, await d.store.read(), d.rules, at, ledgerIndex);
 
@@ -403,8 +411,8 @@ export function createApp(d: AppDeps) {
     const flight: InFlight = {
       invoiceId: p.invoiceId,
       txHash: hash,
-      // Lower bound for the ledger search: the current ledger, or far enough back to cover any allowed expiry window.
-      firstLedger: Math.max(1, Math.min(ledgerIndex ?? lastLedger, lastLedger) - d.rules.maxLedgerWindow - 5),
+      // Lower bound for the ledger search: the ledger index observed BEFORE signing (minus a small margin). Never derived from the tx.
+      firstLedger: Math.max(1, ledgerIndex - 5),
       lastLedger,
       ...(ref ? { reference: ref } : {}),
       ...(inv?.poNumber ? { poNumber: inv.poNumber } : {}),
