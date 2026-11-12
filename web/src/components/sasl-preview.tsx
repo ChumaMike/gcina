@@ -208,7 +208,9 @@ export function SaslPreview() {
   const [slow, setSlow] = useState(false);
   const [sizeIx, setSizeIx] = useState(1);
   const [viewW, setViewW] = useState(1024);
-  const [voiceOn, setVoiceOn] = useState(false);
+  // "sign": the 3D signer (voice optional). "voice": no figure, just read-aloud in the chosen language.
+  const [mode, setMode] = useState<"sign" | "voice">("sign");
+  const [voicePref, setVoiceOn] = useState(false);
   const [chosenLang, setChosenLang] = useState<string | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [spoken, setSpoken] = useState<{ text: string; label: string } | null>(null);
@@ -225,6 +227,8 @@ export function SaslPreview() {
   const translations = useRef(new Map<string, string>());
 
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+  const signing = mode === "sign";
+  const voiceOn = mode === "voice" || voicePref;
   // The panel's own choice wins; otherwise follow the app language from the accessibility sheet.
   const lang = chosenLang ?? speechLang;
 
@@ -256,7 +260,7 @@ export function SaslPreview() {
     const w = Math.min(size.w, Math.max(110, viewW - 56));
     return { w, h: Math.round((w * size.h) / size.w) };
   }, [size, viewW]);
-  const stacked = sizeIx >= 2;
+  const stacked = signing && sizeIx >= 2;
 
   const langOptions = useMemo(() => {
     const known = new Set(LANGS.map((l) => base(l.code)));
@@ -289,16 +293,24 @@ export function SaslPreview() {
   const langLabel = langOptions.find((l) => l.code === lang)?.label ?? lang;
 
   const toggle = useCallback(() => setOn((v) => !v), []);
+  const openAs = (m: "sign" | "voice") => {
+    setMode(m);
+    setOn(true);
+  };
 
   // The accessibility sheet (W5) switches the preview with a window event, and mirrors its state.
   useEffect(() => {
-    const set = (e: Event) => setOn(Boolean((e as CustomEvent<{ on: boolean }>).detail?.on));
+    const set = (e: Event) => {
+      const v = Boolean((e as CustomEvent<{ on: boolean }>).detail?.on);
+      if (v) setMode("sign");
+      setOn(v);
+    };
     window.addEventListener("gcina:sasl", set);
     return () => window.removeEventListener("gcina:sasl", set);
   }, []);
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("gcina:sasl-state", { detail: { on } }));
-  }, [on]);
+    window.dispatchEvent(new CustomEvent("gcina:sasl-state", { detail: { on: on && signing } }));
+  }, [on, signing]);
 
   const replay = useCallback(() => {
     setCurrent(0);
@@ -310,7 +322,7 @@ export function SaslPreview() {
     savePref("size", SIZES[n].id);
   };
   const toggleVoice = () => {
-    const next = !voiceOn;
+    const next = !voicePref;
     setVoiceOn(next);
     savePref("voice", next ? "on" : "off");
     if (!next && canSpeak) window.speechSynthesis.cancel();
@@ -496,9 +508,9 @@ export function SaslPreview() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, voiceOn, lang, words, run, voices, canSpeak]);
 
-  // The 3D signer.
+  // The 3D signer (sign mode only; voice-only mode never starts WebGL).
   useEffect(() => {
-    if (!on || !mount.current) return;
+    if (!on || !signing || !mount.current) return;
     const host = mount.current;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     let r: THREE.WebGLRenderer;
@@ -811,17 +823,17 @@ export function SaslPreview() {
       renderer.current = null;
       camera.current = null;
     };
-  }, [on]);
+  }, [on, signing]);
 
   // Resize the canvas without rebuilding the figure.
   useEffect(() => {
     const r = renderer.current;
     const cam = camera.current;
-    if (!on || !r || !cam) return;
+    if (!on || !signing || !r || !cam) return;
     r.setSize(stage.w, stage.h);
     cam.aspect = stage.w / stage.h;
     cam.updateProjectionMatrix();
-  }, [on, stage.w, stage.h]);
+  }, [on, signing, stage.w, stage.h]);
 
   const done = words.length > 0 && current >= words.length;
   const chip = "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium focus-visible:outline-3 focus-visible:outline-amber-400 disabled:opacity-40";
@@ -829,24 +841,39 @@ export function SaslPreview() {
   const chipOn = "border-teal-700 bg-teal-700 text-white";
   const zoomBtn =
     "inline-flex size-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow ring-1 ring-black/10 hover:bg-white focus-visible:outline-3 focus-visible:outline-amber-400 disabled:opacity-40 dark:bg-slate-800/90 dark:text-slate-100";
-  const panelW = stacked ? stage.w + 26 : 320;
+  const panelW = stacked ? stage.w + 26 : signing ? 320 : 300;
+  const launcher =
+    "inline-flex size-12 items-center justify-center rounded-full text-white shadow-lg ring-2 ring-white/70 focus-visible:outline-3 focus-visible:outline-amber-400";
+  const tab = (active: boolean) =>
+    `inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold focus-visible:outline-3 focus-visible:outline-amber-400 ${
+      active ? "bg-white text-teal-800 shadow dark:bg-slate-700 dark:text-white" : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+    }`;
   const voiceHint = (code: string) => (isEnglish(code) || !canSpeak || voiceFor(code, voices) ? "" : " (text only on this device)");
 
   return (
     <>
       <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}`}</style>
       {!on ? (
-        <button
-          type="button"
-          data-sasl-ignore
-          onClick={toggle}
-          aria-pressed={false}
-          aria-label="Sign language and read-aloud"
-          title="Sign language and read-aloud"
-          className="fixed right-3 bottom-24 z-50 inline-flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-teal-600 to-teal-800 text-white shadow-lg ring-2 ring-white/70 hover:from-teal-700 hover:to-teal-900 focus-visible:outline-3 focus-visible:outline-amber-400 md:bottom-6"
-        >
-          <Hand className="size-6" aria-hidden="true" />
-        </button>
+        <div data-sasl-ignore className="fixed right-3 bottom-24 z-50 flex flex-col gap-2 md:bottom-6">
+          <button
+            type="button"
+            onClick={() => openAs("voice")}
+            aria-label="Read aloud: hear any text on screen, in your language"
+            title="Read aloud (voice only)"
+            className={`${launcher} bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800`}
+          >
+            <Volume2 className="size-6" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => openAs("sign")}
+            aria-label="Sign language preview"
+            title="Sign language preview"
+            className={`${launcher} bg-gradient-to-br from-teal-600 to-teal-800 hover:from-teal-700 hover:to-teal-900`}
+          >
+            <Hand className="size-6" aria-hidden="true" />
+          </button>
+        </div>
       ) : (
         <div
           data-sasl-ignore
@@ -856,7 +883,7 @@ export function SaslPreview() {
           className="fixed right-3 bottom-24 z-50 max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl border border-black/10 bg-white p-3 text-slate-900 shadow-2xl md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold">🤟 SASL avatar · concept preview</p>
+            <p className="text-sm font-semibold">{signing ? "🤟 SASL avatar · concept preview" : "🔊 Read aloud"}</p>
             <button
               type="button"
               onClick={toggle}
@@ -867,7 +894,19 @@ export function SaslPreview() {
             </button>
           </div>
 
-          <div className={`mt-1 flex gap-3 ${stacked ? "flex-col items-center" : "items-center"}`}>
+          <div role="group" aria-label="How should I help?" className="mt-2 flex gap-1 rounded-full bg-slate-100 p-1 dark:bg-slate-800">
+            <button type="button" aria-pressed={signing} onClick={() => setMode("sign")} className={tab(signing)}>
+              <Hand className="size-4" aria-hidden="true" />
+              Sign language
+            </button>
+            <button type="button" aria-pressed={!signing} onClick={() => setMode("voice")} className={tab(!signing)}>
+              <Volume2 className="size-4" aria-hidden="true" />
+              Voice only
+            </button>
+          </div>
+
+          <div className={`mt-2 flex gap-3 ${stacked ? "flex-col items-center" : "items-center"}`}>
+            {signing && (
             <div className="relative shrink-0">
               <div
                 ref={mount}
@@ -886,8 +925,9 @@ export function SaslPreview() {
                 Signer size: {size.label}
               </span>
             </div>
+            )}
 
-            <div className={`min-w-0 text-sm ${stacked ? "w-full" : ""}`} aria-live="polite">
+            <div className={`min-w-0 text-sm ${stacked || !signing ? "w-full" : ""}`} aria-live="polite">
               {words.length ? (
                 <p className={`leading-snug ${sizeIx === 3 ? "text-base" : ""}`}>
                   {words.map((w, i) => (
@@ -898,7 +938,9 @@ export function SaslPreview() {
                 </p>
               ) : (
                 <p className="text-slate-600 dark:text-slate-300">
-                  Hover over, tap or tab to any text and I&apos;ll sign it, word by word{voiceOn ? `, and read it aloud in ${langLabel}` : ""}.
+                  {signing
+                    ? `Hover over, tap or tab to any text and I'll sign it, word by word${voiceOn ? `, and read it aloud in ${langLabel}` : ""}.`
+                    : `Hover over, tap or tab to any text and I'll read it aloud in ${langLabel}. Pick another language below.`}
                 </p>
               )}
             </div>
@@ -927,7 +969,7 @@ export function SaslPreview() {
               <Snail className="size-4" aria-hidden="true" />
               Slower
             </button>
-            {canSpeak && (
+            {canSpeak && signing && (
               <button type="button" onClick={toggleVoice} aria-pressed={voiceOn} className={`${chip} ${voiceOn ? chipOn : chipOff}`}>
                 {voiceOn ? <Volume2 className="size-4" aria-hidden="true" /> : <VolumeX className="size-4" aria-hidden="true" />}
                 Read aloud
@@ -979,9 +1021,14 @@ export function SaslPreview() {
             </label>
           )}
 
+          {!canSpeak && !signing && (
+            <p role="status" className="mt-2 text-xs leading-snug text-amber-800 dark:text-amber-300">
+              This browser can&apos;t read aloud. Try Chrome, Edge, Safari or Samsung Internet.
+            </p>
+          )}
           <p className="mt-2 text-xs leading-snug text-slate-600 dark:text-slate-300">
-            Not real sign language yet: the hand shapes are placeholders. Coming: a South African Sign Language avatar, built and checked with a Deaf-community partner.
-            {voiceOn ? " Read-aloud uses your device's own voices; translations are by AI and still being checked." : ""}
+            {signing ? "Not real sign language yet: the hand shapes are placeholders. Coming: a South African Sign Language avatar, built and checked with a Deaf-community partner." : ""}
+            {voiceOn ? `${signing ? " " : ""}Read-aloud uses your device's own voices; translations are by AI and still being checked.` : ""}
           </p>
         </div>
       )}
