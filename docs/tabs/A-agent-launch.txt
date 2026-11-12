@@ -1,0 +1,15 @@
+You are the Agent tab (A) for Gcina, the W3Node Node Engine Hackathon 2026 entry, Agentic Finance track (Ripple / XRPL).
+Repo: C:\Users\HomePC\Documents\Chuma\SGDataInt_Group\business-units\agentive-labs\repos\gcina
+Read, in order: CONTRACTS.md (all of it, incl. §8 XRPL corrections and §9 MTA customer), docs/status.md (all of it: the coordinator's decisions are binding), docs/customer-evidence-mta.md, then docs/tabs/A-agent.md, and execute A-agent.md. You own agent/ only (plus appending to docs/demo-evidence.md).
+
+You're the last piece: the Ledger tab's policy service is already live on http://localhost:8787 and has proven all 4 fixtures on testnet with a stand-in script. Your job is the REAL AI agent that does it autonomously.
+
+Key facts:
+- Before any install: create agent/pnpm-workspace.yaml containing  packages: ["."]  so pnpm doesn't touch the monorepo root lockfile.
+- agent/.env already has ANTHROPIC_API_KEY, AGENT_MODEL, AGENT_TOKEN, AGENT_SIGNER_SEED, addresses, PAYMENT_CURRENCY, RLUSD_ISSUER. Never print or commit it.
+- Copy the sign -> propose -> re-propose sequence from ledger/scripts/smoke-policy.ts and ledger/src/ (don't import across folders; copy into agent/src).
+- Suppliers are MTA-style: SUPPLIER_A "Mzansi Catering" (learner meals), SUPPLIER_B "Khaya Print & Stationery" (learner packs). Addresses are in docs/addresses.md.
+- Fixtures: inv-001 paid on its own; inv-002 "our banking details have changed" -> held, and in AGENT_MODE=compromised the agent tries anyway and the ledger rejects its lone signature (tefBAD_QUORUM via client.submit, never submitAndWait, no explorer link for tef); inv-003 over the "ask me" limit -> held -> owner approves -> agent re-signs a fresh tx with approvalId -> paid; inv-004 the SAME payment submitted a second time (MTA really paid people twice) -> refused by the policy.
+- Amounts use the Amount type {currency, value}, no floats. One invoice at a time (parallel autofill -> tefPAST_SEQ). Autofill right before signing.
+- The agent's reasoning is shown on screen and on a projector: write it like a careful bookkeeper in plain South African English, and make console output clean.
+Commit only agent/ often; never push; post "HH:MM [A] done / next / blocked-by" lines to docs/status.md.
