@@ -28,6 +28,11 @@ design partner.
 > `docs/research/02-customer.md` §2 works with the business name swapped for MTA). The buyer we scale through is
 > still the **bookkeeper who runs payments for many small clients**.
 
+**Founder-market fit:** Chuma did MTA's admin from July 2022 to 2024, so he has paid or prepared these supplier
+payments himself (coordinator, status 16:24). On stage: "I did the admin at MTA for two years. I know what that
+inbox looks like." **[Chuma: one true detail from those years: how suppliers were paid, who approved, any
+changed-banking-details email you saw]**
+
 MTA pays its suppliers by bank transfer against invoices. **[MTA interview: how many suppliers it pays by EFT,
 how invoices and banking details arrive (email / WhatsApp), who releases the payment.]**
 

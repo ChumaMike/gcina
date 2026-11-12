@@ -73,7 +73,7 @@ workflow or a South African focus. Gcina's quorum is the XRP Ledger's own multi-
 custodian), and a changed bank account can only get past it with the owner's key. *(Source: 03-competitors.md §D. **Never say "nobody else does external limits"**: that's false.)*
 
 ### 12. Who's your customer, and have you spoken to them?
-Our first design partner is Meyiswa Training Academy, a skills-training academy that's a family business of our team (say this openly), and the buyer we scale through is the bookkeeper who runs payments for many small clients. **[MTA interview: how it pays suppliers, has it seen fake banking-details emails, what limits it would set, would it pay for this.]**
+Our first design partner is Meyiswa Training Academy, a skills-training academy that's a family business of our team (say this openly), and the buyer we scale through is the bookkeeper who runs payments for many small clients. I also did MTA's admin myself from 2022 to 2024, so I've been the person paying those invoices. **[MTA interview: how it pays suppliers, has it seen fake banking-details emails, what limits it would set, would it pay for this.]**
 
 ### 13. "Gcina" is already a funeral-cover brand in SA. Isn't that a problem?
 Yes, we found it: an FSCA-registered funeral-cover product trades as Gcina, so it's fine as a hackathon name
