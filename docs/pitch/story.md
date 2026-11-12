@@ -143,6 +143,8 @@ The account's master key is switched off, so the multi-signature rule can't be b
 - **RLUSD**, Ripple's dollar stablecoin, is issued natively on XRPL, and VALR, Yellow Card and Chipper Cash
   listed it in Africa on 4 Sep 2025 (04 §6). Our policy engine is asset-agnostic, so the same guardrails work
   for a rand stablecoin at home and RLUSD for cross-border supplier invoices.
+- **XRPL's built-in exchange:** the treasury bought its $ 250 RLUSD float from the ledger's own XRP/RLUSD AMM pool
+  (`docs/demo-evidence.md`, 18:00, tx 8191857E…), no exchange account needed.
 - Every payment carries the invoice number on-ledger (a memo), so the audit trail is public and permanent.
 
 ## The proof: "the ledger refuses the agent"
