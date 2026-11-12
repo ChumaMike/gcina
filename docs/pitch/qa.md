@@ -82,6 +82,12 @@ protect", which is exactly the job. *(02b Part 2)*
 
 ---
 
+### 13b. Why would anyone let an AI pay suppliers at all?
+They mostly won't yet: in a 2025 PYMNTS survey of 60 large-company CFOs, none would give an AI agent full access
+to start payments, and 97% of mid-market CFOs in a Wakefield survey say human oversight is critical, even though 88%
+already use agentic AI. Gcina keeps that oversight on the ledger: the agent handles the routine payments, and anything
+unusual needs the owner. *(docs/stats-sheet.md; these are US surveys, say so.)*
+
 ### 14. Has MTA actually been hit by fake banking details?
 Not that I know of: what I saw in two years of MTA's admin was the same person sometimes getting paid twice,
 and Gcina's duplicate check stops exactly that. The fake-banking-details risk comes from the courts and all four

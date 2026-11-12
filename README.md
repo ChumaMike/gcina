@@ -29,7 +29,10 @@ Built for the **W3Node Node Engine Hackathon 2026**, **Agentic Finance track (Ri
 > **In 2025, South Africa's Supreme Court of Appeal ruled that if your business pays a hacked invoice into a fraudster's account, you still owe your supplier the full amount.**
 > — *Intengo Imoto v Zoutpansberg Motor Wholesalers*, 2025 (6) SA 143 (SCA); see also *ENS v Hawarden* [2024] ZASCA 90.
 
-So a business that falls for one fake "new banking details" email pays twice. Standard Bank, Absa, Nedbank and
+So a business that falls for one fake "new banking details" email pays twice. Paying twice by plain mistake is common too:
+benchmarks put duplicate or erroneous payments at **0.8%–2%** of all disbursements (APQC). And finance leaders aren't
+ready to hand over the bank account: in a 2025 survey of 60 large-company CFOs, **none** would give an AI agent
+substantial or full access to initiating payments (PYMNTS Intelligence). Standard Bank, Absa, Nedbank and
 FNB all warn businesses about this exact scam and give the same advice: verify any change of banking details
 through a channel you already trust before paying. South Africans lost **R2.4 billion** to digital banking crime
 in 2025 (SABRIC), driven by social engineering rather than hacked systems. Sources: [`docs/research/01-problem-evidence.md`](docs/research/01-problem-evidence.md).

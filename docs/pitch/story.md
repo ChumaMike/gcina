@@ -55,6 +55,16 @@ R1.9 billion in 2024, and SABRIC says it's driven by tricking people rather than
 details" scam, and all give the same advice: verify the change through a channel you already trust before you
 pay. **That check is the rule Gcina enforces.**
 
+**More numbers (from `docs/stats-sheet.md`, coordinator):**
+- Paying twice is common: benchmarks put duplicate or erroneous payments at **0.8%–2%** of all disbursements
+  (median ~1.5%, APQC, 1,686 organisations). Say: "about R1 to R2 in every R100 a business pays out".
+- *ENS v Hawarden* [2024] ZASCA 90: a buyer lost **R5.5m** to an intercepted payment and carried the loss.
+- **The trust gap:** of 60 CFOs at US$1bn+ US firms, **0%** would give an AI agent substantial or full access to
+  initiate payments (PYMNTS Intelligence, Jul 2025); only **14%** of mid-market CFOs fully trust AI with accounting
+  data, **97%** say human oversight is critical, yet **88%** already use an agentic AI tool (Wakefield, Feb 2026).
+  Say: "CFOs want AI agents, but almost none will let one press 'pay'. Gcina is how they say yes."
+- **Don't quote** Deloitte's "54%" until R verifies it. Never say "67% of SA firms hit by BEC" or "R2.4m average BEC cost".
+
 Now picture handing supplier payments to an AI agent. It's faster than any bookkeeper, but it can be fooled by
 the same email. **Would your CFO sign off on that?** Not unless the agent physically *can't* pay the wrong person.
 
