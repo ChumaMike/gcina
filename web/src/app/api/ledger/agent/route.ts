@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { AGENT_ACCOUNT, SIGNER_ROLES, type SignerProof } from "@/lib/addresses";
-import { SESSION_COOKIE, isValidSession } from "@/lib/session";
+import { SESSION_COOKIE, sessionRole } from "@/lib/session";
 
 // Reads the agent account's signer list straight from a public XRPL Testnet node, so the
 // dashboard shows what the LEDGER enforces, not what our own services say.
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const jar = await cookies();
-  if (!(await isValidSession(jar.get(SESSION_COOKIE)?.value))) {
+  if (!(await sessionRole(jar.get(SESSION_COOKIE)?.value))) {
     return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   }
   try {

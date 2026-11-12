@@ -6,8 +6,10 @@ import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
   gateConfigured,
+  issueJudgeSession,
   issueSession,
-  passcodeMatches,
+  judgeMaxAge,
+  passcodeRole,
   safeNext,
 } from "@/lib/session";
 
@@ -72,23 +74,26 @@ export async function login(_prev: LoginState, form: FormData): Promise<LoginSta
   const busy = state.global.length >= GLOBAL_SLOW_AFTER;
   await new Promise((r) => setTimeout(r, busy ? 2000 : 0));
 
-  if (passcode.length > 200 || !(await passcodeMatches(passcode))) {
+  const role = passcode.length > 200 ? null : await passcodeRole(passcode);
+  if (!role) {
     recordFail(ip, b, now);
     await new Promise((r) => setTimeout(r, 400));
     return { error: "That passcode isn't right. Try again." };
   }
   state.ip.delete(ip);
 
-  const token = await issueSession();
+  const token = role === "judge" ? await issueJudgeSession() : await issueSession();
+  if (!token) return { error: "Judge access has ended. Thank you for trying Gcina." };
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token!, {
+  jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    maxAge: role === "judge" ? judgeMaxAge() : SESSION_MAX_AGE,
   });
-  redirect(next);
+  // A judge always lands on the one thing they can do.
+  redirect(role === "judge" ? "/approvals" : next);
 }
 
 export async function logout() {

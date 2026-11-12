@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { callPolicy } from "@/lib/policy-client";
-import { SESSION_COOKIE, isValidSession } from "@/lib/session";
+import { SESSION_COOKIE, sessionRole } from "@/lib/session";
 
 const ALLOWED: [string, RegExp][] = [
   ["GET", /^\/health$/],
@@ -22,17 +22,27 @@ const ALLOWED: [string, RegExp][] = [
   ["POST", /^\/admin\/reset$/],
 ];
 
+// Judge mode (server-enforced): reads, plus approve/reject. No limits, pause, suppliers, invoices or reset.
+const JUDGE_ALLOWED: [string, RegExp][] = [
+  ...ALLOWED.filter(([m]) => m === "GET"),
+  ["POST", /^\/approvals\/[\w-]+\/(approve|reject)$/],
+];
+
 const QUERY_KEYS = new Set(["status", "limit"]);
 
 async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const jar = await cookies();
-  if (!(await isValidSession(jar.get(SESSION_COOKIE)?.value))) {
+  const role = await sessionRole(jar.get(SESSION_COOKIE)?.value);
+  if (!role) {
     return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   }
   const { path } = await ctx.params;
   const pathname = "/" + path.map(encodeURIComponent).join("/");
   if (!ALLOWED.some(([m, re]) => m === req.method && re.test(pathname))) {
     return NextResponse.json({ error: "Not allowed." }, { status: 404 });
+  }
+  if (role === "judge" && !JUDGE_ALLOWED.some(([m, re]) => m === req.method && re.test(pathname))) {
+    return NextResponse.json({ error: "Judges can only approve or reject payments." }, { status: 403 });
   }
   const qs = new URLSearchParams();
   req.nextUrl.searchParams.forEach((v, k) => QUERY_KEYS.has(k) && qs.set(k, v));
@@ -51,6 +61,8 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
       body = {};
     }
   }
+  // The audit trail says who decided; a judge can't claim to be the owner.
+  if (role === "judge" && /\/(approve|reject)$/.test(pathname)) body = { decidedBy: "A judge (demo)" };
   const res = await callPolicy(req.method, target, body);
   return NextResponse.json(res.body, { status: res.status, headers: { "Cache-Control": "no-store" } });
 }

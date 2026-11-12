@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { RlusdBadge } from "./bits";
 import { useData } from "./data-provider";
 import { Logo } from "./logo";
+import { JudgeBanner, useRole } from "./role";
+
+const JUDGE_HREFS = new Set(["/", "/approvals", "/how-it-works"]);
 
 const NAV = [
   { href: "/", label: "Overview", short: "Home", icon: Home },
@@ -38,6 +41,8 @@ function CountDot({ n, className }: { n: number; className?: string }) {
 export function AppShell({ children, mock }: { children: React.ReactNode; mock: boolean }) {
   const path = usePathname();
   const counts = useCounts();
+  const judge = useRole() === "judge";
+  const nav = judge ? NAV.filter((n) => JUDGE_HREFS.has(n.href)) : NAV;
   const { health, errors } = useData();
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   const offline = Boolean(errors.health);
@@ -58,7 +63,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
           </span>
         </Link>
         <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
-          {[...NAV, { href: "/how-it-works", label: "How it works", short: "How", icon: HelpCircle }].map((n) => (
+          {[...nav, { href: "/how-it-works", label: "How it works", short: "How", icon: HelpCircle }].map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -105,15 +110,16 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
       </header>
 
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-28 sm:px-6 md:px-8 md:pt-8 md:pb-12">
+        <JudgeBanner />
         {children}
       </main>
 
       {/* Phone bottom nav */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className={cn("fixed inset-x-0 bottom-0 z-30 grid border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden", judge ? "grid-cols-2" : "grid-cols-5")}
       >
-        {NAV.map((n) => (
+        {nav.map((n) => (
           <Link
             key={n.href}
             href={n.href}

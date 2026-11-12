@@ -10,3 +10,4 @@ policy/data/
 .DS_Store
 
 .passcode-live.local
+.judge-passcode.local

@@ -8,6 +8,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { ErrorNote, Money, RlusdBadge } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
 import { LedgerProofCard } from "@/components/ledger-proof";
+import { useRole } from "@/components/role";
 import { StoppedCard } from "@/components/stopped-card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/components/data-provider";
@@ -86,6 +87,7 @@ function AgentStatus() {
   const { confirm, sheet } = useConfirm();
   const [busy, setBusy] = useState(false);
   const paused = policy?.paused ?? false;
+  const judge = useRole() === "judge";
 
   const setPaused = async (next: boolean) => {
     setBusy(true);
@@ -130,7 +132,8 @@ function AgentStatus() {
           role="switch"
           aria-checked={paused}
           aria-label="Pause agent"
-          disabled={!policy || busy}
+          disabled={!policy || busy || judge}
+          title={judge ? "Only the owner can pause the agent." : undefined}
           onClick={() =>
             paused
               ? setPaused(false)
