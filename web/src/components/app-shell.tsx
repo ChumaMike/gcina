@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, FileText, HelpCircle, Home, LogOut, SlidersHorizontal, Users } from "lucide-react";
+import { Bell, FileText, HelpCircle, Home, LogOut, SendHorizontal, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/login/actions";
@@ -64,7 +64,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
           </span>
         </Link>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
-          {[...nav, { href: "/how-it-works", label: "How it works", short: "How", icon: HelpCircle }].map((n) => (
+          {[...nav, ...(judge ? [] : [{ href: "/supplier", label: "Send a bill", short: "Send", icon: SendHorizontal }]), { href: "/how-it-works", label: "How it works", short: "How", icon: HelpCircle }].map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -102,6 +102,11 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
           <NetworkLine mock={mock} offline={offline} network={health?.network} compact />
         </span>
         <AccessibilityButton compact />
+        {!judge && (
+          <Link href="/supplier" aria-label="Send a bill" aria-current={active("/supplier") ? "page" : undefined} className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted">
+            <SendHorizontal className="size-5" aria-hidden="true" />
+          </Link>
+        )}
         <Link
           href="/how-it-works"
           aria-label="How it works"
