@@ -93,6 +93,7 @@ flowchart LR
 | `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 The agent won't pay it ("I won't pay a new account; the owner must approve it"). In the 18:03 run the policy held it and the owner rejected it; since 19:55 the policy **refuses it outright** as a repeat of inv-001 to a different address, with no approve button. Re-sent as `inv-002b` to a **compromised** agent that obeys it: the policy refuses to co-sign **and** the agent's lone signature is refused by the ledger (**`tefBAD_QUORUM`**: "Signatures provided do not meet the quorum"; no explorer page because no money moved) | agent-alone submit `16FE2B5296FE3F2A…` → `tefBAD_QUORUM`, `applied: false` (12 Nov, 18:03 SAST, [`docs/demo-evidence.md`](docs/demo-evidence.md)) |
 | `inv-003` Khaya Print & Stationery, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" ($ 30.00) → held → owner approves (`apr-0911d9f5`; in this run the tap was played by our rehearsal script, as the dashboard wasn't deployed yet) → paid (12 Nov, 18:04 SAST) | [`D03DBDA1…`](https://testnet.xrpl.org/transactions/D03DBDA1920A708A837398F1A9C1898B4580D061BF12BEC08CB9DF8701D70930) · `tesSUCCESS` |
 | `inv-004` the same payment submitted again (the double payment seen at MTA) | ⛔ Refused by the policy co-signer: "Order PO-1001 has already been paid (invoice inv-001). This looks like a duplicate invoice." No signature, no transaction (12 Nov, 18:04 SAST) | policy refusal in [`docs/demo-evidence.md`](docs/demo-evidence.md) |
+| Owner **fires the agent** (owner's key alone, `SignerListSet`), then re-hires it | 🔑 The agent's key is removed from the account on the ledger, with nobody's permission; re-hired for the next run (12 Nov, 20:16–20:17 SAST) | fire [`EAAEDFA2…`](https://testnet.xrpl.org/transactions/EAAEDFA2028319612AFA44CEE5E70C0A7EBCD7928B0C174796B2B3C78D30606B) · rehire [`49922785…`](https://testnet.xrpl.org/transactions/4992278555FEEE1D3C535482326BB3C34986FC01E8D9C088E09B0DED417D2CAD) · `tesSUCCESS` |
 
 Checked on the ledger afterwards: both payments are `validated`, carry **2 signers** (agent + policy) and delivered exactly 20 and 45 RLUSD to the suppliers' registered addresses. Full run log: [`docs/demo-evidence.md`](docs/demo-evidence.md).
 
@@ -155,7 +156,7 @@ speakers check them.
 - **An approval only waives the reason it was asked for.** Approving a new address or an above-limit amount can't
   lift the repeat check, the per-payment or daily cap, or a pause. The owner changes limits explicitly.
   *(Found in our own live testing on 12 Nov: an owner approval of the fake inv-002 skipped every rule and paid
-  $ 20 RLUSD testnet to the fraud address, tx `1FB4A214…`. Fixed and deployed the same evening, with tests.)*
+  $ 20 RLUSD testnet to the fraud address, tx [`1FB4A214…`](https://testnet.xrpl.org/transactions/1FB4A2140375EB6BEE425CF1C4D6CA663520952F837FAC04389B66DC81F4B106). Fixed and deployed the same evening, with tests.)*
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
 - **No paying twice, even if the network goes quiet.** The policy refuses a repeat (same invoice, or same supplier +
   amount + invoice number). It also records each payment's hash *before* submitting it, and won't co-sign anything else
