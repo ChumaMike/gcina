@@ -125,6 +125,27 @@ export function invoicePos(inv: { poNumber?: string; rawText: string } | undefin
   return set;
 }
 
+/**
+ * The orders a PAID invoice may close: the explicit link always; an order number read from the
+ * supplier's own text only when that order belongs to the same supplier (or isn't on our books).
+ * Stops one supplier's text from marking another supplier's order as paid.
+ */
+export function trustedInvoicePos(
+  inv: { poNumber?: string; rawText: string; supplierName: string } | undefined,
+  s: Pick<State, "purchaseOrders" | "suppliers">,
+): Set<string> {
+  const set = new Set<string>();
+  if (!inv) return set;
+  if (inv.poNumber) set.add(inv.poNumber);
+  const fromText = readPoNumber(inv.rawText);
+  if (fromText && !set.has(fromText)) {
+    const po = s.purchaseOrders.find((o) => o.poNumber === fromText);
+    const owner = po ? s.suppliers.find((x) => x.id === po.supplierId) : undefined;
+    if (!po || (owner && sameSupplierName(owner.name, inv.supplierName))) set.add(fromText);
+  }
+  return set;
+}
+
 /** "Mzansi Catering (Pty) Ltd" and " mzansi  catering " are the same supplier. */
 export function sameSupplierName(a: string, b: string): boolean {
   const norm = (x: string) =>
@@ -165,7 +186,7 @@ export function duplicateReason(p: Proposal, s: State): string | null {
   // on BOTH sides: a prior payment's orders come from what was recorded AND from its own invoice record.
   const pos = invoicePos(inv);
   const priorPos = (x: Prior) => {
-    const set = invoicePos(s.invoices.find((o) => o.id === x.invoiceId));
+    const set = trustedInvoicePos(s.invoices.find((o) => o.id === x.invoiceId), s);
     if (x.poNumber) set.add(x.poNumber);
     return set;
   };

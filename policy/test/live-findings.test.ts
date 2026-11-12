@@ -80,3 +80,17 @@ test("review: supplier names compare loosely ('(Pty) Ltd', case, spacing)", asyn
   assert.ok(!sameSupplierName("Mzansi Catering", "Mzansi Cleaning"));
   assert.ok(!sameSupplierName("(Pty) Ltd", "Ltd"), "empty after normalising never matches");
 });
+
+test("review: one supplier's text naming ANOTHER supplier's order doesn't close that order", async () => {
+  const h = makeApp();
+  // A Mzansi invoice that (wrongly or maliciously) mentions Khaya's order PO-1002 in its text.
+  await h.call("POST", "/invoices", "operator", { id: "inv-060", supplierName: "Mzansi Catering", rawText: "Lunch packs, ref PO-1002, total USD 20.00" });
+  assert.equal((await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-060", to: A(), amount: rl("20.00") }))).json.decision, "cosigned_submitted");
+  const po = (await h.call("GET", "/purchase-orders", "operator")).json.find((o: { poNumber: string }) => o.poNumber === "PO-1002");
+  assert.equal(po.status, "open", "Khaya's order stays open");
+  // Khaya's real invoice for PO-1002 is still payable (held only because it's above the ask-me limit).
+  await h.call("POST", "/invoices", "operator", { id: "inv-003", supplierName: "Khaya Print & Stationery", rawText: "Invoice no: KPS-0937\nYour order: PO-1002", poNumber: "PO-1002" });
+  const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-003", to: W.supplierB.classicAddress, amount: rl("45.00") }));
+  assert.equal(r.json.decision, "held_for_human");
+  assert.doesNotMatch(r.json.reasons.join(" "), /repeat/);
+});

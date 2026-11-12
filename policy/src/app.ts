@@ -4,7 +4,7 @@ import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { isValidClassicAddress } from "xrpl";
 import { type Amount, toMinor, formatAmount, sameAmount, fromLedgerAmount } from "./amount.ts";
-import { evaluate, sastDay, readReference, invoicePos, type RulesConfig } from "./rules.ts";
+import { evaluate, sastDay, readReference, trustedInvoicePos, type RulesConfig } from "./rules.ts";
 import type { Ledger } from "./ledger.ts";
 import type { Store } from "./store.ts";
 import { seedState } from "./seed.ts";
@@ -284,7 +284,7 @@ export function createApp(d: AppDeps) {
     if (inv) {
       inv.status = "paid";
       // Mark every order this invoice points at (agent link AND the policy's own reading of the text).
-      for (const n of invoicePos(inv)) {
+      for (const n of trustedInvoicePos(inv, s)) {
         const po = s.purchaseOrders.find((o) => o.poNumber === n);
         if (po) po.status = "paid";
       }
