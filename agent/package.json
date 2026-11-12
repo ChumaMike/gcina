@@ -1,0 +1,25 @@
+{
+  "name": "gcina-agent",
+  "version": "1.0.0",
+  "description": "Gcina accounts-payable agent: reads supplier invoices, half-signs XRPL payments, asks the policy co-signer",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "agent": "tsx src/run.ts",
+    "inbox": "tsx scripts/simulate-inbox.ts",
+    "extract-fixtures": "tsx scripts/extract-fixtures.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "dotenv": "^18.0.10",
+    "xrpl": "^5.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

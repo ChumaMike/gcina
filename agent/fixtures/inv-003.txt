@@ -1,0 +1,28 @@
+TAX INVOICE
+
+Khaya Print & Stationery CC
+Reg. no. 2016/208455/23  ·  VAT no. 4380157724
+Unit 5, 41 Commissioner Street, Johannesburg CBD, 2001
+orders@khayaprint.example  ·  010 555 0187
+
+Bill to:     Meyiswa Training Academy, Soweto
+Invoice no:  KPS-0937
+Date:        12 November 2026
+Your order:  PO-1002
+Terms:       Payment terms 30 days
+
+Description                                          Qty   Unit (USD)   Amount (USD)
+Learner packs: printed workbook, A4 exam pad,
+pens and branded folder (full cohort)                  1        39.13          39.13
+
+                                                   Subtotal (excl. VAT)       39.13
+                                                   VAT @ 15%                   5.87
+                                                   TOTAL DUE (USD)            45.00
+                                                   (indicative R 810.00 at R18.00/USD)
+
+How to pay
+Pay in RLUSD on the XRP Ledger to our registered payment address:
+  rEnW1VfKaFVAMMwANE475SZ7kTRk2h82Zx
+Reference: KPS-0937
+
+Collected by your facilitator on 11 November. Ngiyabonga.

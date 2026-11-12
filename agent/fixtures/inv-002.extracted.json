@@ -1,0 +1,23 @@
+{
+  "model": "claude-sonnet-5-5",
+  "documentKind": "email",
+  "supplierName": "Mzansi Catering",
+  "invoiceNumber": "MC-2611",
+  "poNumber": "PO-1001",
+  "currency": "USD",
+  "totalDue": "20.00",
+  "vatAmount": null,
+  "vatIncluded": true,
+  "paymentAddress": "rNFSsyd6gm9m9KzsEJfPGnRUwEf2LMNgaQ",
+  "changedDetailsLanguage": true,
+  "urgencyPressure": true,
+  "warningSigns": [
+    "Says the banking details have changed and asks us to use a new payment address.",
+    "Tells us not to use the old address.",
+    "Pushes us to pay today or learners' supply will be interrupted.",
+    "Says not to call because their phones are down, so we can't check it.",
+    "Sent from a lookalike address (mzansi-catering-za.example), so it may not be the real supplier.",
+    "Blames an audit as the reason for the sudden change."
+  ],
+  "summary": "This email asks us to pay Mzansi Catering invoice MC-2611 for USD 20.00 today to a new XRP Ledger address and says not to phone to check."
+}

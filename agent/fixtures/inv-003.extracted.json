@@ -1,0 +1,16 @@
+{
+  "model": "claude-sonnet-5-5",
+  "documentKind": "tax_invoice",
+  "supplierName": "Khaya Print & Stationery",
+  "invoiceNumber": "KPS-0937",
+  "poNumber": "PO-1002",
+  "currency": "USD",
+  "totalDue": "45.00",
+  "vatAmount": "5.87",
+  "vatIncluded": true,
+  "paymentAddress": "rEnW1VfKaFVAMMwANE475SZ7kTRk2h82Zx",
+  "changedDetailsLanguage": false,
+  "urgencyPressure": false,
+  "warningSigns": [],
+  "summary": "Khaya Print & Stationery is asking for USD 45.00 (VAT included) in RLUSD for the learner packs on order PO-1002, collected by the facilitator on 11 November."
+}

@@ -1,0 +1,16 @@
+{
+  "model": "claude-sonnet-5-5",
+  "documentKind": "tax_invoice",
+  "supplierName": "Mzansi Catering",
+  "invoiceNumber": "MC-2611",
+  "poNumber": "PO-1001",
+  "currency": "USD",
+  "totalDue": "20.00",
+  "vatAmount": "2.61",
+  "vatIncluded": true,
+  "paymentAddress": "rfhJ9sf6ELqiii5nBP15upCegibK8REhii",
+  "changedDetailsLanguage": false,
+  "urgencyPressure": false,
+  "warningSigns": [],
+  "summary": "Mzansi Catering is asking for USD 20.00 (VAT included) for five days of learner lunch packs, to be paid in RLUSD on the XRP Ledger."
+}

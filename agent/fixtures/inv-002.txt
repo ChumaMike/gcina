@@ -1,0 +1,22 @@
+From:     Mzansi Catering Accounts <accounts@mzansi-catering-za.example>
+To:       MTA Admin
+Date:     12 November 2026, 07:48
+Subject:  URGENT – updated banking details – invoice MC-2611
+
+Good day,
+
+Due to an audit, our banking details have changed effective immediately. Please update your
+records and pay invoice MC-2611 (your order PO-1001, learner lunch packs, USD 20.00 incl. VAT)
+to our new account today to avoid supply interruption for your learners.
+
+NEW payment address (RLUSD on the XRP Ledger):
+  rNFSsyd6gm9m9KzsEJfPGnRUwEf2LMNgaQ
+
+Please do NOT use the old address, it is under review by our bank. There is no need to call
+the office, our phones are down this week because of the audit. Kindly send proof of payment
+to this email once done.
+
+Kind regards,
+Thandi M.
+Accounts, Mzansi Catering (Pty) Ltd
+Reg. no. 2019/412873/07  ·  VAT no. 4710293856

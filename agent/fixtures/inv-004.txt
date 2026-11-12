@@ -1,0 +1,35 @@
+From:     Facilitator, Cohort 3 <facilitator.c3@mta.example>
+To:       MTA Admin
+Date:     12 November 2026, 15:20
+Subject:  Fwd: Mzansi lunches – please pay
+
+Hi Admin, Mzansi asked me to pass this on, please pay them for the lunches. Thanks!
+
+---------- Forwarded invoice ----------
+TAX INVOICE
+
+Mzansi Catering (Pty) Ltd
+Reg. no. 2019/412873/07  ·  VAT no. 4710293856
+22 Khumalo Street, Orlando West, Soweto, 1804
+accounts@mzansicatering.example  ·  011 555 0142
+
+Bill to:     Meyiswa Training Academy, Soweto
+Invoice no:  MC-2611
+Date:        12 November 2026
+Your order:  PO-1001
+Terms:       Payment terms 30 days
+
+Description                                          Qty   Unit (USD)   Amount (USD)
+Learner lunch packs, 9–13 Nov 2026 (5 days)            1        17.39          17.39
+
+                                                   Subtotal (excl. VAT)       17.39
+                                                   VAT @ 15%                   2.61
+                                                   TOTAL DUE (USD)            20.00
+                                                   (indicative R 360.00 at R18.00/USD)
+
+How to pay
+Pay in RLUSD on the XRP Ledger to our registered payment address:
+  rfhJ9sf6ELqiii5nBP15upCegibK8REhii
+Reference: MC-2611
+
+Thank you for your business. Siyabonga!
