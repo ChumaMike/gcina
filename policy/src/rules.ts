@@ -212,6 +212,11 @@ export function duplicateReason(p: Proposal, s: State): string | null {
   for (const po of pos) {
     const byPo = priors.find((x) => priorPos(x).has(po));
     if (byPo || s.purchaseOrders.find((o) => o.poNumber === po)?.status === "paid") {
+      // Same order, but the money is now meant to go somewhere else: name the fraud first, so a fake
+      // "our banking details changed" bill doesn't read like an innocent repeat.
+      if (byPo && byPo.destination !== p.destination) {
+        return `This bill asks to pay a different account from the one ${byPo.invoiceId} was paid to. Possible changed-banking-details fraud. Order ${po} has also been paid already (${byPo.invoiceId}, ${paidWhen(byPo)}).`;
+      }
       return byPo
         ? `Looks like a repeat of ${byPo.invoiceId}, ${paidWhen(byPo)}: order ${po} has already been paid.`
         : `Looks like a repeat: order ${po} has already been paid.`;

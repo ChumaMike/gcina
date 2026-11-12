@@ -16,7 +16,7 @@ test("[review 1] order already paid → refused even for a DIFFERENT amount and 
   await h.invoice("inv-004", "Khaya Print & Stationery", "PO-1001", "different text entirely");
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-004", to: B(), amount: rl("19.00") }));
   assert.equal(r.json.decision, "rejected");
-  assert.match(r.json.reasons[0], /order PO-1001 has already been paid/);
+  assert.match(r.json.reasons[0], /[Oo]rder PO-1001 has (already been paid|also been paid already)/);
 });
 
 test("[review 1] identical invoice text check is back (no reference, no PO)", async () => {

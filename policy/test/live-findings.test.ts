@@ -31,7 +31,7 @@ test("live finding: the fake re-sent invoice to a new address is REFUSED as a re
   const h = await paidInv001();
   const r = await h.call("POST", "/proposals", "agent", proposal({ invoiceId: "inv-002", to: FRAUD(), amount: rl("20.00") }));
   assert.equal(r.json.decision, "rejected");
-  assert.match(r.json.reasons[0], /repeat of inv-001/);
+  assert.match(r.json.reasons[0], /different account.*changed-banking-details fraud.*inv-001/);
   assert.equal((await h.call("GET", "/approvals?status=pending", "operator")).json.length, 0, "nothing for the owner to approve by mistake");
   assert.equal(h.ledger.submitted.length, 1, "only inv-001 was ever submitted");
 });
