@@ -54,6 +54,8 @@ Deck order (Chuma, 12 Nov): slides 1–3 → live demo → slides 4–6. Full sl
 | **4:20–5:00** | Slide 6 script (rands in, rands out, bookkeepers, R149–R299 aiming, UDAX ask). "The agent pays. The ledger keeps. Thank you." | Slide 6. Stay on it for Q&A. |
 
 If the time is short, cut in this order: Demo 5 (fire) → Demo 3c (hidden instruction) → slide 4 to one line.
+End of the demo (before slide 4), if there's a second: point at the Overview card **"Gcina stopped … for you so far"**
+(live number, read it off the screen, never quote it from memory): "That's money that never left."
 Limits: say in Demo 4 if there's a second: "The limits are the owner's; the agent can read them, never change them."
 
 **Judge mode** (W4): the judge's login can only view and approve or reject held payments; limits, suppliers, reset
