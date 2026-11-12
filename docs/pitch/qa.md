@@ -36,8 +36,9 @@ Be honest: the ledger's guarantee covers the payment decision; the last step to 
 payout provider such as Stitch or Peach) happens off-ledger. *(03-competitors.md §D point 4.)*
 
 ### 7. Who pays you, and how much?
-**[R?/Chuma? pricing from 00-verdict.md GTM.]** Draft: a monthly fee per business plus a small
-fee per payment, sold mainly through bookkeepers who manage accounts payable for many small businesses.
+The business pays an add-on of about R149–R299 a month, roughly a quarter of what it already pays for Xero,
+and bookkeepers get a practice tier priced per client file. It's an early estimate we're testing with our
+design partner and accounting practices, anchored on one fraud loss costing far more than a year of Gcina. *(02b §6: inference, not data. **[Chuma? confirm]**)*
 
 ### 8. Why would a kota shop owner trust an AI with money?
 He doesn't have to trust it: it can only pay approved suppliers, within limits he sets, and anything
@@ -67,6 +68,11 @@ custodian), and a changed bank account can only get past it with the owner's key
 
 ### 12. Who's your customer, and have you spoken to them?
 Our first design partner is a food business owner we already work with, Gumede at Kota~tainment (say this openly: he's a connected party), and our buyer is the bookkeeper who runs payments for 10–30 small clients. **[R? 02-customer.md: what he told us: how he pays suppliers, has he seen fake banking-details invoices, what limits he'd set, would he pay for it.]**
+
+### 13. "Gcina" is already a funeral-cover brand in SA. Isn't that a problem?
+Yes, we found it: an FSCA-registered funeral-cover product trades as Gcina, so it's fine as a hackathon name
+but we'd launch under a compound name such as "Gcina Pay" after a trade-mark search. The word means "keep,
+protect", which is exactly the job. *(02b Part 2)*
 
 ---
 

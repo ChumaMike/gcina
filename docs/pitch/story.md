@@ -4,7 +4,11 @@
 > from `docs/research/`, and **[EV?]** waits for a hash or result in `docs/demo-evidence.md`. Nothing marked
 > goes on stage or into the README until it is filled from a source.
 
-*Gcina* (isiZulu/isiXhosa: "keep, protect").
+*Gcina* (isiZulu/isiXhosa: "keep, protect"). Say it "GEE-nah" (the "Gc" is a soft click).
+
+> **Name risk (02b Part 2): CAUTION.** An FSCA-registered funeral-cover brand already trades as "Gcina" on
+> gcina.co.za. Fine for the hackathon; before any public launch, use a compound such as "Gcina Pay" and do a
+> trade-mark search. Have this answer ready if a judge asks.
 
 ## One line
 
@@ -112,7 +116,10 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
 2. **Channel**: bookkeepers and accountants who already run accounts payable for many small businesses.
    One sale to a bookkeeper brings many client businesses (R's working range: ~10–30), and they prepare the
    EFTs, so they already feel the fraud risk. **[R? sourced number from 02b-segments-and-name.md]**
-3. **Pricing**: **[R?/Chuma? a monthly fee per business + a small per-payment fee. Needs a source-backed number or Chuma's decision.]**
+3. **Pricing** (R's inference in 02b §6, not data): an add-on at **R149–R299 a month** per business, about
+   20–35% of what an SA small business already pays Xero (R485–R857/month), and well under BILL's ~$49/user
+   in the US. Plus a **practice tier priced per client file** for bookkeepers. Test it with Gumede and 3–5 practices.
+   **[Chuma? confirm the number to say on stage]**
 4. **Rails**: testnet RLUSD today → mainnet RLUSD with a licensed SA partner (e.g. VALR / Yellow Card)
    to get suppliers paid in rands. **[R? confirm each partner's XRPL / RLUSD status + licensing]**
 5. **Expansion**: same guardrails for payroll runs, stokvel/co-op payouts, and cross-border supplier
