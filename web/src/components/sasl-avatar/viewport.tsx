@@ -4,18 +4,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import type { createAvatarScene, ViewOptions } from "./scene";
 
-export function AvatarViewport({ paused, reduced, demo, slow }: ViewOptions) {
+export function AvatarViewport({ paused, reduced, demo, slow, speaking }: ViewOptions) {
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<ReturnType<typeof createAvatarScene> | null>(null);
-  const currentOptions = useRef({ paused, reduced, demo, slow });
+  const currentOptions = useRef({ paused, reduced, demo, slow, speaking });
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
   const description = useId();
 
   useEffect(() => {
-    currentOptions.current = { paused, reduced, demo, slow };
+    currentOptions.current = { paused, reduced, demo, slow, speaking };
     scene.current?.setOptions(currentOptions.current);
-  }, [paused, reduced, demo, slow]);
+  }, [paused, reduced, demo, slow, speaking]);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,7 +24,7 @@ export function AvatarViewport({ paused, reduced, demo, slow }: ViewOptions) {
       if (cancelled || !host.current) return;
       scene.current = createAvatarScene(host.current, () => setStatus("error"));
       scene.current.setOptions(currentOptions.current);
-      setStatus("ready");
+      return scene.current.ready.then(() => { if (!cancelled) setStatus("ready"); });
     }).catch(() => { if (!cancelled) setStatus("error"); });
     return () => {
       cancelled = true;
@@ -48,7 +48,7 @@ export function AvatarViewport({ paused, reduced, demo, slow }: ViewOptions) {
         aria-describedby={description}
         className="relative h-full w-full cursor-grab touch-pan-y rounded-2xl outline-offset-[-3px] focus-visible:outline-2 focus-visible:outline-teal-700 active:cursor-grabbing"
       />
-      <span id={description} className="sr-only">A front-facing human character wearing a teal polo, with articulated hands. Drag horizontally or use left and right arrow keys to turn slightly. Home resets the view. Movement is a rig demonstration, not South African Sign Language.</span>
+      <span id={description} className="sr-only">A front-facing human character wearing a teal uniform, with articulated hands. Drag horizontally or use left and right arrow keys to turn slightly. Home resets the view. Movement is a rig demonstration, not South African Sign Language.</span>
       {status !== "ready" && (
         <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#e5efeb] px-8 text-center text-sm text-teal-950">
           <p>{status === "loading" ? "Preparing your avatar…" : "The 3D preview is unavailable. You can still select and read page text below."}</p>

@@ -175,6 +175,21 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     }
     await page.keyboard.press('Escape');
 
+    // The GLB is new in V2: closing during an in-flight load must not revive it.
+    await page.route('**/avatars/gcina-v2.glb', async route => {
+      await delay(350);
+      try { await route.continue(); } catch { /* Closing legitimately aborts the request. */ }
+    });
+    await button('Sign language preview').click();
+    await page.getByText('Preparing your avatar…').waitFor();
+    await page.keyboard.press('Escape');
+    await delay(500);
+    assert.equal(await page.locator('canvas').count(), 0, 'late model load must not revive a closed viewer');
+    await page.unroute('**/avatars/gcina-v2.glb');
+    await open();
+    assert.equal(await page.locator('canvas').count(), 1);
+    await page.keyboard.press('Escape');
+
     // Real mobile viewport/touch context, plus compact and landscape layouts.
     const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, storageState: await context.storageState() });
     const phone = await mobile.newPage();

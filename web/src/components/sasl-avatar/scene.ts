@@ -1,17 +1,19 @@
 import * as THREE from "three";
-import { createAvatar } from "./rig";
+import { createSoftwareSkinning } from "./software-skinning";
+import { createAvatar, type RigInspection } from "./rig";
 
-export type ViewOptions = { paused: boolean; reduced: boolean; demo: boolean; slow: boolean };
+export type ViewOptions = { paused: boolean; reduced: boolean; demo: boolean; slow: boolean; speaking?: boolean };
+export type AvatarView = "portrait" | "face" | "left" | "right" | "side";
 
 /** Owns every GPU resource, listener and scheduled frame for one open preview. */
-export function createAvatarScene(host: HTMLElement, onError: () => void) {
+export function createAvatarScene(host: HTMLElement, onError: () => void, source?: string | ArrayBuffer) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.25;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.VSMShadowMap;
+  renderer.toneMappingExposure = 1.05;
+  // Broad studio lights provide soft form shading without self-shadow artefacts.
+  renderer.shadowMap.enabled = false;
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.setAttribute("aria-hidden", "true");
   renderer.domElement.style.cssText = "display:block;width:100%;height:100%;";
@@ -19,24 +21,20 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 30);
-  const avatar = createAvatar();
-  avatar.root.traverse((object) => {
-    if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; }
+  const abort = new AbortController();
+  let avatar: Awaited<ReturnType<typeof createAvatar>> | undefined;
+  const ready = createAvatar(source, abort.signal).then((loaded) => {
+    if (lost) { loaded.dispose(); throw new Error("WebGL context lost while loading"); }
+    avatar = loaded;
+    scene.add(avatar.root);
+    avatar.root.traverse((object) => {
+      if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; }
+    });
+    pose(); resize(); schedule();
   });
-  scene.add(avatar.root);
-  scene.add(new THREE.HemisphereLight(0xe6f5ff, 0x756353, 2.5));
+  scene.add(new THREE.HemisphereLight(0xe6f5ff, 0x756353, 2.0));
   const key = new THREE.DirectionalLight(0xffe7d1, 2.7);
   key.position.set(-3, 5, 5);
-  key.castShadow = true;
-  key.shadow.mapSize.set(512, 512);
-  key.shadow.radius = 4;
-  key.shadow.blurSamples = 6;
-  key.shadow.camera.left = key.shadow.camera.bottom = -2;
-  key.shadow.camera.right = key.shadow.camera.top = 2;
-  key.shadow.camera.near = 0.5;
-  key.shadow.camera.far = 12;
-  key.shadow.bias = -0.0003;
-  key.shadow.normalBias = 0.015;
   key.target.position.set(0, 1.2, 0);
   scene.add(key.target);
   scene.add(key);
@@ -48,16 +46,20 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
   scene.add(rim);
 
   let options: ViewOptions = { paused: false, reduced: false, demo: false, slow: false };
+  let software: ReturnType<typeof createSoftwareSkinning> | undefined;
+  let view: AvatarView = "portrait", inspection: RigInspection | undefined;
   let disposed = false, lost = false, visible = true;
   let raf = 0, elapsed = 0, last = 0, lastDraw = 0;
   let yaw = 0, targetYaw = 0;
   let qualitySamples = 0, qualityStart = 0, economical = false;
   let pointer: { id: number; x: number; yaw: number } | null = null;
-  const canAnimate = () => !disposed && !lost && visible && !document.hidden && !options.paused && !options.reduced;
+  const canAnimate = () => !disposed && !lost && visible && !document.hidden && !options.paused && !options.reduced && !!avatar;
 
   function draw() {
     if (disposed || lost || document.hidden || !visible) return;
-    avatar.root.rotation.y = yaw;
+    if (!avatar) return;
+    avatar.root.rotation.y = (view === "side" ? Math.PI / 2 : 0) + yaw;
+    if (software) { avatar.root.updateMatrixWorld(true); software.update(); }
     renderer.render(scene, camera);
   }
   function frame(now: number) {
@@ -71,9 +73,10 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
         // A slow GPU/software renderer keeps the same model and animation at
         // native resolution, without the extra shadow/blur passes.
         economical = true;
+        software = createSoftwareSkinning(avatar!.meshes);
         renderer.shadowMap.enabled = false;
         key.castShadow = false;
-        avatar.root.traverse((object) => {
+        avatar!.root.traverse((object) => {
           if (object instanceof THREE.Mesh) {
             const materials = Array.isArray(object.material) ? object.material : [object.material];
             materials.forEach((material) => { material.needsUpdate = true; });
@@ -87,10 +90,15 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
       lastDraw = now;
       elapsed += dt * (options.slow ? 0.58 : 1);
       yaw = THREE.MathUtils.damp(yaw, targetYaw, 12, dt);
-      avatar.update(elapsed, options.demo, false);
+      pose();
       draw();
     }
     raf = requestAnimationFrame(frame);
+  }
+  function pose() {
+    const speaking = options.speaking && !options.paused && !options.reduced;
+    const envelope = speaking ? 0.2 + 0.8 * Math.abs(Math.sin(elapsed * 10.2) * Math.sin(elapsed * 6.4 + 0.5)) : 0;
+    avatar?.update(elapsed, options.demo, options.reduced, envelope, inspection);
   }
   function schedule() {
     cancelAnimationFrame(raf);
@@ -107,9 +115,18 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
     camera.aspect = width / height;
     // Fit both the full head and the entire hand workspace at narrow aspect ratios.
     const verticalFov = THREE.MathUtils.degToRad(camera.fov / 2);
-    const distance = Math.max(1.52 / Math.tan(verticalFov), 1.12 / (Math.tan(verticalFov) * camera.aspect));
-    camera.position.set(0, 1.08, distance + 0.25);
-    camera.lookAt(0, 1.08, 0);
+    const distance = Math.max(1.22 / Math.tan(verticalFov), 1.18 / (Math.tan(verticalFov) * camera.aspect));
+    camera.position.set(0, 1.13, distance + 0.25);
+    camera.lookAt(0, 1.13, 0);
+    if (view === "face") {
+      camera.position.set(0, 1.84, Math.max(1.2, .35 / (Math.tan(verticalFov) * camera.aspect)) + .2);
+      camera.lookAt(0, 1.84, .08);
+    } else if ((view === "left" || view === "right") && avatar) {
+      const box = avatar.bounds(view), center = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+      const handDistance = Math.max(size.y * .65 / Math.tan(verticalFov), size.x * .65 / (Math.tan(verticalFov) * camera.aspect));
+      camera.position.copy(center).add(new THREE.Vector3(0, .03, handDistance + size.z * .5 + .15));
+      camera.lookAt(center);
+    }
     camera.updateProjectionMatrix();
     draw();
   }
@@ -160,15 +177,23 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
   schedule();
 
   return {
+    ready,
+    setView(next: AvatarView) {
+      view = next; yaw = targetYaw = 0;
+      if (avatar) avatar.root.rotation.y = next === "side" ? Math.PI / 2 : 0;
+      resize();
+    },
+    setInspection(next?: RigInspection) { inspection = next; pose(); resize(); },
     setOptions(next: ViewOptions) {
       options = next;
-      if (next.reduced) avatar.update(0, false, true);
+      if (next.reduced || !next.speaking) pose();
       draw();
       schedule();
     },
     resetView() { turn(0); },
     dispose() {
       disposed = true;
+      abort.abort();
       cancelAnimationFrame(raf);
       observer.disconnect();
       intersection.disconnect();
@@ -180,7 +205,8 @@ export function createAvatarScene(host: HTMLElement, onError: () => void) {
       host.removeEventListener("lostpointercapture", up);
       host.removeEventListener("keydown", keydown);
       renderer.domElement.removeEventListener("webglcontextlost", contextLost);
-      avatar.dispose();
+      software?.dispose();
+      avatar?.dispose();
       key.shadow.map?.dispose();
       key.shadow.mapPass?.dispose();
       renderer.dispose();
