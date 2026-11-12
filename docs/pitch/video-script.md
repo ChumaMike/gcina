@@ -31,7 +31,7 @@
 | 7 | 1:55–2:15 | `Phone`: inv-003 Khaya Print & Stationery, R 810, above the limit → Approve → confirm sheet → paid + explorer link | "Bigger payments come to the owner. Khaya Print & Stationery, R 810: above the owner's limit, so they approve it from their phone, and it's paid." | 👤 Owner approves from the phone |
 | 8 | 2:15–2:23 | Limits screen: change "ask me above", save, show "The agent can't change these." | "The limits are his. He can change them any time. The agent can read them, but never change them." | Limits set by a human, outside the agent |
 | 9 | 2:23–2:36 | How it works screen (diagram) | "How? The agent's account has no single key. Agent: one vote. Policy service: one vote. Owner's offline key: two. The ledger needs two." | Agent 1 + Policy 1 = 2 ✓ · Agent alone = 1 ✗ |
-| 10 | 2:36–2:46 | End card: GitHub repo URL, "Built on the XRP Ledger testnet", team names | "Gcina. The agent pays. The ledger keeps. We start with businesses like MTA, and grow through the bookkeepers who pay suppliers for them." | github.com/**[repo?]** |
+| 10 | 2:36–2:46 | End card: github.com/ChumaMike/gcina · gcina.vercel.app, "Built on the XRP Ledger testnet", team names | "Gcina. The agent pays. The ledger keeps. We start with businesses like MTA, and grow through the bookkeepers who pay suppliers for them." | github.com/**[repo?]** |
 
 **Runtime check**: 2:46. If an edit runs long, cut shot 8 down to 5 s first, then trim shot 3.
 

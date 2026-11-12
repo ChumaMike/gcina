@@ -13,6 +13,7 @@ by a fake "our banking details have changed" invoice.
 
 Built for the **W3Node Node Engine Hackathon 2026**, **Agentic Finance track (Ripple / XRPL)**.
 
+- 💻 Code: https://github.com/ChumaMike/gcina
 - 🎥 Demo video (≤ 3 min): **[link?]**
 - 🖥️ Operator dashboard (testnet): **https://gcina.vercel.app** (demo passcode on request)
 - 🛡️ Policy co-signer API (testnet): https://gcina-policy.vercel.app/health
