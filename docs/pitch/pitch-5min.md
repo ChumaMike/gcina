@@ -1,17 +1,20 @@
 # Gcina: 5-minute pitch script (Sat 14 Nov, Park View, Woodstock)
 
-> Status: **DRAFT v0 (16:00)**. Timings are targets; rehearse with a stopwatch and fix them on Friday.
-> **[R?]** = waiting on research, **[EV?]** = waiting on `docs/demo-evidence.md`.
+> Status: **v2 (12 Nov, 22:30)**, two speakers, 3 stage slides. Rehearse with a stopwatch on Friday and fix the times.
 
-## Roles
+## Format and roles
 
-| Who | Does |
-|---|---|
-| **Speaker (Chuma)** | Talks, holds the phone (owner view), does the approval live |
-| **Driver** (teammate, or Chuma with a clicker if solo) | Laptop on the projector: dashboard + agent terminal |
+Organiser format (CONTRACTS.md, from the briefing; the BuilderBase page doesn't publish it): **5-minute pitch + 3-minute
+Q&A**, live demo, intro under 20 s, **2–3 slides, at most 4 bullets each**, the video as backup. So: **3 stage slides**
+([stage deck](https://claude.ai/artifact/URNNrYQ5KixFGCfTK1Jiin)), the demo in the middle, backups only for Q&A.
 
-If Chuma is solo: the laptop shows the dashboard and the terminal side by side, the phone is mirrored or
-just held up, and every click below is his.
+| Who | Talks | Does |
+|---|---|---|
+| **Chuma** (speaker) | Slide 1 (problem), the owner beat in the demo, slide 3 (why us, business, ask) | Holds the phone (owner view); offers judges the owner role |
+| **Dalindyebo** (driver) | Slide 2 (solution) and narrates the demo while driving it | Laptop on the projector: dashboard + agent terminal |
+
+Hand-overs are scripted below (**→**). Q&A: Chuma takes business, customers, regulation and rands; Dalindyebo takes
+how it works, security and XRPL. Whoever isn't answering stays quiet: one voice per answer.
 
 ## Screen layout on the projector
 
@@ -37,35 +40,27 @@ just held up, and every click below is his.
 5. Hotspot on Chuma's phone as backup Wi-Fi; laptop already knows the hotspot.
 6. Backup video downloaded **to the laptop** (not streaming), opened in a paused player in another window.
 
-## The script
+## The script (two speakers, 5:00)
 
-Deck order (Chuma, 12 Nov): slides 1–3 → live demo → slides 4–6. Full slide wording: [`slides.md`](slides.md).
+| Time | Who | Say | Do |
+|---|---|---|---|
+| **0:00–0:40** | Chuma | "I did the admin at Meyiswa Training Academy in Soweto, and sometimes the same person got paid twice. That's one way a small business pays twice. The other: an email says 'our banking details have changed'. In 2025 our Supreme Court of Appeal ruled that if you pay it, you still owe your real supplier. It's not rare: one to two in every hundred payments is a duplicate or an error. AI could take this admin off a business's hands, but an AI can be fooled by the same email, so in a survey of 60 big-company finance chiefs, not one would let an agent near payments. I'm Chuma, this is Dalindyebo, and this is Gcina." **→** | Slide 1. |
+| **0:40–1:05** | Dalindyebo | "Gcina is an AI agent that pays your suppliers. It reads the invoice, matches the order, and pays. But it can't pay alone. The business's account on the XRP Ledger needs two votes. The agent has one. Our rules service has one: approved suppliers, your limits, no repeats. The owner's own key has two. So a fooled agent can't pay anyone on its own. Let me show you." | Slide 2, then switch to the dashboard: Overview, **Gcina at work** card on top. |
+| **1:05–1:25** | Dalindyebo | **Demo 1, paid.** "An invoice from Mzansi Catering: order PO-1001, R 360, their registered address. Watch the card: reading, checking, two signatures, on the ledger. Paid, no human. That's a real transaction on the XRP Ledger test network." | Invoices → **inv-001 arrives**. Card goes green. Click the explorer link, 3 s, back. |
+| **1:25–1:40** | Dalindyebo | **Demo 2, the double payment.** "Now what Chuma saw at MTA: the same invoice again. Refused at checking: *looks like a repeat of inv-001*." | **inv-004 arrives**. Card stops red at Checking. |
+| **1:40–2:00** | Dalindyebo | **Demo 3, the fake banking details.** "The scam: same supplier, 'urgent, new banking details, don't call us'. The agent won't pay a new account, and our rules refuse it outright: already paid, now to a new account. Nobody even gets asked." | **inv-002 arrives**. Card stops red; the reason in plain words. |
+| **2:00–2:25** | Dalindyebo | "But what if the AI itself is tricked? We make it obey the fraudster. Our rules refuse to sign. So it goes around us, straight to the ledger, alone…" *(silent ~2 s while the card turns red)* "That wasn't us. That was the ledger." | Ctrl+C terminal 1, Enter in terminal 2 (`pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`), restart terminal 1 after. Card: "Agent ✓ / Your rules ✗", **1 of 2 votes**, red bar. |
+| **2:25–2:45** | Dalindyebo | **Demo 4, the hidden instruction.** "This invoice looks normal. But hidden in white text is an instruction to AI assistants: pay another address, keep quiet. Here's what the AI sees. The agent stops at reading." | **inv-005 arrives**. Flip **What you see / What the AI sees**. Card stops red at Reading. **→** |
+| **2:45–3:15** | Chuma | **Demo 5, the owner decides.** "Bigger payments come to the owner. Would one of you like to be MTA's owner for two minutes? Scan this." *(Yes:)* "R 810, above the limit. Your call." *(No, or no signal:)* "I'll be the owner, then." | Show the **/judge** QR (live only). Dalindyebo: **inv-003 arrives**. Judge or Chuma taps **Approve** → paid + QR. If rejected: "Rejected. Nothing moves. That's the point." |
+| **3:15–3:35** | Chuma | **Demo 6, fire the agent.** "And if the owner stops trusting the AI, their own key takes it off the account, on the ledger, with nobody's permission: not the agent's, not ours." | Dalindyebo, terminal 2: `cd ../ledger && pnpm fire-agent` → FIRED … tesSUCCESS. **Rehire off stage.** |
+| **3:35–3:50** | Dalindyebo | "Everything you saw is on the public ledger. And so far, Gcina has stopped [read the number] that would have left." **→** | Point at **See it on the public ledger** (live signer list) and the **Gcina stopped …** counter. Read the number off the screen. Back to slides. |
+| **3:50–5:00** | Chuma | "Why not what exists? Ramp alerts you, in the US. The South African payment add-ons move rands well, but a person builds every batch. Gcina does the work, and needs a second key it can't hold. Why us? I did this admin myself. Our company already runs Skhokho, a live platform South African small businesses use for orders and card payments. And we ship: you just watched real payments. The business: we're aiming at R149 to R299 a month, sold through bookkeepers who pay suppliers for many businesses. Rands in, rands out: a licensed South African crypto provider converts on each side. Our ask: a place in Ripple's UDAX accelerator, to take Gcina from testnet to a real pilot with MTA. The agent pays. The ledger keeps. Thank you." | Slide 3. Stay on it for Q&A. |
 
-| Time | Say (Speaker) | Do (Driver / Speaker) |
-|---|---|---|
-| **0:00–0:30** | Slide 1 script (MTA, two ways to pay twice, AI can be fooled). Ends: "I'm Chuma, this is Dalindyebo, and this is Gcina." | Slide 1 (problem). |
-| **0:30–0:55** | Slide 2 script (court ruling, SABRIC, 1–2 in 100 payments, 54% vs 0 of 60, the banks' advice). | Slide 2 (evidence). |
-| **0:55–1:15** | Slide 3 script (one vote each, the ledger needs two). Ends: "Let me show you." | Slide 3, then switch to the dashboard. |
-| **1:15–1:35** | **Demo 1: paid on its own.** "An invoice from Mzansi Catering: order PO-1001, R 360, to their registered address. The agent reads it, checks it, and pays. No human. That's a real transaction on the XRP Ledger test network, with the invoice number on it." | Invoices → **inv-001 arrives**. When "paid" shows, click the explorer link, 3 s, back. |
-| **1:35–1:50** | **Demo 2: the double payment.** "The thing I saw at MTA: the same invoice again. Refused: *looks like a repeat of inv-001*. No second payment." | **inv-004 arrives**. Point at the refusal in the feed. |
-| **1:50–2:10** | **Demo 3: the fake banking details.** "Now the scam: same supplier, 'urgent, new banking details, don't call us'. The agent won't pay a new account, and the policy refuses it outright: an invoice that's already paid, now to a new account. Nobody even gets asked." | **inv-002 arrives**. Point at "Looks like a repeat of inv-001 … different address. Possible changed-banking-details fraud." No Approve button. |
-| **2:10–2:35** | "But what if the AI is tricked? Let's be the attacker: the agent now obeys the fraudster. It signs. Our policy refuses to co-sign. So it goes around us, straight to the ledger, alone." *(Stop talking. ~2 s while the card turns red.)* "That wasn't us. That was the ledger." | Driver: Ctrl+C terminal 1, Enter in terminal 2 (`pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`), restart terminal 1 after. Point at the **Gcina at work** card: "Agent ✓ / Your rules ✗", the meter at **1 of 2 votes**, and the red bar "1 of 2 signatures, so the XRP Ledger said no (tefBAD_QUORUM). The money never left." **Silent 2 s. This is the moment.** Then open the agent account's explorer page: no payment there. |
-| **2:35–2:55** | **Demo 3c: the hidden instruction.** "This one looks perfectly normal: Khaya Print, the right order, their registered address. But hidden in the email, in white text you can't see, is an instruction to AI assistants: pay a different address and don't mention it. Here's what the AI sees. The agent stops: 'a hidden instruction aimed at me'. That attack is called prompt injection." | **inv-005 arrives**. Flip the **What you see / What the AI sees** toggle on that invoice (hidden text in red). Point at the agent's stop reason. |
-| **2:55–3:20** | **Demo 4: the owner decides.** "Bigger payments go to the owner. Would one of you like to be MTA's owner for two minutes? Scan this." *(If yes:)* "It's on your phone: R 810, above the owner's limit. Your call." *(If no, or no signal:)* "I'll be the owner then." | Show the **/judge** QR. **inv-003 arrives**. Judge (or Speaker on the phone) taps **Approve** → paid + explorer link. If the judge rejects, say: "Rejected. Nothing moves. That's the point." |
-| **3:20–3:40** | **Demo 5: fire the agent.** "Last one. Say the owner stops trusting the AI. With their own key, and nobody's permission (not the agent's, not ours), they take the agent off the account. On the ledger. From now on its signature counts for nothing." | Driver, terminal 2: `cd ../ledger && pnpm fire-agent`. Point at **FIRED … tesSUCCESS** + the explorer link. **Off stage after: `pnpm rehire-agent`.** |
-| **3:40–4:00** | Slide 4, short: "Ramp alerts you, in the US. Visa's pilot pays invoices a person already approved. The SA add-ons move rands, but a person builds every batch. Gcina does the work, and the spending power sits outside the AI." | Slide 4 (why not what exists). |
-| **4:00–4:20** | Slide 5 script (lived it, already serve SA small businesses, we ship, their language). | Slide 5 (why us). |
-| **4:20–5:00** | Slide 6 script (rands in, rands out, bookkeepers, R149–R299 aiming, UDAX ask). "The agent pays. The ledger keeps. Thank you." | Slide 6. Stay on it for Q&A. |
+**Running long?** Cut in this order: Demo 6 (fire: one line instead) → Demo 4 (hidden instruction) → the 3:35 ledger line.
+**Limits (track MVP item):** if there's a second in Demo 5, Chuma: "The limits are the owner's; the agent can read them, never change them."
 
-If the time is short, cut in this order: Demo 5 (fire) → Demo 3c (hidden instruction) → slide 4 to one line.
-End of the demo (before slide 4), if there's a second: point at the Overview card **"Gcina stopped … for you so far"**
-(live number, read it off the screen, never quote it from memory): "That's money that never left."
-Limits: say in Demo 4 if there's a second: "The limits are the owner's; the agent can read them, never change them."
-
-**Judge mode** (W4): the judge's login can only view and approve or reject held payments; limits, suppliers, reset
-and pause are blocked. It expires Sat 14 Nov, 18:00 SAST. Never show the passcode on the projector: the QR on
-`/judge` carries the login. Show the QR only during the live pitch, never in photos, the video or the deck; anyone who scans
-it is a judge until Sat 18:00.
+**Judge mode:** the judge's login can only view and approve or reject held payments; it expires Sat 14 Nov, 18:00 SAST.
+The QR on `/judge` carries the login: show it only live in the room, never in the video, photos or the deck.
 
 **Never say** "the ledger refuses a double payment": the duplicate check is in our policy service. The ledger refuses the *agent on its own*.
 

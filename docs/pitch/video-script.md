@@ -1,6 +1,9 @@
-# Gcina: demo video script (target 2:45, hard cap 2:50)
+# Gcina: demo video script (target 2:48, hard cap 3:00)
 
-> Status: **DRAFT v0 (16:05)**. Record after the 23:00 full testnet run, or on Friday morning.
+**Voice: Chuma**, one voice for the whole video (first-hand story; recorded after the screen takes). Dalindyebo drives the
+screen recording. The limit is 3 minutes (CONTRACTS.md); we aim for 2:48 to leave room.
+
+> Status: **v2 (12 Nov, 22:30)**: matches the live dashboard (Gcina at work card, What the AI sees, judge-free). Record Friday morning.
 > Upload: YouTube **Unlisted** (or Drive, "anyone with the link"). Title: *Gcina: the agent pays, the ledger keeps (W3Node Node Engine 2026, Agentic Finance)*.
 
 ## Recording plan
@@ -21,21 +24,21 @@
 
 | # | Time | Scene / what's on screen | Voice-over | Caption (burned in) |
 |---|---|---|---|---|
-| 1 | 0:00–0:12 | Title card: **Gcina**, "The agent pays. The ledger keeps." Small: *W3Node Node Engine 2026 · Agentic Finance (Ripple)* | "I did the admin at Meyiswa Training Academy, a training academy in Soweto. Payments were approved by hand, and sometimes the same person got paid twice." | MTA, Soweto · double payments, first-hand |
-| 2 | 0:12–0:26 | A fake invoice email, full screen (inv-002 fixture text, styled) with "banking details have changed" highlighted | "And in 2025 our Supreme Court of Appeal ruled: pay a hacked invoice into a fraudster's account, and you still owe your supplier. Either way, you pay twice." | Supreme Court of Appeal, 2025 · *Intengo Imoto v Zoutpansberg* |
-| 3 | 0:26–0:30 | Dashboard Overview | "Gcina is an AI agent that pays your suppliers, and can't pay alone." | Gcina = AI accounts payable, with guardrails |
-| 4 | 0:30–0:48 | `Split`: inv-001 arrives → **Gcina at work** card goes Reading → Checking → Two signatures → On the ledger, all green → explorer link → `Explorer` | "Mzansi Catering, order PO-1001, R 360. The agent matches it to the order and the registered address, and pays it by itself on the XRP Ledger test network." | ✅ Paid on its own · real testnet transaction |
-| 4b | 0:48–0:57 | `Split`: inv-004 arrives → "Looks like a repeat of inv-001" | "The same invoice again, the MTA problem. Already paid, so it's refused." | ⛔ Duplicate refused |
-| 5 | 0:57–1:13 | `Split`: inv-002 arrives → agent won't pay → policy refuses it (feed line) | "Now the fake one: new banking details, urgent, don't call us. The agent won't pay a new account, and the policy refuses it outright: already paid, now to a new account." | 🛑 Refused: repeat of inv-001 to a new address |
-| 6 | 1:13–1:35 | Compromised run → zoom on the **Gcina at work** card: "Agent ✓ / Your rules ✗", meter **1 of 2 votes**, red bar "…the XRP Ledger said no (tefBAD_QUORUM). The money never left." Hold 2 s on the red bar with no voice. | "What if the AI itself is tricked? Here we force it to obey the fraudster. Our policy refuses. So it goes straight to the ledger alone…" *(2 s silence)* "That wasn't us. That was the ledger." | Compromised agent → rejected by the ledger itself |
-| 6b | 1:35–1:50 | inv-005: rendered email, then flip **What you see / What the AI sees** (white text in red) → agent's stop reason | "This invoice looks normal. Hidden in white text is an instruction to AI assistants: pay another address and keep quiet. The agent spots it and stops." | 🕵️ Hidden instruction caught (prompt injection) |
-| 7 | 1:50–2:08 | `Phone`: inv-003 Khaya Print & Stationery, R 810, above the limit → Approve → paid + explorer link | "Bigger payments go to the owner. R 810 is above their limit, so they approve it from their phone, and it's paid." | 👤 Owner approves from the phone |
-| 8 | 2:08–2:14 | Limits screen: change "ask me above", save, "The agent can't change these." | "The limits are the owner's. The agent can read them, never change them." | Limits set by a human, outside the agent |
-| 8b | 2:14–2:26 | Terminal: `pnpm fire-agent` → FIRED … tesSUCCESS → explorer page of the SignerListSet | "And if the owner stops trusting the AI, their own key takes it off the account, on the ledger, with nobody's permission." | 🔑 Owner fires the agent, on the ledger |
-| 9 | 2:26–2:37 | How it works screen (diagram) | "How? Agent: one vote. Policy: one vote. Owner's offline key: two. The ledger needs two." | Agent 1 + Policy 1 = 2 ✓ · Agent alone = 1 ✗ |
-| 10 | 2:37–2:46 | End card: github.com/ChumaMike/gcina · gcina.vercel.app, "Built on the XRP Ledger testnet", team names | "Gcina. The agent pays. The ledger keeps." | github.com/ChumaMike/gcina |
+| 1 | 0:00–0:14 | Title card: logo + **Gcina**, "The agent pays. The ledger keeps." Small: *W3Node Node Engine 2026 · Agentic Finance (Ripple / XRPL)* | "I'm Chuma. I did the admin at a training academy in Soweto, and sometimes the same person got paid twice." | MTA, Soweto · double payments, first-hand |
+| 2 | 0:14–0:30 | The fake inv-002 email full screen, "our banking details have changed" highlighted | "The other way to pay twice: a fake 'new banking details' email. In 2025 our Supreme Court of Appeal ruled that if you pay it, you still owe your real supplier." | Supreme Court of Appeal, 2025 |
+| 3 | 0:30–0:42 | Dashboard Overview, **Gcina at work** card + **See it on the public ledger** card | "Gcina is an AI agent that pays your suppliers. But its account on the XRP Ledger needs two votes, and the agent only has one." | Agent 1 vote · Your rules 1 · Owner 2 · Ledger needs 2 |
+| 4 | 0:42–1:00 | inv-001 arrives → card: Reading → Checking → Two signatures → On the ledger, all green → explorer page | "Mzansi Catering, order PO-1001, R 360, to their registered address. The agent reads it, our rules co-sign, and it's paid in RLUSD on the test network. No human." | ✅ Paid on its own · real testnet transaction |
+| 5 | 1:00–1:09 | inv-004 arrives → card stops red at Checking | "The same invoice again: refused as a repeat." | ⛔ Duplicate refused |
+| 6 | 1:09–1:23 | inv-002 arrives → card stops red, reason in plain words | "The fake banking details: an invoice that's already paid, now to a new account. Refused outright." | 🛑 Fake banking details refused |
+| 7 | 1:23–1:45 | Compromised run: card shows "Agent ✓ / Your rules ✗", meter **1 of 2 votes**, red bar. Hold 2 s silent on the bar. | "What if the AI itself is tricked? We force it to obey the fraudster. Our rules refuse, so it goes to the ledger alone…" *(2 s silence)* "That wasn't us. That was the ledger." | The XRP Ledger refused the agent on its own |
+| 8 | 1:45–2:00 | inv-005: rendered email → flip **What you see / What the AI sees** (white text in red) → card stops at Reading | "This one hides an instruction in white text, telling AI assistants to pay another address. The agent spots it and stops." | 🕵️ Hidden instruction caught |
+| 9 | 2:00–2:16 | Phone view: inv-003 Khaya Print & Stationery, R 810, held → **Approve** → paid + QR | "Bigger payments go to the owner. R 810 is above their limit, so they approve it on their phone." | 👤 Owner approves from the phone |
+| 10 | 2:16–2:23 | Limits: change "ask me above", save, "The agent can't change these." | "The limits are the owner's. The agent can read them, never change them." | Limits set outside the agent |
+| 11 | 2:23–2:34 | Terminal `pnpm fire-agent` → FIRED … tesSUCCESS → explorer page | "And the owner can fire the agent, on the ledger, with their own key." | 🔑 Owner fires the agent, on the ledger |
+| 12 | 2:34–2:40 | Accessibility sheet: language list (11), text size, Listen | "In all 11 written official languages, on the phone." | 11 languages · screen-reader friendly |
+| 13 | 2:40–2:48 | End card: logo, github.com/ChumaMike/gcina · gcina.vercel.app, team names | "Gcina. The agent pays. The ledger keeps." | github.com/ChumaMike/gcina |
 
-**Runtime check**: 2:46. If an edit runs long, trim shot 2 first, then shot 9. Never cut 6, 6b or 8 (8 is the track's "human sets limits" MVP item).
+**Runtime check**: 2:48. Running long: trim shot 2, then 12. Never cut 4, 7, 9 or 10 (10 is the track's "human sets limits" item).
 
 ## Captions
 
