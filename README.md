@@ -133,6 +133,13 @@ On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testne
 Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets live only in gitignored
 `.env` files created by `ledger/scripts/setup-testnet.ts`; nothing secret is committed.
 
+## Accessibility
+
+11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners.
+The dashboard works by keyboard and screen reader (the activity feed announces new events), with large tap targets
+and text that zooms to 200% on a small phone. Non-English screens are marked as AI translations while first-language
+speakers check them.
+
 ## Security model
 
 - **Keys are split by process.** The agent holds only `AGENT_SIGNER`. The policy service holds only

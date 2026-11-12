@@ -97,6 +97,9 @@ Not that I know of: what I saw in two years of MTA's admin was the same person s
 and Gcina's duplicate check stops exactly that. The fake-banking-details risk comes from the courts and all four
 big banks' warnings, so we stop both. *(customer-evidence-mta.md; never claim an MTA fraud incident.)*
 
+### 14b. Is it accessible? What about people who don't read English?
+"11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners." *(C, 18:30. Say "AI translation, checked by a first-language speaker" only after Chuma has checked isiXhosa/isiZulu; until then: "AI translations, being checked".)*
+
 ### 15. Why not stokvels, or another market?
 The same engine protects any money one person controls for many people, and stokvels are our next market: NASASA
 estimates about 11 million members and R50 billion a year, though it's their own estimate. We start with supplier
