@@ -11,6 +11,7 @@ On **XRPL Testnet**, a multi-signed agent account that the agent **cannot spend 
 3. `ledger/scripts/setup-testnet.ts` (**idempotent**; skips anything that already exists):
    - Fund TREASURY, AGENT_ACCOUNT, SUPPLIER_A, SUPPLIER_B, FRAUDSTER via the faucet. Generate AGENT_SIGNER, POLICY_SIGNER and OPERATOR_SIGNER keypairs (fund them only if the docs say signers must exist).
    - SignerListSet on AGENT_ACCOUNT (quorum 2: agent 1, policy 1, operator 2), then disable its master key.
+   - **RLUSD (scored by Ripple's judges):** trustlines to the testnet RLUSD issuer on AGENT_ACCOUNT, TREASURY and all suppliers; fund TREASURY from tryrlusd.com (ask Chuma if it needs a human); float TREASURY → AGENT_ACCOUNT. Decide RLUSD vs the XRP fallback by **18:00** and post it in status (CONTRACTS §2). Note: the trustline on the multi-sign AGENT_ACCOUNT must be set **before** disabling the master key, or be multi-signed afterwards.
    - Write the env files exactly as CONTRACTS §2 says (gitignored) and `docs/addresses.md` (public addresses + explorer links only).
    - **Milestone 16:45: commit + status line.**
 4. `ledger/scripts/prove-quorum.ts`: (a) agent-only signed payment → submit → expect the ledger to reject it; record the engine result; (b) agent + policy signatures → succeeds. Write both hashes/results into `docs/demo-evidence.md`. This is the core "the ledger refuses the agent" proof, so do it **before** the HTTP service.

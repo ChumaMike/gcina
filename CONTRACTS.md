@@ -55,7 +55,10 @@ To change this file, ask the coordinator in `docs/status.md` (append a line unde
 
 So: **agent alone = weight 1 < quorum 2, and the ledger itself rejects it.** Only agent + policy co-sign, or a human, can move money.
 - The script writes seeds into gitignored env files: `agent/.env` gets `AGENT_SIGNER_SEED`; `policy/.env` gets `POLICY_SIGNER_SEED`; `ledger/.env.testnet` gets all of them. **Public addresses only** go into `docs/addresses.md` (committed).
-- Currency: **XRP on testnet first**. Amounts are stored as **drops** (string). UI shows XRP and an indicative ZAR value at a fixed demo rate `ZAR_PER_XRP=40` (labelled "indicative"), formatted `R 1 234.56`. RLUSD (trustline + tryrlusd.com faucet) is a **stretch goal only after 23:00 is green**.
+- Currency: **RLUSD is the payment currency** (Ripple's judges explicitly score "meaningful use of the XRP Ledger **and RLUSD**"). Suppliers are paid in RLUSD, and XRP only pays network fees and reserves.
+  - L sets RLUSD trustlines on AGENT_ACCOUNT, TREASURY, SUPPLIER_A, SUPPLIER_B and FRAUDSTER, and funds TREASURY → AGENT_ACCOUNT with testnet RLUSD. Get the **testnet RLUSD issuer address** from docs.ripple.com/products/stablecoin and the tryrlusd.com faucet; if the faucet needs a human or a captcha, ask Chuma in chat to do that step.
+  - **Fallback (decide by 18:00 at the latest):** if testnet RLUSD isn't obtainable, pay in XRP, keep the code currency-agnostic, and tell C. The API uses `amount: { currency: "RLUSD" | "XRP", value: string }`. RLUSD values are decimal strings (IOU, never floats in maths; use integer cents internally), XRP values are drops.
+  - The UI shows `$ 20.00 RLUSD` plus an indicative ZAR value at a fixed demo rate `ZAR_PER_USD=18` (labelled "indicative"), formatted `R 360.00`. In the contract types below, read `amountDrops: Drops` as `amount: Amount` where `type Amount = { currency: "RLUSD" | "XRP"; value: string }`.
 - Every payment gets a Memo `{"invoiceId": "...", "app": "gcina"}` (hex-encoded).
 
 ## 3. Policy service API (`policy/`, base `http://localhost:8787`, deployed later on Vercel)
@@ -113,7 +116,19 @@ Poll `GET /invoices?status=new` every 5 s (or run `pnpm agent once`) → Claude 
 3. `inv-003` Khaya Packaging, above `requireHumanAboveDrops` → **held → human approves → paid** 👤
 4. `inv-004` duplicate of inv-001 → **rejected**
 
-Default demo policy: perPayment 50 XRP, daily 120 XRP, requireHumanAbove 30 XRP. PO-1001 = 20 XRP, PO-1002 = 45 XRP.
+Default demo policy: perPayment 50 RLUSD, daily 120 RLUSD, requireHumanAbove 30 RLUSD. PO-1001 = 20 RLUSD, PO-1002 = 45 RLUSD (same numbers in XRP if we fall back).
+
+## 7. Scoring map: every rubric point has an owner (source: the event page rubric + guide)
+| Rubric point | What earns the top band (27–30) | Owner |
+|---|---|---|
+| **Product 30** | "Polished, intuitive interface needing no explanation, seamless flows, production-ready experience", accessible | W |
+| **Technical 30** | "Production-ready code, clean architecture, **fully deployed on testnet**, no critical bugs" | L, A, W |
+| **Business 30** | "Critical, well-defined **African** problem, solution tailored to local context, **validated users**, strong commercial potential", GTM, "**integration with local infrastructure**" (ZAR rails: VALR / Yellow Card / Chipper RLUSD, bank-verified supplier onboarding) | R, P |
+| **Ripple sponsor lens** | "Meaningful use of the XRP Ledger **and RLUSD**" (multi-sign quorum, master-key disable, RLUSD payments, memos; Credentials / x402 if time) | L, A |
+| Track MVP ×3 | autonomous testnet tx · limits the agent can't control · human sets limits | L, A, W |
+| Submission | title + **public repo with README** + demo video ≤ 3 min (YouTube/Drive, anyone with link) by Fri 23:59 | P, C |
+| Stage | 5-min pitch + 3-min Q&A, live demo, intro < 20 s, 2–3 slides × 4 bullets, video as backup, ≥ 1 member at Park View | P, Chuma |
+| Rules | New work only (disclose any open-source/AI help in README); **never commit keys or seeds**; testnet accounts only; Node Engine only (can't be submitted to another hackathon) | everyone |
 
 ## 6. Milestones (SAST, Thu 12 Nov)
 - **16:45**: L: testnet accounts + SignerList live, `docs/addresses.md` committed. W: dashboard scaffold running against mocks. A: fixtures + Claude extraction working offline. R: evidence pack v1 by 18:30.
