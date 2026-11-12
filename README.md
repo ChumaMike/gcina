@@ -60,12 +60,12 @@ flowchart LR
 
 | Invoice | What happens | Proof |
 |---|---|---|
-| `inv-001` Mzansi Meat Supplies, PO-1001, 20 XRP (≈ R 800.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
+| `inv-001` Mzansi Meat Supplies, PO-1001, $ 20.00 RLUSD (≈ R 360.00 indicative) | ✅ Paid **autonomously** by the agent | **[EV? tx link]** |
 | `inv-002` same supplier, "URGENT, our banking details have changed", fraudster address | 🛑 Agent flags it and holds it; in **compromised mode** the policy refuses **and** the agent's direct single-signature submit is rejected by the ledger (**[EV? engine result]**) | **[EV? link / log]** |
-| `inv-003` Khaya Packaging, PO-1002, 45 XRP (≈ R 1 800.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
+| `inv-003` Khaya Packaging, PO-1002, $ 45.00 RLUSD (≈ R 810.00 indicative) | 👤 Above "ask me above" → held → owner approves on phone → paid | **[EV? tx link]** |
 | `inv-004` duplicate of inv-001 | ⛔ Rejected as already paid | **[EV? audit line]** |
 
-Indicative ZAR uses a fixed demo rate of R 40 per XRP. It isn't a market price.
+Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet issuance); XRP only pays network fees and reserves. Indicative ZAR uses a fixed demo rate of R 18 per USD. It isn't a market price.
 
 ## Track MVP checklist
 
@@ -74,6 +74,10 @@ Indicative ZAR uses a fixed demo rate of R 40 per XRP. It isn't a market price.
 - [ ] **A human operator sets/changes limits outside the agent**: dashboard → policy service with an operator token; the agent token gets `403` on every policy/supplier/approval route. **[EV? audit line of a limit change]**
 
 Testnet accounts (public addresses only): [`docs/addresses.md`](docs/addresses.md).
+
+On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testnet.xrpl.org/accounts/rGnmtEMkzCECGn1mkdxZt8cieEU62kV6hq)):
+- SignerListSet, quorum 2 (agent 1 · policy 1 · operator 2): [`BD09D89B…`](https://testnet.xrpl.org/transactions/BD09D89B09C4F40CEC53D62671300E0D8499D3B0268018E77852429B93BC2186)
+- AccountSet `asfDisableMaster` (master key off): [`557AC3C9…`](https://testnet.xrpl.org/transactions/557AC3C9C7BECA0706B4F7667BD3AC4EEBD895DDB8C8A8CC4AFB7EC71DC23C53)
 
 ## Repo layout
 
@@ -105,12 +109,18 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 
 | Today (hackathon) | Production path |
 |---|---|
-| XRPL **Testnet**, test XRP from the faucet | RLUSD on XRPL mainnet **[R? rails partner + licensing from 04-regulation-and-rails.md]** |
+| XRPL **Testnet**, testnet RLUSD (+ faucet XRP for fees) | RLUSD on XRPL mainnet **[R? rails partner + licensing from 04-regulation-and-rails.md]** |
 | Suppliers have XRPL test addresses | Suppliers keep receiving **rands in their bank account** via a licensed off-ramp partner **[R?]** |
 | Policy signer key in a server env var | Policy key in an HSM / KMS on separate infrastructure from the agent |
 | Demo passcode on the dashboard | Proper owner login + phone approval with device binding |
 | JSON / Postgres store | Hardened store, POPIA-compliant handling of invoice data **[R?]** |
-| Fixed indicative rate (R 40/XRP) | Live quote at payment time |
+| Fixed indicative rate (R 18/USD) | Live quote at payment time |
+
+## Built with
+
+xrpl.js · Hono · Next.js · Anthropic Claude API (the agent's invoice reading) · pnpm + TypeScript.
+**AI assistance disclosure:** the team used Claude Code (Anthropic) as a coding and writing assistant during
+the hackathon. **[Chuma? confirm wording + list any other open-source templates used]**
 
 ## Team
 

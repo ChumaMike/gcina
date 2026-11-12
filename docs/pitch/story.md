@@ -91,6 +91,18 @@ Testnet proof:
 
 That's the answer to "would your CFO sign off?": **even if the AI is fooled, the money doesn't move.**
 
+## Positioning (from `docs/research/03-competitors.md` §D)
+
+- Say: **"Sage and Ramp ask their AI to spot the fraud. Gcina makes the XRP Ledger refuse the payment: an
+  accounts-payable agent that can't pay a new bank account until a human co-signs."**
+- Short: "The first accounts-payable agent for SA small businesses that the ledger itself won't let go rogue."
+  Always keep "AP" / "for SA small businesses" in that sentence.
+- **Never say** "nobody else enforces limits outside the agent" (Coinbase, Privy, Turnkey, Safe and Crossmint do).
+- **Be exact:** the ledger enforces the *quorum*; the supplier list and limits live in our co-signer service.
+  The claim is "the agent alone can't pay, and beating the rules needs a second, independent key".
+- Why it matters for SA: none of the global agentic AP tools is live here, Xero has no native bill pay in SA,
+  and bank account verification proves who owns an account, not that it's the account this supplier always used.
+
 ## Business model and go-to-market
 
 **[R? all of this section must be checked against 00-verdict.md GTM bullets and 02-customer.md.]**
@@ -101,7 +113,7 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
    One sale to a bookkeeper brings many client businesses (R's working range: ~10–30), and they prepare the
    EFTs, so they already feel the fraud risk. **[R? sourced number from 02b-segments-and-name.md]**
 3. **Pricing**: **[R?/Chuma? a monthly fee per business + a small per-payment fee. Needs a source-backed number or Chuma's decision.]**
-4. **Rails**: testnet XRP today → RLUSD on XRPL with a licensed SA partner (e.g. VALR / Yellow Card)
+4. **Rails**: testnet RLUSD today → mainnet RLUSD with a licensed SA partner (e.g. VALR / Yellow Card)
    to get suppliers paid in rands. **[R? confirm each partner's XRPL / RLUSD status + licensing]**
 5. **Expansion**: same guardrails for payroll runs, stokvel/co-op payouts, and cross-border supplier
    payments in the region. **[R? pick the 1–2 that research supports]**
