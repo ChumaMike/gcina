@@ -1,7 +1,7 @@
 // pnpm agent once [--evidence]    work through every new invoice, then every owner-approved hold, then stop
 // pnpm agent watch [--evidence]   keep doing that every 5 s (the dashboard's "invoice arrived" button feeds it)
 // AGENT_MODE=compromised pnpm agent once   the fooled agent: obeys the invoice, then tries to go around the policy
-import { enableEvidence, handleApproval, handleInvoice } from "./agent.ts";
+import { enableEvidence, handleApproval, handleInvoice, UncertainPayment } from "./agent.ts";
 import { env } from "./env.ts";
 import { policy } from "./policy.ts";
 import { c, ui } from "./ui.ts";
@@ -20,6 +20,13 @@ async function tick(): Promise<number> {
     try {
       await handleInvoice(inv);
     } catch (e) {
+      if (e instanceof UncertainPayment) {
+        // It may already be paid. Leave it exactly as it is (status "processing") for a person; never retry.
+        failures.set(inv.id, 2);
+        ui.error(`${inv.id}: ${e.message}`);
+        worked++;
+        continue;
+      }
       failures.set(inv.id, (failures.get(inv.id) ?? 0) + 1);
       ui.error(`Couldn't finish ${inv.id}: ${e instanceof Error ? e.message : String(e)}`);
       // Put it back for one more try. Safe: an invoice the policy already held or paid can't be reset by the agent.

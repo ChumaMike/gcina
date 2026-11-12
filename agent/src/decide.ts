@@ -141,7 +141,7 @@ export function decide(inv: Invoice, x: Extraction, books: Books): Plan {
       ...common,
       headline: "Do NOT pay. This looks like changed-banking-details fraud.",
       reasoning:
-        `I'm not paying this. It asks us to send ${money(amount)} to an address that isn't the one we have on file for ${supplier.name}, ` +
+        `I won't pay a new account; the owner must approve it. This asks us to send ${money(amount)} to an address that isn't the one we have on file for ${supplier.name}, ` +
         `and ${x.changedDetailsLanguage ? "it says their banking details have changed" : "it doesn't explain why"}.${x.urgencyPressure ? " It also pushes us to pay today and not to phone, which is exactly how this scam works." : ""}${alsoPaid} ` +
         `I've sent it to the co-signer only so it sits in the owner's queue: please phone ${supplier.name} on the number you already have, not one from this email, before anyone approves anything.`,
     };

@@ -8,7 +8,7 @@ import { extract } from "./extract.ts";
 import { policy } from "./policy.ts";
 import type { Amount, Approval, Decision, Invoice } from "./types.ts";
 import { c, ui } from "./ui.ts";
-import { explorerTx, halfSignPayment, submitAlone } from "./xrpl.ts";
+import { explorerTx, fateOf, halfSignPayment, submitAlone } from "./xrpl.ts";
 
 const short = (addr: string) => `${addr.slice(0, 5)}…${addr.slice(-4)}`;
 
@@ -36,18 +36,71 @@ const txCell = (d: { txHash?: string; explorerUrl?: string }) =>
   d.explorerUrl && d.txHash ? `[${d.txHash.slice(0, 12)}…](${d.explorerUrl})` : d.txHash ? `\`${d.txHash.slice(0, 16)}…\` (never on a ledger)` : "—";
 
 // ---------- proposing ----------
-const isStale = (d: Decision) => d.decision === "rejected" && (/tefPAST_SEQ|tefMAX_LEDGER|expired/i.test(d.ledgerResult ?? "") || d.reasons.some((r) => /expiry|LastLedgerSequence|could not be reached/i.test(r)));
+/**
+ * Thrown when we can't tell whether a co-signed payment landed. Never retried automatically:
+ * a person checks the ledger first, because guessing wrong means paying the supplier twice.
+ */
+export class UncertainPayment extends Error {}
 
-/** Autofill + half-sign right now, send to the co-signer. A stale transaction is re-signed once (C10). */
+// The ledger definitively never applied this blob (tef = never entered a ledger), and it's only stale, not wrong.
+const definitelyStale = (d: Decision) => d.decision === "rejected" && /^(tefPAST_SEQ|tefMAX_LEDGER)$/.test(d.ledgerResult ?? "");
+// The co-signed blob may still be out there: the policy lost the ledger mid-wait, or gave up waiting before validation.
+const mayStillLand = (d: Decision) =>
+  d.decision === "rejected" && (/^expired before validation/i.test(d.ledgerResult ?? "") || d.reasons.some((r) => /could not be reached/i.test(r)));
+
+/**
+ * Autofill + half-sign right now, send to the co-signer. Re-signs at most once, and ONLY when the first
+ * transaction provably can never apply (C10 stale, or the ledger is past its expiry with its Sequence unused).
+ * Re-signing after a lost answer without checking could pay the same invoice twice.
+ */
 async function propose(p: { invoiceId: string; destination: string; amount: Amount; supplierId: string | null; reasoning: string; approvalId?: string }): Promise<Decision> {
   for (let attempt = 1; ; attempt++) {
-    const { blob } = await halfSignPayment({ to: p.destination, amount: p.amount, invoiceId: p.invoiceId });
-    const d = await policy.propose({ ...p, agentSignedTxBlob: blob });
-    if (attempt < 2 && isStale(d)) {
-      ui.step(c.dim("That signed transaction went stale before it was co-signed. Signing a fresh one…"));
+    const signed = await halfSignPayment({ to: p.destination, amount: p.amount, invoiceId: p.invoiceId });
+    let d: Decision | null = null;
+    let lost = "";
+    try {
+      d = await policy.propose({ ...p, agentSignedTxBlob: signed.blob });
+    } catch (e) {
+      lost = e instanceof Error ? e.message : String(e); // the policy may have co-signed and submitted before the answer got lost
+    }
+    if (d && definitelyStale(d)) {
+      if (attempt < 2) {
+        ui.step(c.dim(`That signed transaction went stale (${d.ledgerResult}) and never reached a ledger. Signing a fresh one…`));
+        continue;
+      }
+      return d;
+    }
+    if (d && !mayStillLand(d)) return d;
+
+    // Uncertain: find out what the ledger did with that Sequence before doing anything else.
+    ui.step(c.yellow(`${lost ? "I lost the co-signer's answer" : "The co-signer couldn't confirm the result"}. Before I sign anything again, I'm checking the ledger so we can't pay twice…`));
+    const fate = await fateOf(signed);
+    if (fate.kind === "applied") {
+      const ours = fate.isPayment && fate.destination === p.destination && fate.invoiceId === p.invoiceId;
+      if (ours && fate.result === "tesSUCCESS") {
+        return {
+          proposalId: d?.proposalId ?? "unknown",
+          decision: "cosigned_submitted",
+          reasons: [`The answer got lost, but the ledger shows this payment validated (${fate.result}). Not paying again. The policy's books may not show it yet: tell the owner.`],
+          txHash: fate.hash,
+          ledgerResult: fate.result,
+          explorerUrl: explorerTx(fate.hash),
+        };
+      }
+      throw new UncertainPayment(
+        `The ledger used that transaction slot for ${ours ? `our payment, which finished with ${fate.result}` : "a different transaction"} (${fate.hash}). Not signing again; a person should look at ${explorerTx(fate.hash)}.`,
+      );
+    }
+    if (fate.kind === "unknown") {
+      throw new UncertainPayment(`I can't confirm whether ${p.invoiceId} was paid (${lost || d?.reasons[0] || "no answer"}; ledger check: ${fate.why}). Not signing again until a person checks the ledger.`);
+    }
+    // fate.kind === "never": the ledger is past its expiry and the slot is unused, so it can never land.
+    if (attempt < 2) {
+      ui.step(c.dim("Confirmed: the first transaction expired without touching the ledger. Signing a fresh one…"));
       continue;
     }
-    return d;
+    if (d) return d;
+    throw new Error(`No answer from the policy service: ${lost}. Confirmed nothing was paid.`);
   }
 }
 
@@ -157,6 +210,9 @@ export async function handleApproval(ap: Approval): Promise<void> {
     supplierId: supplier?.id ?? null,
     approvalId: ap.id,
     reasoning: `Owner approved ${ap.id} (${ap.decidedBy ?? "operator"}). Fresh transaction for exactly the approved amount and address.`,
+  }).catch((e: unknown) => {
+    if (e instanceof UncertainPayment) approvalTries.set(ap.id, 2); // never retry an approval we can't account for
+    throw e;
   });
   showDecision(d, `${ap.invoiceId} after owner approval (${ap.id})`);
 }
