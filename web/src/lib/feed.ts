@@ -32,7 +32,7 @@ export const isPayment = (e: AuditEvent) => e.kind === "payment.validated" || (e
 export type Outcome = "paid" | "ledger-refused" | "declined" | "stopped" | "refused" | "held" | "working";
 
 /** The agent itself marked the invoice rejected (e.g. hidden instructions in inv-005): it signed nothing. */
-export const agentStopped = (e: AuditEvent) => e.actor === "agent" && e.kind === "invoice.updated" && /→s*rejected/.test(e.message);
+export const agentStopped = (e: AuditEvent) => e.actor === "agent" && e.kind === "invoice.updated" && /→\s*rejected/.test(e.message);
 export type Group = { key: string; invoiceId: string | null; events: AuditEvent[]; at: string };
 
 export function outcomeOf(g: Group): Outcome {

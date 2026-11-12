@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActivityFeed } from "@/components/activity-feed";
+import { AgentAtWork } from "@/components/agent-at-work";
 import { ErrorNote, Money, RlusdBadge } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
 import { LedgerProofCard } from "@/components/ledger-proof";
@@ -31,6 +32,8 @@ export default function OverviewPage() {
       </div>
 
       <AgentStatus />
+
+      <AgentAtWork />
 
       {pending.length > 0 && (
         <Link
