@@ -11,6 +11,15 @@ if (!passcode) throw new Error('Set AVATAR_TEST_PASSCODE to your local mock dash
 const output = path.resolve(process.env.AVATAR_CAPTURE_DIR || '../work/avatar-captures');
 fs.mkdirSync(output, { recursive: true });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function checkCompactLayout(page) {
+  const panel = await page.locator('#sasl-preview-panel').boundingBox();
+  const avatar = await page.locator('.sasl-studio').boundingBox();
+  const text = await page.locator('[data-avatar-text]').boundingBox();
+  assert.ok(panel.width <= 320, 'panel must retain the original 320px maximum width');
+  assert.ok(avatar.width <= 160 && avatar.width >= 140, 'avatar must fit the original compact width');
+  assert.equal(avatar.height, 190, 'avatar must retain the original 190px height');
+  assert.ok(text.x >= avatar.x + avatar.width && text.y < avatar.y + avatar.height, 'text must remain beside the avatar');
+}
 
 (async () => {
   const browser = await chromium.launch({
@@ -54,6 +63,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
       await page.getByText('Preparing your avatar…').waitFor({ state: 'hidden' });
     };
     await open();
+    await checkCompactLayout(page);
     assert.equal(await page.locator('canvas').count(), 1);
     assert.match(await panel.innerText(), /Movement study, not SASL translation/);
     await button('Pause').click();
@@ -200,6 +210,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     await phone.getByText('Preparing your avatar…').waitFor({ state: 'hidden' });
     await phone.getByRole('button', { name: 'Pause', exact: true }).tap();
     const mobilePanel = phone.locator('#sasl-preview-panel');
+    await checkCompactLayout(phone);
     const mobileBox = await mobilePanel.boundingBox();
     assert.ok(mobileBox.x >= 0 && mobileBox.y >= 0 && mobileBox.x + mobileBox.width <= 390 && mobileBox.y + mobileBox.height <= 844);
     await phone.screenshot({ path: path.join(output, 'mobile.png') });
@@ -209,6 +220,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     assert.match(await phone.locator('main h1').first().getAttribute('class'), /sasl-highlight/);
     await phone.setViewportSize({ width: 320, height: 568 });
     await delay(150);
+    await checkCompactLayout(phone);
     assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await mobilePanel.getByRole('button', { name: 'Slower', exact: true }).scrollIntoViewIfNeeded();
     await phone.screenshot({ path: path.join(output, 'mobile-small.png') });

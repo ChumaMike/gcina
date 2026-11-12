@@ -15,7 +15,15 @@ try{
  await page.emulateMedia({reducedMotion:'no-preference'});await page.getByRole('button',{name:'Pause',exact:true}).click();
  const button=name=>page.getByRole('button',{name,exact:true});
  const capture=name=>page.screenshot({path:path.join(output,`${name}.png`)});
- await capture('full-character');await button('Face').click();await capture('face');
+ const compact=async()=>{
+  const stage=await page.locator('.sasl-studio').boundingBox(), card=await page.locator('.viewer-card').boundingBox(), text=await page.locator('#spoken').boundingBox();
+  assert.ok(card.width<=320 && stage.width<=160);assert.equal(stage.height,190);
+  assert.ok(text.x>=stage.x+stage.width && text.y<stage.y+stage.height,'preview text must sit beside the compact avatar');
+ };
+ await compact();await capture('app-size');
+ await button('Enlarge inspection').click();assert.ok((await page.locator('.sasl-studio').boundingBox()).height>190);
+ await capture('full-character');await button('Show app size').click();await compact();
+ await button('Face').click();await capture('face');
  for(const side of ['Left','Right']){
   await button('Open').click();await button(`${side} hand`).click();await capture(`${side.toLowerCase()}-open`);
   const open=await page.locator('canvas').screenshot();await button('Closed').click();await capture(`${side.toLowerCase()}-closed`);
@@ -29,6 +37,7 @@ try{
  }
  await button('Relaxed').click();await button('Side').click();await capture('side');
  await button('Left hand').click();await button('Reset view').click();assert.equal(await button('Front').getAttribute('aria-pressed'),'true');
- await page.setViewportSize({width:390,height:844});await capture('studio-mobile');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await compact();await page.setViewportSize({width:390,height:844});await compact();await capture('studio-mobile');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.setViewportSize({width:320,height:568});await compact();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  assert.deepEqual(errors,[]);console.log(`PASS: front, face, side, both open/closed hands, ten independent digit controls, reset, mobile. Captures: ${output}`);
 }finally{await browser.close()}

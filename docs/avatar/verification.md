@@ -16,6 +16,8 @@ state was changed. Baseline: `453072fa4023c872d72f33ee404120660bdc6029` on
 | Production Chromium regression script | Pass |
 | Chromium voice integration script | Pass, with explicit speech double plus native unavailable-voice check |
 | Standalone inspection script | Pass |
+| Original compact layout | Panel ≤320px; avatar ≤160px wide × 190px tall; selected text alongside it on desktop and 390px/320px phones |
+| Standalone default size | Opens compact; explicit enlargement/detail views work; Front/reset restores compact size |
 | Desktop 1440 × 1000 | Captured and visually inspected |
 | Mobile 390 × 844, touch | Captured and visually inspected; face, hands and primary controls remain visible |
 | Small mobile 320 × 568 / landscape 844 × 390 | No horizontal overflow; controls and close reachable |
@@ -48,7 +50,7 @@ claim a general collision guarantee for arbitrary future signing poses.
 
 Rendering was measured in **Chromium 156.0.8078.79**, **Node 24.22.1**, Linux,
 using **SwiftShader software rendering with no hardware GPU**. The final production
-run observed **9.0 rendered fps and 11 draw calls/frame** during the rig study.
+run with the compact viewport observed **10.6 rendered fps and 11 draw calls/frame** during the rig study.
 An earlier V2 run was 5.6 fps; the fallback avoids expensive bone-texture work and
 uses diffuse studio shading. V1's recorded result in this environment was 12 fps,
 so the more detailed skinned model remains slower on this software renderer.

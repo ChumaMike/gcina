@@ -19,6 +19,12 @@ were checked in Chromium. The link is pinned to the tested implementation commit
 GitHub's file page cannot run HTML and reports that this bundled file is too large
 to display; use the browser preview above or download it using the instructions below.
 
+The app keeps the original **320px maximum panel width** and **160 × 190px avatar**,
+with selected text beside the character. On narrow phones the avatar width shrinks
+slightly to fit. The standalone preview opens at this compact size too.
+**Enlarge inspection** and the detail views enlarge only the standalone preview;
+**Show app size**, **Front** or **Reset view** restores the compact presentation.
+
 Download [preview.html](preview.html) from this branch, then open the downloaded
 file in Chrome. It contains the actual GLB, renderer and controls in one file;
 GitHub's HTML source viewer does not execute it. If your browser blocks local
@@ -47,13 +53,13 @@ use their provider's network service. No backend TTS service is added by Gcina.
 
 ## Actual visual previews
 
-[Full character](v2/full-character.webp) · [Face](v2/face.webp) ·
+[Compact app size](v2/app-size.webp) · [Enlarged character inspection](v2/full-character.webp) · [Face](v2/face.webp) ·
 [Left open](v2/left-open.webp) · [Left closed](v2/left-closed.webp) ·
 [Right open](v2/right-open.webp) · [Right closed](v2/right-closed.webp) ·
 [Side profile](v2/side.webp) · [Dashboard](v2/desktop.webp) ·
 [Mobile dashboard](v2/mobile.webp) · [Mobile studio](v2/studio-mobile.webp)
 
-![V2 interactive studio](v2/full-character.webp)
+![V2 compact interactive preview](v2/app-size.webp)
 
 | V1 baseline | V2 implementation |
 |---|---|

@@ -190,7 +190,7 @@ export function SaslPreview() {
 
   return (
     <>
-      <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}.sasl-studio{height:min(270px,23dvh)}@media(min-width:768px){.sasl-studio{height:min(350px,40dvh)}}@media(max-height:560px) and (min-width:768px){.sasl-studio{height:240px}}`}</style>
+      <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}#sasl-preview-panel .sasl-studio{height:190px;width:100%}`}</style>
       {!on ? (
         <button
           ref={launcher}
@@ -210,7 +210,7 @@ export function SaslPreview() {
           id="sasl-preview-panel"
           data-sasl-ignore
           aria-label="South African Sign Language concept preview"
-          className="fixed right-3 bottom-24 z-50 max-h-[64dvh] w-[min(23rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-3xl border border-black/10 bg-white p-3 text-slate-900 shadow-[0_16px_64px_-12px_#123f3b55] md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+          className="fixed right-3 bottom-24 z-50 max-h-[64dvh] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-3xl border border-black/10 bg-white p-3 text-slate-900 shadow-[0_16px_64px_-12px_#123f3b55] md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="mb-3 flex items-center justify-between gap-2 pl-1">
             <div>
@@ -221,20 +221,22 @@ export function SaslPreview() {
               <X className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <AvatarViewport paused={paused} reduced={reduced} demo={demo} slow={slow} speaking={voice.speech.status === "speaking"} />
-          <div className="mt-3 px-1">
-            <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-slate-400">
-              <span>{words.length ? "Selected text" : "Explore the concept"}</span>
-              {words.length > 0 && <span>{done ? "Complete" : current < 0 ? "Ready to read" : `${Math.min(current + 1, words.length)} / ${words.length}`}</span>}
+          <div className="grid grid-cols-[min(160px,55%)_minmax(0,1fr)] items-center gap-2">
+            <AvatarViewport paused={paused} reduced={reduced} demo={demo} slow={slow} speaking={voice.speech.status === "speaking"} />
+            <div data-avatar-text className="min-w-0">
+              <div className="mb-1.5 flex flex-col gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                <span>{words.length ? "Selected text" : "Explore the concept"}</span>
+                {words.length > 0 && <span>{done ? "Complete" : current < 0 ? "Ready to read" : `${Math.min(current + 1, words.length)} / ${words.length}`}</span>}
+              </div>
+              <div className="max-h-32 min-h-10 overflow-y-auto break-words text-sm leading-relaxed">
+                {words.length ? (
+                  <p>{words.map((w, i) => <span key={i} className={i === current ? "rounded bg-amber-200 px-0.5 font-medium text-slate-900" : i < current ? "text-slate-500 dark:text-slate-400" : ""}>{w}{" "}</span>)}</p>
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-300">Hover, tap or tab to page text, then press Listen.</p>
+                )}
+              </div>
+              <p className="sr-only" role="status">{words.length ? `Selected text: ${words.join(" ")}` : "Select page text to explore the concept. This is not SASL translation."}</p>
             </div>
-            <div className="max-h-16 min-h-10 overflow-y-auto text-sm leading-relaxed">
-              {words.length ? (
-                <p>{words.map((w, i) => <span key={i} className={i === current ? "rounded bg-amber-200 px-0.5 font-medium text-slate-900" : i < current ? "text-slate-500 dark:text-slate-400" : ""}>{w}{" "}</span>)}</p>
-              ) : (
-                <p className="text-slate-600 dark:text-slate-300">Hover, tap or tab to page text, then press Listen.</p>
-              )}
-            </div>
-            <p className="sr-only" role="status">{words.length ? `Selected text: ${words.join(" ")}` : "Select page text to explore the concept. This is not SASL translation."}</p>
           </div>
           <div className="mt-3 grid grid-cols-5 gap-1.5">
             {speechActive ? (

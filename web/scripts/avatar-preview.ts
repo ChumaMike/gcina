@@ -49,6 +49,21 @@ function listen() {
   speech.listen(text.value.trim(), { voiceURI: voices.value, rate: Number(rate.value) * (options.slow ? .75 : 1) });
 }
 function inspect() { scene?.setInspection({ pose, finger, curl: Number(element<HTMLInputElement>("curl").value) }); }
+function setEnlarged(enlarged: boolean) {
+  element("layout").classList.toggle("enlarged", enlarged);
+  element("enlarge").setAttribute("aria-pressed", String(enlarged));
+  element("enlarge").textContent = enlarged ? "Show app size" : "Enlarge inspection";
+  element("size-label").textContent = enlarged ? "Inspection view" : "In-app size";
+}
+function setView(view: AvatarView) {
+  setEnlarged(view !== "portrait");
+  scene?.setView(view);
+  document.querySelectorAll("[data-view]").forEach((button) => button.setAttribute("aria-pressed", String(button.getAttribute("data-view") === view)));
+}
+element("enlarge").onclick = () => {
+  if (element("layout").classList.contains("enlarged")) setView("portrait");
+  else setEnlarged(true);
+};
 element("listen").onclick = listen;
 element("stop").onclick = () => speech.stop();
 element("replay").onclick = () => { if (voiceUsed) listen(); else { options.paused = false; update(); } };
@@ -67,16 +82,14 @@ element("demo").onclick = () => {
   update();
 };
 element("reset").onclick = () => {
-  scene?.setView("portrait"); scene?.resetView();
-  document.querySelectorAll("[data-view]").forEach((button) => button.setAttribute("aria-pressed", String(button.getAttribute("data-view") === "portrait")));
+  setView("portrait"); scene?.resetView();
 };
 element("slow").onclick = () => {
   speech.stop(); options.slow = !options.slow;
   element("slow").setAttribute("aria-pressed", String(options.slow)); update();
 };
 document.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.onclick = () => {
-  scene?.setView(button.dataset.view as AvatarView);
-  document.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+  setView(button.dataset.view as AvatarView);
 });
 document.querySelectorAll<HTMLButtonElement>("[data-pose]").forEach((button) => button.onclick = () => {
   pose = button.dataset.pose as HandPose; finger = undefined; options.demo = false;
