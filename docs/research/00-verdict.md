@@ -30,13 +30,13 @@ Also send the fake-banking-details question (02 §2, Part C) to 2–3 bookkeeper
 ## 3 stats for the stage (ranked by credibility; check against 08 before slides lock)
 1. **"In 2024 and again in 2025, South Africa's Supreme Court of Appeal ruled that if you pay a hacked invoice into a
    fraudster's account, you still owe your supplier."** *ENS v Hawarden* [2024] ZASCA 90; *Intengo Imoto v Zoutpansberg
-   Motor Wholesalers* 2025 (6) SA 143 (SCA). ([Clyde & Co](https://connectedworld.clydeco.com/post/102kqmg/verify-before-you-pay-south-africas-sca-reinforces-buyers-duty-in-bec-fraud-ca), [Moonstone](https://www.moonstone.co.za/sca-overturns-precedent-setting-cyber-crime-judgment/))
+   Motor Wholesalers* [2025] ZASCA 93 (R290,000; the buyer still owed the seller). ([Clyde & Co](https://connectedworld.clydeco.com/post/102kqmg/verify-before-you-pay-south-africas-sca-reinforces-buyers-duty-in-bec-fraud-ca), [Moonstone](https://www.moonstone.co.za/sca-overturns-precedent-setting-cyber-crime-judgment/))
 2. **"Standard Bank, Absa, Nedbank and FNB all warn businesses about 'changed banking details' invoices. The advice is
    always the same: check before you pay."** (01 §1c)
-3. **"Benchmarks put duplicate or erroneous payments at roughly 1 to 2 rand in every R100 a business pays out."**
-   (APQC via CFO.com, *subject to 08*.) Paired with the MTA story.
+3. **"Benchmarks find that about 1 to 2 in every 100 payments a business makes are duplicates or errors."**
+   (APQC via [CFO.com](https://www.cfo.com/news/metric-of-the-month-detect-and-prevent-duplicate-or-erroneous-payments/656852/): it counts **payments, not rands**, so never say "R1–2 in every R100"; no "1,686 organisations", no "1.5% median".) Paired with the MTA story.
 Context lines (say with their scope): SABRIC R2.4bn in 2025 = **all digital banking crime**; FBI IC3 US$3.05bn BEC = **US**;
-PYMNTS 0% = **60 CFOs of US $1bn+ firms**.
+PYMNTS 0% = **60 CFOs of US $1bn+ firms** (Sep 2025 report, link in 08); Deloitte 54% = **200 North American $1bn+ CFOs**, Jan 2026; Wakefield 14/97/88% = **vendor-commissioned (Maximor AI)**; AFP 74% = **US organisations**.
 
 ## 30-second problem statement
 > "Small businesses lose money paying the wrong account and paying the same person twice. When a supplier's email is
@@ -70,7 +70,10 @@ PYMNTS 0% = **60 CFOs of US $1bn+ firms**.
 9. "Validated users" / "customers" (plural). Say "design partner" only once MTA's owner confirms.
 10. "MTA paid via Xero." Chuma isn't sure; say "payroll and accounting software".
 11. "No CFO would…" without scope (60 US $1bn+ CFOs).
-12. Deloitte "54% of CFOs prioritise AI agents in 2026": **only if 08 verifies it**; otherwise drop.
+12. Deloitte 54% **without scope**. It's verified, but say "54% of 200 large North American CFOs call AI agents in finance a transformation priority (Deloitte, Jan 2026)".
+15. "R1–2 in every R100" for duplicates (APQC counts payments), "1,686 organisations", "1.5% median" (vendor blog only).
+16. "268,000 formal businesses with employees" (not found; SBI 2018 ≈ 250,000) and "FinScope 2.6m SMMEs" (label not found).
+17. Wakefield CFO stats without "commissioned by a finance-AI vendor"; AFP 74% as "global".
 13. "Gcina is a registered/unique brand." gcina.co.za is an FSCA-registered funeral-cover brand. Don't claim the name; do a CIPC search before launch.
 14. RLUSD issuer details (clawback/charter) unless verified (05 C0 note).
 
