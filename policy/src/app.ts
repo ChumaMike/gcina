@@ -231,7 +231,11 @@ export function createApp(d: AppDeps) {
       if (role === "agent" && (inv.status === "paid" || inv.status === "held")) throw new HttpError(409, `Invoice ${inv.id} is ${inv.status}; the agent can't change it.`);
       const from = inv.status;
       if (b.status) inv.status = b.status;
-      if (b.poNumber !== undefined) inv.poNumber = String(b.poNumber);
+      if (b.poNumber !== undefined) {
+        // The agent may match an invoice to an order once; it can never move it to another order (that would dodge the repeat check).
+        if (role === "agent" && inv.poNumber && inv.poNumber !== String(b.poNumber)) throw new HttpError(403, `Invoice ${inv.id} is already matched to ${inv.poNumber}; only the owner can change that.`);
+        inv.poNumber = String(b.poNumber);
+      }
       audit(s, { actor: role, kind: "invoice.updated", message: `Invoice ${inv.id}: ${from} → ${inv.status}${b.poNumber ? `, matched to ${b.poNumber}` : ""}.` }, now());
       return inv;
     });
@@ -304,7 +308,7 @@ export function createApp(d: AppDeps) {
     for (const f of pending) {
       let st: Awaited<ReturnType<Ledger["lookup"]>>;
       try {
-        st = await d.ledger.lookup(f.txHash, f.lastLedger);
+        st = await d.ledger.lookup(f.txHash, f.firstLedger ?? f.lastLedger - 60, f.lastLedger);
       } catch {
         return `An earlier co-signed payment for ${invoiceId} (${f.txHash.slice(0, 12)}…) has no final result yet and the ledger can't be reached to check. Nothing new will be signed until it settles.`;
       }
@@ -393,10 +397,17 @@ export function createApp(d: AppDeps) {
 
     // Co-sign. The hash is known before submitting and is saved first, so an unknown outcome can never lead to a second signature.
     const { blob, hash } = d.ledger.cosign(verdict.tx, p.agentSignedTxBlob);
+    const inv = (await d.store.read()).invoices.find((i) => i.id === p.invoiceId);
+    const lastLedger = Number(verdict.tx.LastLedgerSequence);
+    const ref = inv ? readReference(inv.rawText) : null;
     const flight: InFlight = {
       invoiceId: p.invoiceId,
       txHash: hash,
-      lastLedger: Number(verdict.tx.LastLedgerSequence),
+      // Lower bound for the ledger search: the current ledger, or far enough back to cover any allowed expiry window.
+      firstLedger: Math.max(1, Math.min(ledgerIndex ?? lastLedger, lastLedger) - d.rules.maxLedgerWindow - 5),
+      lastLedger,
+      ...(ref ? { reference: ref } : {}),
+      ...(inv?.poNumber ? { poNumber: inv.poNumber } : {}),
       at: at.toISOString(),
       proposalId: id,
       amount: p.amount,
@@ -417,7 +428,7 @@ export function createApp(d: AppDeps) {
 
     let result: Awaited<ReturnType<Ledger["submit"]>>;
     try {
-      result = await d.ledger.submit(blob, hash, flight.lastLedger);
+      result = await d.ledger.submit(blob, hash, flight.firstLedger, flight.lastLedger);
     } catch (e) {
       const decision: Decision = {
         proposalId: id,

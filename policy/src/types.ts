@@ -61,7 +61,7 @@ export type AuditEvent = {
 export type StoredProposal = Omit<Proposal, "agentSignedTxBlob"> & { id: string; at: string; txHashSignedByAgent?: string; decision?: Decision };
 export type Payment = { invoiceId: string; amount: Amount; destination: string; txHash: string; at: string; sastDay: string; approvalId?: string; reference?: string; poNumber?: string };
 /** A co-signed tx whose outcome isn't known yet (submitted, then the ledger went quiet). Blocks re-signing until resolved. */
-export type InFlight = { invoiceId: string; txHash: string; lastLedger: number; at: string; proposalId: string; amount: Amount; destination: string; approvalId?: string };
+export type InFlight = { invoiceId: string; txHash: string; firstLedger: number; lastLedger: number; at: string; proposalId: string; amount: Amount; destination: string; approvalId?: string; reference?: string; poNumber?: string };
 export type ApprovalUse = { approvalId: string; txHash: string };
 
 export type State = {

@@ -20,9 +20,12 @@ export interface Ledger {
   /** Policy signs the agent's exact tx (Signers stripped) and combines both signatures. No network. */
   cosign(unsignedTx: Record<string, unknown>, agentBlob: string): { blob: string; hash: string };
   /** Submits a fully signed blob and waits for validation or expiry. Throws only if the ledger can't be reached. */
-  submit(blob: string, hash: string, lastLedger: number): Promise<SubmitResult>;
-  /** Final state of an earlier submission: validated result, "expired" (past LastLedgerSequence, can never apply), or "pending". */
-  lookup(hash: string, lastLedger: number): Promise<{ state: "validated"; result: string; delivered?: unknown } | { state: "expired" } | { state: "pending" }>;
+  submit(blob: string, hash: string, firstLedger: number, lastLedger: number): Promise<SubmitResult>;
+  /**
+   * Final state of an earlier submission: validated result, "expired" (the server searched EVERY ledger from
+   * firstLedger to past LastLedgerSequence and it isn't there, so it can never apply), or "pending" (anything less certain).
+   */
+  lookup(hash: string, firstLedger: number, lastLedger: number): Promise<{ state: "validated"; result: string; delivered?: unknown } | { state: "expired" } | { state: "pending" }>;
   balances(addresses: Record<string, string>, rlusdIssuer: string): Promise<Record<string, AccountBalances>>;
 }
 
@@ -61,33 +64,35 @@ export class XrplLedger implements Ledger {
     return { blob, hash: hashes.hashSignedTx(blob) };
   }
 
-  async submit(blob: string, hash: string, lastLedger: number): Promise<SubmitResult> {
+  async submit(blob: string, hash: string, firstLedger: number, lastLedger: number): Promise<SubmitResult> {
     await this.ready();
     const prelim = await this.client.submit(blob);
     const engine = prelim.result.engine_result;
     if (/^(tef|tem|tel)/.test(engine)) return { hash, engineResult: engine, validated: false };
     for (;;) {
       await new Promise((r) => setTimeout(r, 1000));
-      const st = await this.lookup(hash, lastLedger);
+      const st = await this.lookup(hash, firstLedger, lastLedger);
       if (st.state === "validated") return { hash, engineResult: st.result, validated: true, explorerUrl: explorerTx(hash), delivered: st.delivered };
       if (st.state === "expired") return { hash, engineResult: `expired before validation (prelim ${engine})`, validated: false };
     }
   }
 
-  async lookup(hash: string, lastLedger: number) {
+  async lookup(hash: string, firstLedger: number, lastLedger: number) {
     await this.ready();
-    try {
-      const tx = await this.client.request({ command: "tx", transaction: hash });
-      if (tx.result.validated) {
-        const meta = tx.result.meta as { TransactionResult?: string; delivered_amount?: unknown } | undefined;
-        return { state: "validated" as const, result: meta?.TransactionResult ?? "unknown", delivered: meta?.delivered_amount };
-      }
-    } catch (e) {
-      if ((e as { data?: { error?: string } })?.data?.error !== "txnNotFound") throw e;
-    }
-    // Only final once a VALIDATED ledger is past LastLedgerSequence.
+    // Fail closed: only call it expired once a validated ledger is past LastLedgerSequence AND the server
+    // confirms it searched every ledger in [firstLedger, lastLedger] (searched_all). Otherwise: pending.
     const validated = await this.client.request({ command: "ledger", ledger_index: "validated" });
-    return Number(validated.result.ledger_index) > lastLedger ? { state: "expired" as const } : { state: "pending" as const };
+    const pastExpiry = Number(validated.result.ledger_index) > lastLedger;
+    try {
+      const tx = await this.client.request({ command: "tx", transaction: hash, min_ledger: Math.max(1, firstLedger), max_ledger: lastLedger } as never);
+      const r = (tx as { result: { validated?: boolean; meta?: { TransactionResult?: string; delivered_amount?: unknown } } }).result;
+      if (r.validated) return { state: "validated" as const, result: r.meta?.TransactionResult ?? "unknown", delivered: r.meta?.delivered_amount };
+      return { state: "pending" as const };
+    } catch (e) {
+      const data = (e as { data?: { error?: string; searched_all?: boolean } })?.data;
+      if (data?.error !== "txnNotFound") throw e;
+      return pastExpiry && data.searched_all === true ? { state: "expired" as const } : { state: "pending" as const };
+    }
   }
 
   async balances(addresses: Record<string, string>, rlusdIssuer: string) {

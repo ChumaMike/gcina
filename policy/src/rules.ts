@@ -125,26 +125,52 @@ function sastTime(iso: string): string {
  */
 export function duplicateReason(p: Proposal, s: State): string | null {
   const inv = s.invoices.find((i) => i.id === p.invoiceId);
-  const prior = s.payments.find((x) => x.invoiceId === p.invoiceId);
-  if (prior) return `Invoice ${p.invoiceId} has already been paid (${sastTime(prior.at)}). Paying it again would be a repeat.`;
-  const ref = (inv && readReference(inv.rawText)) ?? (p.reference ? p.reference.toUpperCase() : null);
+  // Paid AND co-signed-but-unsettled payments both count: a tx that may still apply is treated as paid.
+  type Prior = { invoiceId: string; destination: string; amount: Proposal["amount"]; at: string; reference?: string; poNumber?: string; settling: boolean };
+  const priors: Prior[] = [
+    ...s.payments.map((x) => ({ ...x, settling: false })),
+    ...(s.inflight ?? []).map((x) => ({ ...x, settling: true })),
+  ];
+  const paidWhen = (x: Prior) => (x.settling ? `co-signed ${sastTime(x.at)}, still settling` : `paid ${sastTime(x.at)}`);
+
+  const prior = priors.find((x) => x.invoiceId === p.invoiceId);
+  if (prior) return `Invoice ${p.invoiceId} has already been ${prior.settling ? "co-signed and is still settling" : `paid (${sastTime(prior.at)})`}. Paying it again would be a repeat.`;
+
+  // Order already paid: refuse whatever the amount or destination (fail closed).
   const po = inv?.poNumber ?? null;
-  let amountMinor: bigint;
+  if (po) {
+    const byPo = priors.find((x) => x.poNumber === po);
+    if (byPo || s.purchaseOrders.find((o) => o.poNumber === po)?.status === "paid") {
+      return byPo
+        ? `Looks like a repeat of ${byPo.invoiceId}, ${paidWhen(byPo)}: order ${po} has already been paid.`
+        : `Looks like a repeat: order ${po} has already been paid.`;
+    }
+  }
+
+  // Same payee + same amount + same supplier invoice number. The policy's own reading of the text always counts;
+  // the agent's reference can only ADD a match, never hide one.
+  const refs = new Set<string>();
+  const textRef = inv ? readReference(inv.rawText) : null;
+  if (textRef) refs.add(textRef);
+  if (typeof p.reference === "string" && p.reference.trim()) refs.add(p.reference.trim().toUpperCase());
+  let amountMinor: bigint | null = null;
   try {
     amountMinor = toMinor(p.amount);
   } catch {
-    return null; // rule 2 already refuses malformed amounts
+    amountMinor = null; // rule 2 already refuses malformed amounts
   }
-  const twin = s.payments.find(
-    (x) =>
-      x.destination === p.destination &&
-      x.amount.currency === p.amount.currency &&
-      toMinor(x.amount) === amountMinor &&
-      ((ref !== null && x.reference === ref) || (po !== null && x.poNumber === po)),
-  );
-  if (twin) {
-    const why = ref !== null && twin.reference === ref ? `invoice number ${ref}` : `order ${po}`;
-    return `Looks like a repeat of ${twin.invoiceId}, paid ${sastTime(twin.at)}: same supplier, same amount, same ${why}.`;
+  if (amountMinor !== null && refs.size) {
+    const twin = priors.find(
+      (x) => x.destination === p.destination && x.amount.currency === p.amount.currency && toMinor(x.amount) === amountMinor && x.reference !== undefined && refs.has(x.reference),
+    );
+    if (twin) return `Looks like a repeat of ${twin.invoiceId}, ${paidWhen(twin)}: same supplier, same amount, same invoice number ${twin.reference}.`;
+  }
+
+  // Identical invoice text (ignoring invoice-number lines) from the same supplier that was already paid.
+  if (inv) {
+    const norm = (t: string) => t.replace(/\b(inv|invoice)[-\s#:]*[a-z0-9-]+/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
+    const twin = s.invoices.find((o) => o.id !== inv.id && o.status === "paid" && o.supplierName === inv.supplierName && norm(o.rawText) === norm(inv.rawText));
+    if (twin) return `Looks like a repeat of ${twin.id}: the same invoice from ${inv.supplierName} has already been paid.`;
   }
   return null;
 }
@@ -179,7 +205,10 @@ export function limitReasons(p: Proposal, s: State, now: Date, coolingOffMinutes
   const a = toMinor(p.amount);
   if (a > toMinor(pol.perPaymentMax)) reasons.push(`${formatAmount(p.amount)} is more than your per-payment limit of ${formatAmount(pol.perPaymentMax)}.`);
   const today = sastDay(now);
-  const spent = s.payments.filter((x) => x.sastDay === today && x.amount.currency === p.amount.currency).reduce((t, x) => t + toMinor(x.amount), 0n);
+  // Co-signed payments still settling count as spent (fail closed).
+  const spent = [...s.payments, ...(s.inflight ?? []).map((x) => ({ ...x, sastDay: sastDay(new Date(x.at)) }))]
+    .filter((x) => x.sastDay === today && x.amount.currency === p.amount.currency)
+    .reduce((t, x) => t + toMinor(x.amount), 0n);
   if (spent + a > toMinor(pol.dailyMax)) reasons.push(`This would take today's payments past your daily limit of ${formatAmount(pol.dailyMax)}.`);
   // 5. human approval threshold
   if (a > toMinor(pol.requireHumanAbove)) reasons.push(`${formatAmount(p.amount)} is above ${formatAmount(pol.requireHumanAbove)}, where you asked to approve payments yourself.`);

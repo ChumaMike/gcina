@@ -81,7 +81,7 @@ export class FakeLedger implements Ledger {
     this.submitted.push(tx);
     return { blob: "BLOB", hash: `HASH${this.submitted.length}`.padEnd(64, "0") };
   }
-  async submit(_blob: string, hash: string): Promise<SubmitResult> {
+  async submit(_blob: string, hash: string, _first?: number, _last?: number): Promise<SubmitResult> {
     if (this.submitThrows) throw new Error("websocket closed");
     return { hash, engineResult: "tesSUCCESS", validated: true, explorerUrl: `https://testnet.xrpl.org/transactions/${hash}`, ...this.next };
   }
