@@ -5,10 +5,11 @@
 // old "invoice arrives" buttons posted; from there the agent finds it and works on it by itself,
 // and its answer comes back into the thread.
 
-import { CheckCheck, FileText, Paperclip, SendHorizontal, ShieldAlert } from "lucide-react";
+import { CheckCheck, FileText, Paperclip, RotateCcw, SendHorizontal, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm-sheet";
 import { useData } from "@/components/data-provider";
 import { Logo } from "@/components/logo";
 import { api } from "@/lib/api";
@@ -34,6 +35,7 @@ export default function SupplierPage() {
   const [sending, setSending] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
+  const { confirm, sheet } = useConfirm();
 
   const sent = useMemo(() => [...(d.invoices ?? [])].sort((a, b) => (a.receivedAt < b.receivedAt ? -1 : 1)), [d.invoices]);
   const outcomes = useMemo(() => new Map(group(d.audit ?? []).filter((g) => g.invoiceId).map((g) => [g.invoiceId!, outcomeOf(g)])), [d.audit]);
@@ -166,6 +168,30 @@ export default function SupplierPage() {
           </div>
         </form>
       </section>
+
+      {sent.length > 0 && (
+        <button
+          type="button"
+          disabled={sending !== null}
+          onClick={() =>
+            confirm({
+              title: "Start the demo again?",
+              description: "Clears every bill, approval and payment record so you can run the demo from the top. Money already sent on the test ledger stays sent.",
+              confirmLabel: "Start again",
+              tone: "danger",
+              onConfirm: async () => {
+                await api("POST", "/admin/reset");
+                await d.refresh();
+                toast.success("Cleared. Ready for the first bill.");
+              },
+            })
+          }
+          className="mt-4 inline-flex min-h-12 items-center justify-center gap-2 self-center rounded-full border bg-card px-5 text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          <RotateCcw className="size-4" aria-hidden="true" /> Start the demo again
+        </button>
+      )}
+      {sheet}
     </div>
   );
 }
