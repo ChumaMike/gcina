@@ -4,6 +4,8 @@
 //   pnpm inbox inv-001            post one fixture
 //   pnpm inbox inv-001 inv-002    post several, in order
 //   pnpm inbox reset              demo reset on the policy service (POST /admin/reset)
+//   pnpm inbox approve:inv-003    rehearsal stand-in for the OWNER tapping Approve on the dashboard
+//   pnpm inbox reject:inv-002     … or Reject (recorded as decidedBy "owner (rehearsal)")
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "dotenv";
@@ -50,6 +52,16 @@ for (const a of args) {
   if (a === "reset") {
     await op("POST", "/admin/reset");
     console.log("📭 Demo reset: invoices, approvals and payments cleared on the policy service.");
+    continue;
+  }
+  const owner = /^(approve|reject):(.+)$/.exec(a);
+  if (owner) {
+    const [, action, invoiceId] = owner;
+    const aps = (await op("GET", "/approvals?status=pending")) as unknown as Array<{ id: string; invoiceId: string }>;
+    const ap = aps.find((x) => x.invoiceId === invoiceId);
+    if (!ap) throw new Error(`No pending approval for ${invoiceId}`);
+    await op("POST", `/approvals/${ap.id}/${action}`, { decidedBy: "owner (rehearsal)" });
+    console.log(`${action === "approve" ? "👍 Owner approved" : "👎 Owner rejected"} ${invoiceId} (${ap.id})`);
     continue;
   }
   // "inv-002=inv-002b" sends fixture inv-002 again under a new id (a held invoice can't be re-posted under its old id).

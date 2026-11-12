@@ -22,6 +22,7 @@ pnpm install            # agent/ has its own pnpm-workspace.yaml, so the monorep
 | add `--evidence` | Also append a results table to `docs/demo-evidence.md` |
 | `pnpm inbox reset` | Demo reset on the policy service (plays the operator, not the agent) |
 | `pnpm inbox inv-001` | "An invoice arrived": posts a fixture |
+| `pnpm inbox approve:inv-003` / `reject:inv-002` | Rehearsal stand-in for the owner's tap on the dashboard (`decidedBy: "owner (rehearsal)"`) |
 | `pnpm inbox inv-002=inv-002b` | Re-sends a fixture under a new id (a held invoice can't be re-posted under its own id) |
 | `pnpm extract-fixtures` | Offline: Claude reads every fixture, writes `fixtures/*.extracted.json` |
 
@@ -29,10 +30,10 @@ pnpm install            # agent/ has its own pnpm-workspace.yaml, so the monorep
 ```
 pnpm inbox reset
 pnpm inbox inv-001 && pnpm agent once        # ✅ paid on its own, explorer link printed
-pnpm inbox inv-002 && pnpm agent once        # 🛑 agent says "do NOT pay"; policy HOLDS it for the owner → reject it on the dashboard
+pnpm inbox inv-002 && pnpm agent once        # 🛑 agent says "do NOT pay"; policy HOLDS it for the owner → reject it on the dashboard (or `pnpm inbox reject:inv-002`)
 pnpm inbox inv-002=inv-002b && pnpm agent once --compromised
                                              # fooled agent pays the new address → policy holds → agent submits alone → ⛔ tefBAD_QUORUM
-pnpm inbox inv-003 && pnpm agent once        # 👤 above the ask-me limit → HELD → approve on the dashboard, then:
+pnpm inbox inv-003 && pnpm agent once        # 👤 above the ask-me limit → HELD → approve on the dashboard (or `pnpm inbox approve:inv-003`), then:
 pnpm agent once                              # ✅ fresh tx with the approvalId → paid
 pnpm inbox inv-004 && pnpm agent once        # 🔁 same bill again → policy REFUSES (order PO-1001 already paid)
 ```
@@ -43,3 +44,5 @@ It only half-signs when it wants a payment made, **or** when a policy rule is ce
 changed address → rule 3 hold for the owner; above the limit → rule 5 hold; order already paid → rule 6 refusal on record.
 Anything that fails on the order itself (no order, wrong amount, unknown supplier) it stops itself, unsigned,
 because the policy doesn't check orders.
+
+Live RLUSD run of exactly this sequence (12 Nov 2026, 18:02–18:05 SAST): `docs/demo-evidence.md`, "Real agent run in RLUSD".
