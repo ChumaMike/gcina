@@ -19,25 +19,34 @@ Tagline: **The agent pays. The ledger keeps.**
 
 ## The 30-second problem
 
-> **Honesty rule (from R, 02-customer.md §1):** Gumede is our **first design partner, a food business
-> owner we already work with**, never "an independent customer". Every detail about how he pays suppliers
-> below is a **placeholder** until the interview fills §4 of `02-customer.md`. If he pays fewer than ~5
-> suppliers by EFT, use R's reframe: **Gumede is the human face, the bookkeeper who runs payments for
-> 20 small clients is the buyer.**
+**Named customer: Meyiswa Training Academy (MTA)**, a South African skills-training academy and our first
+design partner.
 
-Gumede runs Kota~tainment, a kota business. **[R? interview: how many suppliers he pays by EFT, how
-invoices and banking details reach him (WhatsApp / email / paper), who does the payment.]**
+> **Honesty rule:** MTA is a family business of our team (run by Chuma's brother). Say so openly if asked:
+> "our first design partner is a business we're close to", never "an independent customer". Every detail about
+> how MTA pays suppliers is a **placeholder** until the MTA owner interview is in (R's script in
+> `docs/research/02-customer.md` §2 works with the business name swapped for MTA). The buyer we scale through is
+> still the **bookkeeper who runs payments for many small clients**.
 
-Then one day a message arrives that looks exactly like his meat supplier's: *"Due to an audit, our banking
-details have changed. Please pay today to avoid supply interruption."* Same logo, same amount, a new account.
+MTA pays its suppliers by bank transfer against invoices. **[MTA interview: how many suppliers it pays by EFT,
+how invoices and banking details arrive (email / WhatsApp), who releases the payment.]**
 
-**[R?] one hard SA stat on invoice / changed-banking-details fraud (SABRIC or SAFPS, with year).**
+Then one day an email arrives that looks exactly like a regular supplier's: *"Due to an audit, our banking
+details have changed. Please pay today to avoid supply interruption."* Same name, same amount, a new account.
 
-If he pays it, the money is gone, and in South Africa the business that paid usually carries the loss.
-**[R? confirm with the court-case / Mondaq source in 01-problem-evidence.md before saying this line.]**
+**The stat (rank 1 in research):** "In 2025, South Africa's Supreme Court of Appeal ruled that if your business pays a hacked invoice into a fraudster's account, you still owe your supplier the full amount."
+Source: *Intengo Imoto v Zoutpansberg Motor Wholesalers*, 2025 (6) SA 143 (SCA); also *ENS v Hawarden* [2024] ZASCA 90 (`docs/research/01-problem-evidence.md` §2, §5). So the business pays **twice**: once to the fraudster, then again to the real supplier.
 
-Now picture handing that job to an AI agent. It's faster than Gumede, but it can be fooled by the same email.
-**Would your CFO sign off on that?** Not unless the agent physically *can't* pay the wrong person.
+**Backup stat (rank 2):** South Africans lost **R2.4 billion** to digital banking crime in 2025, up from about
+R1.9 billion in 2024, and SABRIC says it's driven by tricking people rather than hacking systems
+(SABRIC, Aug 2026). **Never call this "BEC losses"**: it's all digital banking crime.
+
+**Third line:** Standard Bank, Absa, Nedbank and FNB all publicly warn businesses about the "changed banking
+details" scam, and all give the same advice: verify the change through a channel you already trust before you
+pay. **That check is the rule Gcina enforces.**
+
+Now picture handing supplier payments to an AI agent. It's faster than any bookkeeper, but it can be fooled by
+the same email. **Would your CFO sign off on that?** Not unless the agent physically *can't* pay the wrong person.
 
 ## What Gcina does
 
@@ -113,14 +122,14 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
 
 **[R? all of this section must be checked against 00-verdict.md GTM bullets and 02-customer.md.]**
 
-1. **Beachhead**: owner-run SA food and hospitality businesses with 5–20 regular suppliers, starting with
-   Kota~tainment. **[R? Gumede interview: how he pays today, what limits he'd set, what he'd pay]**
+1. **Beachhead**: owner-run SA small businesses that pay a handful of regular suppliers by EFT against invoices,
+   starting with MTA. **[MTA interview: how it pays today, what limits it'd set, what it'd pay]**
 2. **Channel**: bookkeepers and accountants who already run accounts payable for many small businesses.
    One sale to a bookkeeper brings many client businesses (R's working range: ~10–30), and they prepare the
    EFTs, so they already feel the fraud risk. **[R? sourced number from 02b-segments-and-name.md]**
 3. **Pricing** (R's inference in 02b §6, not data): an add-on at **R149–R299 a month** per business, about
    20–35% of what an SA small business already pays Xero (R485–R857/month), and well under BILL's ~$49/user
-   in the US. Plus a **practice tier priced per client file** for bookkeepers. Test it with Gumede and 3–5 practices.
+   in the US. Plus a **practice tier priced per client file** for bookkeepers. Test it with MTA and 3–5 practices.
    **[Chuma? confirm the number to say on stage]**
 4. **Rails** (04 §1, §6, §7): Gcina runs **as software behind a licensed crypto asset service provider (CASP)**,
    which does KYB/KYC and Travel Rule data. The supplier's payment lands at a licensed SA exchange, is sold
@@ -133,7 +142,7 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
 
 ## What's next
 
-- Live pilot with Kota~tainment on testnet amounts, using his real supplier list. **[Chuma? Gumede agreed?]**
+- Pilot with MTA on testnet amounts, using its real supplier list. **[Chuma? MTA owner agreed?]**
 - Licensed rails partner for RLUSD ↔ ZAR.
 - Bookkeeper pilot: 1 practice, 10 clients.
 - **The ask: a place in Ripple's UDAX Cape Town accelerator (with UCT)** to take Gcina from testnet to a

@@ -46,9 +46,9 @@ The business pays an add-on of about R149–R299 a month, roughly a quarter of w
 and bookkeepers get a practice tier priced per client file. It's an early estimate we're testing with our
 design partner and accounting practices, anchored on one fraud loss costing far more than a year of Gcina. *(02b §6: inference, not data. **[Chuma? confirm]**)*
 
-### 8. Why would a kota shop owner trust an AI with money?
-He doesn't have to trust it: it can only pay approved suppliers, within limits he sets, and anything
-unusual comes to his phone first. **[R? Gumede's own words from the interview, if we have them.]**
+### 8. Why would a small business owner trust an AI with money?
+They don't have to trust it: it can only pay approved suppliers, within limits they set, and anything
+unusual comes to their phone first. **[MTA owner's own words from the interview, if we have them.]**
 
 ### 9. Why XRPL over Ethereum or Solana?
 Multi-signing with weighted signers and a disabled master key is a **native ledger feature** on XRPL, so
@@ -73,7 +73,7 @@ workflow or a South African focus. Gcina's quorum is the XRP Ledger's own multi-
 custodian), and a changed bank account can only get past it with the owner's key. *(Source: 03-competitors.md §D. **Never say "nobody else does external limits"**: that's false.)*
 
 ### 12. Who's your customer, and have you spoken to them?
-Our first design partner is a food business owner we already work with, Gumede at Kota~tainment (say this openly: he's a connected party), and our buyer is the bookkeeper who runs payments for 10–30 small clients. **[R? 02-customer.md: what he told us: how he pays suppliers, has he seen fake banking-details invoices, what limits he'd set, would he pay for it.]**
+Our first design partner is Meyiswa Training Academy, a skills-training academy that's a family business of our team (say this openly), and the buyer we scale through is the bookkeeper who runs payments for many small clients. **[MTA interview: how it pays suppliers, has it seen fake banking-details emails, what limits it would set, would it pay for this.]**
 
 ### 13. "Gcina" is already a funeral-cover brand in SA. Isn't that a problem?
 Yes, we found it: an FSCA-registered funeral-cover product trades as Gcina, so it's fine as a hackathon name
@@ -82,7 +82,8 @@ protect", which is exactly the job. *(02b Part 2)*
 
 ---
 
-## Spare questions (if time)
+## Spare questions
+- **Is your stat about BEC?** No, and we never say so: the R2.4 billion is all SA digital banking crime (SABRIC 2025). Our core fact is the 2025 SCA ruling that the payer still owes the supplier. (if time)
 - **Does the agent ever see the owner's dashboard token?** No: the agent has its own token that gets
   "forbidden" on every limit, supplier and approval route; only the dashboard server holds the operator token.
 - **What happens to a held payment after it expires?** The signed payment has a short ledger expiry; once the owner approves, the agent signs a fresh one, so nothing old and stale can be replayed.

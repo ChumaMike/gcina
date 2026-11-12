@@ -21,16 +21,16 @@
 
 | # | Time | Scene / what's on screen | Voice-over | Caption (burned in) |
 |---|---|---|---|---|
-| 1 | 0:00–0:12 | Title card: **Gcina**, "The agent pays. The ledger keeps." Small: *W3Node Node Engine 2026 · Agentic Finance (Ripple)* | "Gumede runs Kota~tainment, a kota business in South Africa, and he's our first design partner. **[R? interview: one true line about how he pays suppliers]**" | Gumede · Kota~tainment |
-| 2 | 0:12–0:30 | A fake invoice email, full screen (inv-002 fixture text, styled) with "banking details have changed" highlighted | "One night, an invoice arrives from his meat supplier. *Our banking details have changed, please pay today.* **[R? stat]**. If he pays it, that money is gone." | **[R? stat + source, small]** |
+| 1 | 0:00–0:12 | Title card: **Gcina**, "The agent pays. The ledger keeps." Small: *W3Node Node Engine 2026 · Agentic Finance (Ripple)* | "In 2025, South Africa's Supreme Court of Appeal ruled that if your business pays a hacked invoice into a fraudster's account, you still owe your supplier the full amount." | Supreme Court of Appeal, 2025 · *Intengo Imoto v Zoutpansberg* |
+| 2 | 0:12–0:30 | A fake invoice email, full screen (inv-002 fixture text, styled) with "banking details have changed" highlighted | "Meyiswa Training Academy, our first design partner, pays its suppliers from email invoices. Then this arrives: *Our banking details have changed, please pay today.* Pay it, and you pay twice." | Every big SA bank warns about this exact scam |
 | 3 | 0:30–0:42 | Dashboard Overview | "Gcina is an AI agent that pays suppliers for a small business, inside limits the owner sets and the agent can't break." | Gcina = AI accounts payable, with guardrails |
 | 4 | 0:42–1:05 | `Split`: simulate inv-001 → terminal reasoning → "paid" in the feed → click the explorer link → `Explorer` | "A real invoice: Mzansi Meat Supplies, order PO-1001, R 360. The agent reads it, matches it to the order and the registered address, and pays it by itself on the XRP Ledger test network." | ✅ Paid on its own · real testnet transaction |
 | 5 | 1:05–1:25 | `Split`: simulate inv-002 → agent flags it → Approvals card with the reason | "Now the fake one. Same supplier, same amount, new address, urgent. The agent catches it itself and holds it, with a reason in plain English." | 🛑 Held: not the supplier's registered address |
 | 6 | 1:25–1:55 | Terminal in compromised mode: agent signs → policy refuses → direct ledger submit → **red ledger rejection `tefBAD_QUORUM`**. Zoom in on the result line. | "But what if the AI itself is tricked? Here we force it to obey the fraudster. It signs the payment. Our policy service refuses. So it goes straight to the ledger with only its own signature, and **the XRP Ledger rejects it.** The agent alone can never move money." | Compromised agent → rejected by the ledger itself |
-| 7 | 1:55–2:15 | `Phone`: inv-003 Khaya Packaging, R 810, above the limit → Approve → confirm sheet → paid + explorer link | "Bigger payments come to the owner. Khaya Packaging, R 810: above Gumede's limit, so he approves it from his phone, and it's paid." | 👤 Owner approves from the phone |
+| 7 | 1:55–2:15 | `Phone`: inv-003 Khaya Packaging, R 810, above the limit → Approve → confirm sheet → paid + explorer link | "Bigger payments come to the owner. Khaya Packaging, R 810: above the owner's limit, so they approve it from their phone, and it's paid." | 👤 Owner approves from the phone |
 | 8 | 2:15–2:25 | Limits screen: change "ask me above", save, show "The agent can't change these." | "The limits are his. He can change them any time. The agent can read them, but never change them." | Limits set by a human, outside the agent |
 | 9 | 2:25–2:38 | How it works screen (diagram) | "How? The agent's account has no single key. Agent: one vote. Policy service: one vote. Owner's offline key: two. The ledger needs two." | Agent 1 + Policy 1 = 2 ✓ · Agent alone = 1 ✗ |
-| 10 | 2:38–2:48 | End card: GitHub repo URL, "Built on the XRP Ledger testnet", team names | "Gcina. The agent pays. The ledger keeps. We start with food businesses like Gumede's, and grow through the bookkeepers who pay suppliers for them." | github.com/**[repo?]** |
+| 10 | 2:38–2:48 | End card: GitHub repo URL, "Built on the XRP Ledger testnet", team names | "Gcina. The agent pays. The ledger keeps. We start with small businesses like MTA, and grow through the bookkeepers who pay suppliers for them." | github.com/**[repo?]** |
 
 **Runtime check**: 2:48. If an edit runs long, cut shot 8 down to 5 s first, then trim shot 3.
 
@@ -38,7 +38,7 @@
 
 - Burn in the short captions above (Clipchamp text, bottom third, white on 60% black, 48 px).
 - Also upload a full `.srt` to YouTube generated from the voice-over (YouTube auto-captions, then correct
-  "Gcina", "Kota~tainment", "Mzansi", "Khaya", "XRP Ledger" by hand).
+  "Gcina", "Meyiswa", "Zoutpansberg", "Mzansi", "Khaya", "XRP Ledger" by hand).
 
 ## Checks before uploading
 

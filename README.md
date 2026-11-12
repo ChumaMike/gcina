@@ -13,11 +13,26 @@ Built for the **W3Node Node Engine Hackathon 2026**, **Agentic Finance track (Ri
 - 🖥️ Operator dashboard (testnet): **[deployed URL?]** (demo passcode on request)
 - 🔎 Testnet evidence: [`docs/demo-evidence.md`](docs/demo-evidence.md)
 
+### For judges: where to find each rubric point
+
+| Rubric | Read this |
+|---|---|
+| **Business (30)**: African problem, users, GTM, local rails | [The problem](#the-problem) · [Testnet demo vs production path](#testnet-demo-vs-production-path-honest) · [`docs/pitch/story.md`](docs/pitch/story.md) · [`docs/research/`](docs/research) |
+| **Technical (30)**: deployed on testnet, architecture | [Track MVP checklist](#track-mvp-checklist) · [How we use XRPL + RLUSD](#how-we-use-xrpl--rlusd) · [Security model](#security-model) · [`docs/demo-evidence.md`](docs/demo-evidence.md) |
+| **Product (30)**: polished, no explanation needed | Dashboard link above · [The demo, invoice by invoice](#the-demo-invoice-by-invoice) · video |
+| **Ripple lens**: meaningful use of XRPL + RLUSD | [How we use XRPL + RLUSD](#how-we-use-xrpl--rlusd) |
+
 ---
 
 ## The problem
 
-**[R? 30-second problem + 1 headline stat with source and year, from docs/research/00-verdict.md]**
+> **In 2025, South Africa's Supreme Court of Appeal ruled that if your business pays a hacked invoice into a fraudster's account, you still owe your supplier the full amount.**
+> — *Intengo Imoto v Zoutpansberg Motor Wholesalers*, 2025 (6) SA 143 (SCA); see also *ENS v Hawarden* [2024] ZASCA 90.
+
+So a business that falls for one fake "new banking details" email pays twice. Standard Bank, Absa, Nedbank and
+FNB all warn businesses about this exact scam and give the same advice: verify any change of banking details
+through a channel you already trust before paying. South Africans lost **R2.4 billion** to digital banking crime
+in 2025 (SABRIC), driven by social engineering rather than hacked systems. Sources: [`docs/research/01-problem-evidence.md`](docs/research/01-problem-evidence.md).
 
 A small business pays its suppliers by bank transfer against invoices. Fraudsters send convincing
 "new banking details" invoices and the business pays them instead. AI agents can now do accounts payable,
@@ -25,8 +40,7 @@ but an agent can be fooled by the same email, or prompt-injected into obeying it
 **So would your CFO sign off on letting an AI pay suppliers?** Only if the agent physically can't pay the
 wrong person.
 
-Our first design partner is a food business owner we already work with: Gumede, owner of Kota~tainment.
-**[R? one line from the interview]**
+Our first design partner is **Meyiswa Training Academy (MTA)**, a South African skills-training academy (a family business of our team, so we say so up front). **[MTA interview: one line]**
 
 ## How it works
 
@@ -66,6 +80,16 @@ flowchart LR
 | `inv-004` duplicate of inv-001 | ⛔ Rejected as already paid | **[EV? audit line]** |
 
 Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet issuance); XRP only pays network fees and reserves. Indicative ZAR uses a fixed demo rate of R 18 per USD. It isn't a market price.
+
+## How we use XRPL + RLUSD
+
+| XRPL feature | How Gcina uses it | Why it matters |
+|---|---|---|
+| **Multi-signing** (`SignerListSet`) | `AGENT_ACCOUNT` has signers agent 1 · policy 1 · owner 2, quorum 2 | The rule "no single machine can pay" is enforced by the ledger protocol, not by a smart contract we wrote |
+| **Master key disabled** (`asfDisableMaster`) | Set right after the SignerList | Nobody can bypass the quorum with the account's own key (`tefMASTER_DISABLED`) |
+| **RLUSD** (trust lines + issued-currency `Payment`) | Suppliers are paid in testnet RLUSD; XRP only covers fees and reserves | A dollar-stable unit for invoices instead of a volatile asset |
+| **Memos** | Every payment carries `{"invoiceId": "…", "app": "gcina"}` | The invoice ↔ payment audit trail lives on the ledger |
+| **Fast, final settlement** | Multi-signed payment fee is 30 drops (10 × (1 + 2 signers)); ledgers close every 3–5 s | A two-key-protected supplier payment costs a fraction of a cent and is final in seconds (`docs/research/05-xrpl-fit.md`) |
 
 ## Track MVP checklist
 
@@ -117,11 +141,14 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 | JSON / Postgres store | Hardened store, POPIA: operator agreement (s21), a lawful basis for sending invoice data to the LLM provider (s72), redaction |
 | Fixed indicative rate (R 18/USD) | Live quote at payment time |
 
-## Built with
+## Built during Node Engine
 
-xrpl.js · Hono · Next.js · Anthropic Claude API (the agent's invoice reading) · pnpm + TypeScript.
-**AI assistance disclosure:** the team used Claude Code (Anthropic) as a coding and writing assistant during
-the hackathon. **[Chuma? confirm wording + list any other open-source templates used]**
+All code in this repository was written during the hackathon (12–13 Nov 2026); nothing was carried over from an
+earlier project. What we used that already existed:
+
+- **Open-source libraries:** [xrpl.js](https://github.com/XRPLF/xrpl.js), [Hono](https://hono.dev), [Next.js](https://nextjs.org), Tailwind CSS + shadcn/ui, zod, the Anthropic TypeScript SDK, tsx, pnpm. **[confirm final list from each package.json]**
+- **AI tools:** the agent calls the **Anthropic Claude API** at runtime to read invoices. The team used **Claude Code** (Anthropic) as a coding, research and writing assistant while building. **[Chuma? confirm wording]**
+- **Services:** XRPL Testnet + faucet, testnet RLUSD, Vercel (hosting).
 
 ## Team
 
@@ -133,4 +160,3 @@ W3Node **Node Engine Hackathon 2026** · **Agentic Finance track**, sponsored by
 "Would your CFO sign off? Build a working product where an AI agent moves money on behalf of a business
 and the XRP Ledger enforces the rules it plays by."
 
-All code in this repository was written during the hackathon.
