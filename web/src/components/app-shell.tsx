@@ -118,7 +118,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
         </Link>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-28 sm:px-6 md:px-8 md:pt-8 md:pb-12">
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-56 sm:px-6 md:px-8 md:pt-8 md:pb-12">
         <JudgeBanner />
         {children}
       </main>

@@ -854,7 +854,7 @@ export function SaslPreview() {
     <>
       <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}`}</style>
       {!on ? (
-        <div data-sasl-ignore className="fixed right-3 bottom-24 z-50 flex flex-col gap-2 md:bottom-6">
+        <div data-sasl-ignore className="fixed right-3 bottom-28 z-50 flex flex-col gap-2 md:bottom-6">
           <button
             type="button"
             onClick={() => openAs("voice")}
@@ -880,7 +880,7 @@ export function SaslPreview() {
           role="complementary"
           aria-label="Sign language and read-aloud"
           style={{ width: `min(${panelW}px, calc(100vw - 1.5rem))` }}
-          className="fixed right-3 bottom-24 z-50 max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl border border-black/10 bg-white p-3 text-slate-900 shadow-2xl md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+          className="fixed right-3 bottom-28 z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-2xl border border-black/10 bg-white p-3 text-slate-900 shadow-2xl md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="flex items-start justify-between gap-2">
             <p className="text-sm font-semibold">{signing ? "🤟 SASL avatar · concept preview" : "🔊 Read aloud"}</p>
