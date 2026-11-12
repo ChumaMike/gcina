@@ -50,3 +50,19 @@ AGENT_ACCOUNT `rGnmtEMkzCECGn1mkdxZt8cieEU62kV6hq` (master disabled, SignerList 
 
 `tef*` results are final rejections at submit time: the transaction never enters a ledger and no fee is charged,
 so (a) and (b) have no explorer page. That is the point — the money cannot move.
+
+## Deployed policy (https://gcina-policy.vercel.app) with the live agent watcher, 2026/11/12 evening SAST
+
+Read back from the ledger (`account_tx` on AGENT_ACCOUNT) and the deployed policy (`GET /invoices`, agent token) by A at 20:39 SAST; nothing was re-run or reset.
+The agent here is C's `pnpm agent watch` (normal + `--compromised` runs) pointed at the deployed URL.
+
+| Time (SAST) | Step | Result | Tx |
+|---|---|---|---|
+| 19:40:33 | inv-001 Mzansi Catering, $ 20.00 RLUSD | ✅ paid, tesSUCCESS, 2 Signers, delivered 20 RLUSD to `rfhJ9…Ehii` | [3A1C61BDD46C…](https://testnet.xrpl.org/transactions/3A1C61BDD46C16A3C8FC6CA633B3B10ABD2CDC939E5B40A094854ACBC5806BE2) |
+| 19:45:51 | inv-002 (fake new address) under the **earlier** repeat/approval rules | ⚠ paid $ 20.00 RLUSD to `rNFSs…NgaQ` after an owner approval; the gap that allowed it was closed in 4584a18 / 2a64dc4 (approvals can't lift hard limits; the fake re-sent invoice is refused as a repeat). Disclosed in docs/pitch/qa.md | [1FB4A2140375…](https://testnet.xrpl.org/transactions/1FB4A2140375EB6BEE425CF1C4D6CA663520952F837FAC04389B66DC81F4B106) |
+| ~20:05 | inv-002, inv-002b on the current rules | 🛑 rejected (deployed store) | — |
+| ~20:07 | inv-002c, compromised agent | 👤 held by the policy (store: held) → lone signature ⛔ tefBAD_QUORUM, never on a ledger (reported by C's watcher) | — (no explorer page) |
+| 20:16:53 | owner fires the agent (owner key alone, SignerListSet) | ✅ tesSUCCESS | [EAAEDFA20283…](https://testnet.xrpl.org/transactions/EAAEDFA2028319612AFA44CEE5E70C0A7EBCD7928B0C174796B2B3C78D30606B) |
+| 20:17:10 | owner re-hires the agent | ✅ tesSUCCESS | [4992278555FE…](https://testnet.xrpl.org/transactions/4992278555FEEE1D3C535482326BB3C34986FC01E8D9C088E09B0DED417D2CAD) |
+
+SignerList checked after the re-hire (validated ledger): quorum 2; agent `rhGCPJ…` weight 1, the other two signers weight 1 and 2; master key disabled.
