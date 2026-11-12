@@ -49,10 +49,13 @@ const DataContext = createContext<Ctx>({ ...empty, refresh: async () => {} });
 export const useData = () => useContext(DataContext);
 
 const POLL_MS = 3000;
+/** While the agent is working on a bill, poll faster so its steps and notes appear as they happen. */
+const BUSY_POLL_MS = 1200;
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [snap, setSnap] = useState<Snapshot>(empty);
   const inflight = useRef(false);
+  const busy = useRef(false);
 
   const refresh = useCallback(async () => {
     if (inflight.current) return;
@@ -60,6 +63,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     try {
       const keys = ["health", "policy", "suppliers", "invoices", "approvals", "audit", "balances"] as const;
       const results = await Promise.allSettled(keys.map((k) => api("GET", `/${k}`)));
+      const inv = results[3];
+      if (inv.status === "fulfilled") busy.current = asList(inv.value).some((i) => i.status === "new" || i.status === "processing");
       setSnap((prev) => {
         const next: Snapshot = { ...prev, errors: {}, loadedAt: Date.now() };
         results.forEach((r, i) => {
@@ -109,7 +114,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     let stopped = false;
     const tick = async () => {
       if (!document.hidden) await refresh();
-      if (!stopped) timer = setTimeout(tick, POLL_MS);
+      if (!stopped) timer = setTimeout(tick, busy.current ? BUSY_POLL_MS : POLL_MS);
     };
     tick();
     const onVis = () => !document.hidden && refresh();
