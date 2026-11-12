@@ -3,6 +3,7 @@
 import { Mic, MicOff, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,24 +41,30 @@ export function SpeakToGcina({ onNavigate }: { onNavigate?: () => void }) {
     return () => rec.current?.stop();
   }, []);
 
+  // Every answer is shown as text (in the sheet AND as a toast, which survives navigation).
   const reply = (text: string) => {
     setAnswer(text);
+    toast.message(text);
     if (prefs.listen) speak(text, "en-ZA");
+  };
+  const go = (href: string) => {
+    router.push(href);
+    onNavigate?.();
   };
 
   const act = (said: string) => {
     setHeard(said);
     const waiting = approvals?.filter((a) => a.status === "pending").length ?? 0;
-    if (/what|status|anything|kukhona|wat is|enigma/i.test(said) && !COMMANDS.some((c) => c.re.test(said))) {
-      return reply(waiting === 0 ? "Nothing is waiting for you. The agent is handling the rest." : `${waiting} ${waiting === 1 ? "payment is" : "payments are"} waiting for you to approve.`);
+    // Questions first ("what is waiting?" must answer, not just open a page).
+    if (/\b(what|status|anything|any|kukhona|wat|yini)\b|\?/i.test(said)) {
+      if (waiting === 0) return reply("Nothing is waiting for you. The agent is handling the rest.");
+      reply(`${waiting} ${waiting === 1 ? "payment is" : "payments are"} waiting for you to approve. Opening Approvals.`);
+      return go("/approvals");
     }
     const c = COMMANDS.find((x) => x.re.test(said));
     if (!c) return reply('Try "approvals", "overview", "invoices", or "what is waiting?"');
     reply(c.say);
-    if (c.href) {
-      router.push(c.href);
-      onNavigate?.();
-    }
+    if (c.href) go(c.href);
   };
 
   const listen = () => {
