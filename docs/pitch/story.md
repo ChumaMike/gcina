@@ -185,8 +185,14 @@ That's the answer to "would your CFO sign off?": **even if the AI is fooled, the
    for *domestic* payments, so at home we'd pay in a **rand stablecoin** and keep **RLUSD for cross-border**
    supplier invoices. Not yet confirmed: whether VALR supports RLUSD on XRPL or has an RLUSD/ZAR pair, so
    **never promise an XRPL → ZAR route on stage**.
-5. **Expansion**: same guardrails for payroll runs, stokvel/co-op payouts, and cross-border supplier
-   payments in the region. **[R? pick the 1–2 that research supports]**
+5. **Expansion** (C decision 17:22, `docs/idea-comparison.md`): **Same engine, next markets:** it protects any money one person controls for many. Supplier runs today; **stokvel payouts** and stipend registers next (stokvels: about 11 million members and R50 billion a year, NASASA's own estimate via Ipsos 2024, no published method); cross-border RLUSD supplier invoices with a licensed partner. Source: `docs/research/06-stokvel-problem.md`.
+
+## Product promises (C, 17:00, from Chuma's review)
+
+- **"You only hear from Gcina when something's wrong."** Routine payments are quiet one-line ticks; held items come first.
+- The agent can't change the rules: its token is blocked from every owner action, and the agent and policy keys live on separate systems.
+- Built now: duplicate check by invoice number **or** same payee + amount + reference (the MTA case); a cooling-off setting for newly approved accounts (0 for the demo, 24 h in production); approving a changed address needs "I confirmed this with the supplier on a number I already had".
+- Production next steps: owner passkey/2FA, 24 h cooling-off on new accounts, WhatsApp/SMS alert on any limit or supplier change, Xero/Sage supplier import, a bank account check (AVS-R) when an address is approved.
 
 ## What's next
 

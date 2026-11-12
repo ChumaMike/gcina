@@ -98,6 +98,11 @@ Not that I know of: what I saw in two years of MTA's admin was the same person s
 and Gcina's duplicate check stops exactly that. The fake-banking-details risk comes from the courts and all four
 big banks' warnings, so we stop both. *(customer-evidence-mta.md; never claim an MTA fraud incident.)*
 
+### 15. Why not stokvels, or another market?
+The same engine protects any money one person controls for many people, and stokvels are our next market: NASASA
+estimates about 11 million members and R50 billion a year, though it's their own estimate. We start with supplier
+payments because the loss is legally the business's (SCA 2025) and we've seen the double payments first-hand. *(06-stokvel-problem.md, idea-comparison.md)*
+
 ## Spare questions
 - **Is your stat about BEC?** No, and we never say so: the R2.4 billion is all SA digital banking crime (SABRIC 2025). Our core fact is the 2025 SCA ruling that the payer still owes the supplier. (if time)
 - **Does the agent ever see the owner's dashboard token?** No: the agent has its own token that gets

@@ -139,6 +139,7 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
   suppliers, approvals) lives server-side in the dashboard and never reaches the browser or the agent.
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
 - **Every payment carries its invoice ID** as an on-ledger memo, and every decision is in the audit log.
+- **Quiet when normal:** routine payments show as one-line ticks; anything held goes to the top for the owner. *You only hear from Gcina when something's wrong.*
 
 ## Testnet demo vs production path (honest)
 
@@ -151,6 +152,12 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 | Demo passcode on the dashboard | Proper owner login + phone approval with device binding |
 | JSON / Postgres store | Hardened store, POPIA: operator agreement (s21), a lawful basis for sending invoice data to the LLM provider (s72), redaction |
 | Fixed indicative rate (R 18/USD) | Live quote at payment time |
+| Cooling-off on newly approved accounts set to 0 for the demo | 24 h cooling-off, owner passkey/2FA, WhatsApp/SMS alert on any limit or supplier change |
+| Supplier register typed in on the dashboard | Import from Xero/Sage; bank account verification (AVS-R) before an address is approved |
+
+**Same engine, next markets:** it protects any money one person controls for many: supplier runs today; stokvel
+payouts and stipend registers next (stokvels: ~11 million members, ~R50 billion a year, NASASA estimate); cross-border
+RLUSD supplier invoices with a licensed partner.
 
 ## Built during Node Engine
 
