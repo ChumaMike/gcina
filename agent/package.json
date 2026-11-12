@@ -9,6 +9,7 @@
     "agent": "tsx src/run.ts",
     "inbox": "tsx scripts/simulate-inbox.ts",
     "extract-fixtures": "tsx scripts/extract-fixtures.ts",
+    "check-decisions": "tsx scripts/check-decisions.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
