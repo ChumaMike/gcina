@@ -423,6 +423,14 @@ export function createApp(d: AppDeps) {
       ...(verdict.approvalId ? { approvalId: verdict.approvalId } : {}),
     };
     await d.store.update((s) => {
+      // Fail closed: re-run the rules on the row-locked, current books before claiming the payment.
+      // If anything changed since the first check (another instance claimed it, limits changed, paused),
+      // this throws, the transaction rolls back and the co-signed blob is never submitted.
+      // Correctness therefore never depends on the advisory lock staying held.
+      const recheck = evaluate(p, s, d.rules, at, ledgerIndex);
+      if (recheck.kind !== verdict.kind) {
+        throw new HttpError(409, `Not co-signed: the books changed while deciding. ${recheck.reasons.join(" ")} Nothing was sent to the ledger.`);
+      }
       (s.inflight ??= []).push(flight);
       received(s);
       audit(s, {
