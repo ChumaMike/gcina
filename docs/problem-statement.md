@@ -22,13 +22,19 @@ South African small businesses that pay many suppliers and people lose money in 
 | Bank AVS / "verify account owner" | Confirms an account belongs to a name | Doesn't detect changed details, duplicates or limits |
 | Agent-wallet toolkits (Ripple XRPL agent kit / x402, Stripe, Coinbase, Privy) | Give AI agents wallets and spending caps | Built for developers and agent-to-API payments, not a small business's supplier and fraud workflow |
 
-**Nobody offers:** an AI that does the payables work **plus** a rule-keeper the AI can't override **plus** a ledger that refuses the AI on its own, all controlled by the owner from a phone.
+| Ramp (US) | AI fraud agent checks about 60 signals per bill and flags new or changed bank details; AP agents | Controls live inside the same platform the agent runs on; US only |
+| Visa + BILL + Billtrust pilot (20 Oct 2026) | AI agents **execute** invoice payments that a human has **already approved** | The agent doesn't decide; trust rests on platform authentication (Visa Trusted Agent Protocol) |
+| SA Xero payment add-ons (Payaccsys, Paysoft Flow, Netcash) | Batch supplier payments with optional account verification (AVS/CDV) | No AI agent; checks are opt-in |
+
+**Honest position (C, updated after a teammate's competitor review):** many of our parts exist on their own (AI invoice reading, changed-details flags, approvals, agents executing approved payments). **We are not "the first" and we never say "only" or "nobody".** What's different is the **combination and where the control sits**: the agent may **decide and initiate**, but its **authority to spend is enforced outside it**: by an independent co-signer and the ledger's two-key rule, not by the same platform the agent runs on.
 
 ## Unique value proposition
-**Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, the ledger won't let it pay wrong.**
+**Gcina: autonomous supplier payments, independent financial control.** Gcina lets a small business hand supplier payments to an AI agent **by separating the agent's ability to initiate a payment from its authority to spend**. The agent proposes; an independent co-signer and the XRP Ledger's two-key rule decide. Even if it's fooled or hacked, it still can't pay on its own.
+
+**Judge answer, "why not Ramp or Sage?":** "They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams."
 
 ### What makes it different
-1. **Three independent locks, not one.**
+1. **Three independent locks, not one** (each part exists elsewhere; the combination, and keeping spending authority outside the agent, is ours).
    - **Judgement:** the AI reads the invoice and flags urgency and changed-details language.
    - **Rules:** a separate policy service holds the second key and only co-signs approved payees, within limits, never twice.
    - **Ledger:** XRPL multi-sign with the master key disabled means the agent alone gets `tefBAD_QUORUM`.
