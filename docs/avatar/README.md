@@ -13,7 +13,7 @@ animation and facial grammar require Deaf SASL experts and validated data.
 
 ## Open the interactive preview in Chrome
 
-**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/50e681207ed26453a3c4f2eedd472c87356b1c27/docs/avatar/preview.html)** — no download required.
+**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/6359a7baf3664d5182ecbe3dc5bb92c2b8d0016c/docs/avatar/preview.html)** — no download required.
 This viewer runs the committed standalone HTML. The character and hand controls
 were checked in Chromium. The link is pinned to the tested implementation commit.
 GitHub's file page cannot run HTML and reports that this bundled file is too large
