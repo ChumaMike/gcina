@@ -8,3 +8,5 @@ dist/
 policy/data/
 *.log
 .DS_Store
+
+.passcode-live.local
