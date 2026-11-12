@@ -33,5 +33,6 @@ export const env = {
   currency: (process.env.PAYMENT_CURRENCY ?? "RLUSD") as Currency,
   rlusdIssuer: process.env.RLUSD_ISSUER ?? "rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV",
   model: process.env.AGENT_MODEL ?? "claude-sonnet-5-5",
-  mode: (process.env.AGENT_MODE === "compromised" ? "compromised" : "normal") as "normal" | "compromised",
+  // `--compromised` does the same as AGENT_MODE=compromised (no env-var syntax to fight on stage).
+  mode: (process.env.AGENT_MODE === "compromised" || process.argv.includes("--compromised") ? "compromised" : "normal") as "normal" | "compromised",
 };

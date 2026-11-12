@@ -52,9 +52,11 @@ for (const a of args) {
     console.log("📭 Demo reset: invoices, approvals and payments cleared on the policy service.");
     continue;
   }
-  const id = a.replace(/\.txt$/, "");
-  const rawText = readFileSync(resolve(AGENT_DIR, "fixtures", `${id}.txt`), "utf8");
+  // "inv-002=inv-002b" sends fixture inv-002 again under a new id (a held invoice can't be re-posted under its old id).
+  const [fixture, newId] = a.replace(/\.txt$/, "").split("=");
+  const id = newId || fixture;
+  const rawText = readFileSync(resolve(AGENT_DIR, "fixtures", `${fixture}.txt`), "utf8");
   // No poNumber: the inbox doesn't know the order. Matching it is the agent's job.
-  await op("POST", "/invoices", { id, supplierName: FROM[id] ?? "Unknown sender", rawText });
-  console.log(`📨 ${id} arrived from ${FROM[id] ?? "an unknown sender"}`);
+  await op("POST", "/invoices", { id, supplierName: FROM[fixture] ?? "Unknown sender", rawText });
+  console.log(`📨 ${id} arrived from ${FROM[fixture] ?? "an unknown sender"}`);
 }
