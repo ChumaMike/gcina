@@ -138,10 +138,17 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 
 ## Accessibility
 
-11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners.
-The dashboard works by keyboard and screen reader (the activity feed announces new events), with large tap targets
-and text that zooms to 200% on a small phone. Non-English screens are marked as AI translations while first-language
-speakers check them.
+One accessibility button (phone header, desktop sidebar) opens:
+- **Language:** all 11 written official languages. Key screens are translated so far (the feed, approvals, Approve /
+  Reject, "Gcina stopped"); non-English is marked "AI translation, being checked by first-language speakers".
+- **Text size** A / A+ / A++, **high contrast**, **reduce motion**: saved on the device.
+- **Listen:** feed rows and approval cards read aloud in the chosen language where the phone has that voice
+  (otherwise it says so and reads English). **Speak to Gcina:** ask by voice, e.g. "what is waiting?"; every answer
+  is also shown as text.
+- Screen readers: the activity feed announces new events (`aria-live`); automated axe checks show 0 serious or
+  critical issues on every screen, and text at 200% fits a 360 px phone.
+- **South African Sign Language** (our 12th official language) is marked *coming*, with a concept preview: we'll
+  build it with a Deaf-community partner. WhatsApp voice-note approvals are on the roadmap too.
 
 ## Security model
 
