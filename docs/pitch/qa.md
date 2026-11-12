@@ -114,6 +114,12 @@ address that isn't the supplier's, and the ledger refuses the agent on its own. 
 account without asking the agent or us. In the demo that's one command; in production it's a button in the owner's
 own wallet app." (ledger/scripts/agent-key.ts; fire/rehire tested by C on 12 Nov.)
 
+### 14g. "How do I know this is real and not a mock-up?"
+"Don't take our word for it." Open the dashboard's **See it on the public ledger** card (Overview or How it works):
+it reads the agent account's signer list live from a public XRPL Testnet node (agent 1 vote, policy 1, owner 2,
+quorum 2). Every paid row has a QR code: let the judge scan it and land on testnet.xrpl.org on their own phone.
+Refused attempts have no page, by design: they never entered the ledger.
+
 ### 14b. Is it accessible? What about people who don't read English?
 "11 languages, screen-reader friendly, every voice note also shown as text. South African Sign Language (our 12th official language) and WhatsApp voice-note approvals are on the roadmap with partners." *(C, 18:30. Say "AI translation, checked by a first-language speaker" only after Chuma has checked isiXhosa/isiZulu; until then: "AI translations, being checked".)*
 
