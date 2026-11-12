@@ -1,6 +1,6 @@
 # 00 — Verdict: is Gcina a winning answer?
 
-**Draft 1, 12 Nov 2026 16:25 (R).** Final at 21:00 after the Gumede interview and the 5b rails follow-up.
+**Draft 1, 12 Nov 2026 16:05 (R).** Final at 21:00 after the Gumede interview and the 5b rails follow-up.
 Sources are in files 01–05. Every number below links back to them. Nothing here is a new number.
 
 ## Bottom line (sceptic's read)
@@ -114,5 +114,5 @@ Optional global line: *"In the US, the FBI counted US$3.05 billion lost to busin
 
 ## Open items before 21:00
 - Gumede interview (02 §4) → update Customer validation and the Q5 answer.
-- ~~04 §8 local rails + AVS~~ done 16:40: no SA exchange confirmed for RLUSD-on-XRPL → Q1/GTM 4 updated. Chuma could check VALR's RLUSD deposit screen (which networks) before Saturday.
+- ~~04 §8 local rails + AVS~~ done 16:06: no SA exchange confirmed for RLUSD-on-XRPL → Q1/GTM 4 updated. Chuma could check VALR's RLUSD deposit screen (which networks) before Saturday.
 - Links to open by hand (blocked to the fetcher): SAFLII judgments, the full SABRIC 2025 PDF, Capitec, Cliffe Dekker (see 01).

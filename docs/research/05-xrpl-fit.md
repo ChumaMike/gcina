@@ -17,7 +17,7 @@ Live values (server_info, 2026-11-12, rippled 3.4.1 on both networks):
 
 ## Corrections to CONTRACTS.md
 
-## C0. RLUSD addendum (added 16:25 after the contract switched to RLUSD at 15:58)
+## C0. RLUSD addendum (added 16:05 after the contract switched to RLUSD at 15:58)
 
 The corrections below were checked against the XRP-drops version of the contract. With RLUSD (an issued token) as the payment currency:
 - **Amount shape on the ledger:** `{ currency: "524C555344000000000000000000000000000000", issuer: "rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV", value: "20" }` (testnet). "RLUSD" has 5 characters, so the ledger needs the 40-hex code; the plain string "RLUSD" is invalid. The API type `{currency:"RLUSD", value}` is ours; translate it at the ledger edge. Source: https://docs.ripple.com/products/stablecoin/developer-resources/rlusd-on-the-xrpl
