@@ -9,7 +9,8 @@
     "buy-rlusd": "tsx scripts/buy-rlusd.ts",
     "typecheck": "tsc --noEmit",
     "fire-agent": "tsx scripts/agent-key.ts fire",
-    "rehire-agent": "tsx scripts/agent-key.ts rehire"
+    "rehire-agent": "tsx scripts/agent-key.ts rehire",
+    "recycle": "tsx scripts/recycle.ts"
   },
   "license": "MIT",
   "dependencies": {
