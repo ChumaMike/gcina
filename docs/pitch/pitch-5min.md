@@ -15,14 +15,16 @@ just held up, and every click below is his.
 
 ## Screen layout on the projector
 
-- **Left 60%**: the deployed dashboard (`gcina-web`), Overview tab, zoom 125%.
+- **Left 60%**: the deployed dashboard, https://gcina.vercel.app, Overview tab, zoom 125%.
 - **Right 40%**: the agent terminal (`pnpm agent watch`), font 20 pt+, dark theme.
 - Second browser tab ready: the XRPL testnet explorer (pre-opened on the inv-001 hash from rehearsal).
 - **Phone**: logged in to the dashboard, on the Approvals tab, brightness up, Do Not Disturb on.
 
 ## Pre-flight (T-15 min, off stage)
 
-1. Policy service healthy: open `/health`, see `ok: true`, `testnet` and currency `RLUSD`. Dashboard Overview shows **RLUSD balances** (TREASURY and the agent's float), not zero.
+0. `agent/.env` has `POLICY_URL=https://gcina-policy.vercel.app` (the live one). **Never** run the stage agent against
+   `localhost:8787`: its payments wouldn't show on the dashboard (C, 19:29).
+1. Policy service healthy: open https://gcina-policy.vercel.app/health, see `ok: true`, `testnet` and currency `RLUSD`. Dashboard Overview shows **RLUSD balances** (TREASURY and the agent's float), not zero.
 2. Terminal 1 (on the projector): `cd agent && pnpm agent watch` (normal mode; the dashboard's invoice buttons feed it).
    Terminal 2 (in `agent/`), command typed but **not** run: `pnpm inbox inv-002=inv-002b && pnpm agent once --compromised`.
    A held invoice is never picked up again, so the compromised beat re-sends the fake one as a new id, `inv-002b`. Stop terminal 1 (Ctrl+C) just before running terminal 2, so the normal agent doesn't grab inv-002b first; restart it after. (Source: `agent/README.md` "Demo run".)
