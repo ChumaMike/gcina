@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ErrorNote, ExplorerLink, InvoiceChip, PageHeader, timeAgo } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
+import { TxQr } from "@/components/ledger-proof";
 import { InvoiceTwoViews } from "@/components/invoice-views";
 import { useData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,12 @@ export default function InvoicesPage() {
                     <div className="rounded-lg bg-muted/60 p-3 text-sm" aria-live="polite">
                       <p>{latest.message}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{timeAgo(latest.at)}</p>
-                      {tx && <ExplorerLink hash={tx} className="-mb-2" />}
+                      {tx && (
+                        <div className="mt-2 flex items-center gap-3">
+                          <TxQr hash={tx} size={64} />
+                          <ExplorerLink hash={tx} />
+                        </div>
+                      )}
                     </div>
                   )}
 

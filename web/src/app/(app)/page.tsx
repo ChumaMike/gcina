@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ErrorNote, Money, RlusdBadge } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
+import { LedgerProofCard } from "@/components/ledger-proof";
 import { StoppedCard } from "@/components/stopped-card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/components/data-provider";
@@ -74,6 +75,8 @@ export default function OverviewPage() {
           )}
         </CardContent>
       </Card>
+
+      <LedgerProofCard />
     </div>
   );
 }

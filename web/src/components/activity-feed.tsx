@@ -8,6 +8,7 @@ import type { AuditEvent, Invoice } from "@/lib/types";
 import { amountOf, dataOf, group, isPayment, ledgerRefusal, outcomeOf, type Group } from "@/lib/feed";
 import { cn } from "@/lib/utils";
 import { ActorChip, ExplorerLink, clock, timeAgo } from "./bits";
+import { TxQr } from "./ledger-proof";
 
 /** The agent's own words for this invoice, if it gave any. */
 function reasoningOf(g: Group): string | null {
@@ -75,7 +76,8 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
           </p>
           {time}
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 pl-7">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-7">
+          {paidEv.txHash && <TxQr hash={paidEv.txHash} size={56} />}
           {paidEv.txHash && <ExplorerLink hash={paidEv.txHash} />}
           <Steps events={g.events} />
         </div>
@@ -91,7 +93,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
   const policyWords = g.events.find((e) => e.actor === "policy" && /held|rejected|refused/.test(e.kind))?.message;
   const detail =
     outcome === "ledger-refused"
-      ? `The agent tried to pay on its own signature. The XRP Ledger needs two keys and said no (${refusal}). No money moved.`
+      ? `The agent tried to pay on its own signature. The XRP Ledger needs two keys and said no (${refusal}). No money moved. It never entered the ledger, so there's no page to link: that's the point.`
       : outcome === "stopped"
         ? "The agent found something wrong in this invoice and refused to sign. Nothing was sent to the policy or the ledger."
         : outcome === "working"
@@ -115,7 +117,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
           <p className="flex items-start gap-2 rounded-lg bg-danger-soft p-2 text-[0.95rem] font-medium text-danger">
             <ShieldX className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span>
-              Ledger refused: agent alone. It tried to pay on its own signature; the XRP Ledger needs two keys ({refusal}). No money moved.
+              Ledger refused: agent alone. It tried to pay on its own signature; the XRP Ledger needs two keys ({refusal}). No money moved. It never entered the ledger, so there&apos;s no page to link: that&apos;s the point.
             </span>
           </p>
         )}
@@ -218,9 +220,14 @@ export function ActivityFeed({
                 <time dateTime={e.at} title={clock(e.at)}>
                   {timeAgo(e.at)}
                 </time>
-                {refused && <span className="font-mono text-danger">{refused} · no money moved</span>}
+                {refused && <span className="font-mono text-danger">{refused} · no money moved · never entered the ledger, so no page: that&apos;s the point</span>}
               </div>
-              {e.txHash && !refused && <ExplorerLink hash={e.txHash} className="-mb-2" />}
+              {e.txHash && !refused && (
+                <div className="flex items-center gap-3">
+                  <TxQr hash={e.txHash} size={48} />
+                  <ExplorerLink hash={e.txHash} />
+                </div>
+              )}
             </div>
           </li>
         );

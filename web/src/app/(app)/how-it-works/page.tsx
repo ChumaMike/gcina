@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight, Bot, FileText, Landmark, ShieldCheck } from "lucide-react";
 import { RlusdBadge } from "@/components/bits";
 import { accountUrl, txUrl } from "@/lib/money";
+import { LedgerProofCard } from "@/components/ledger-proof";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "How it works" };
@@ -63,6 +64,8 @@ export default function HowItWorksPage() {
           Only you set limits and approve suppliers, from this dashboard. The agent has no way to change them.
         </Fact>
       </div>
+
+      <LedgerProofCard />
 
       <p className="text-sm text-muted-foreground">
         Check it yourself on the XRP Ledger Testnet:{" "}
