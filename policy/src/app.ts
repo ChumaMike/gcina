@@ -496,8 +496,22 @@ export function createApp(d: AppDeps) {
   // The agent reports its own direct ledger attempts (compromised-mode demo). Audit only; changes nothing.
   app.post("/audit/agent-events", async (c) => {
     need(c, "agent");
-    const b = await body<{ kind?: string; invoiceId?: string; destination?: string; engine_result?: string; engine_result_message?: string; applied?: boolean }>(c);
-    if (b.kind !== "ledger.direct_attempt") throw new HttpError(400, 'kind must be "ledger.direct_attempt".');
+    const b = await body<{ kind?: string; invoiceId?: string; destination?: string; engine_result?: string; engine_result_message?: string; applied?: boolean; text?: string; step?: string }>(c);
+    if (b.kind === "agent.thought") {
+      // The agent's own running commentary, for the dashboard. Display only: no rule ever reads it.
+      // The text can echo words from an invoice, so it is length-capped, stripped of control
+      // characters and only ever rendered as plain text.
+      if (typeof b.invoiceId !== "string" || !/^[\w-]{1,64}$/.test(b.invoiceId)) throw new HttpError(400, "invoiceId is required.");
+      if (typeof b.step !== "string" || !["read", "check", "sign", "wait", "stop"].includes(b.step)) throw new HttpError(400, "step must be read, check, sign, wait or stop.");
+      const text = typeof b.text === "string" ? b.text.replace(/\s+/g, " ").replace(/[\u0000-\u001f\u007f]+/g, "").trim().slice(0, 240) : "";
+      if (!text) throw new HttpError(400, "text is required.");
+      const ev = await d.store.update((s) => {
+        audit(s, { actor: "agent", kind: "agent.thought", message: text, data: { invoiceId: b.invoiceId, step: b.step } }, now());
+        return s.audit[s.audit.length - 1];
+      });
+      return c.json(ev, 201);
+    }
+    if (b.kind !== "ledger.direct_attempt") throw new HttpError(400, 'kind must be "ledger.direct_attempt" or "agent.thought".');
     if (typeof b.engine_result !== "string" || !/^[a-z]{3}[A-Z_]{2,40}$/.test(b.engine_result)) throw new HttpError(400, "engine_result must be an XRPL result code.");
     if (typeof b.invoiceId !== "string" || typeof b.destination !== "string" || !isValidClassicAddress(b.destination)) {
       throw new HttpError(400, "invoiceId and a valid destination are required.");
