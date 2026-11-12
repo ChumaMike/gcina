@@ -48,10 +48,22 @@ export function outcomeOf(g: Group): Outcome {
   return "working";
 }
 
+/** The agent's own running notes. Display only: they never count towards an outcome or the savings counter. */
+export const isThought = (e: AuditEvent) => e.kind === "agent.thought";
+export type Thought = { id: string; at: string; text: string; step: string };
+/** Notes for one invoice, oldest first. */
+export function thoughtsFor(events: AuditEvent[] | null, invoiceId: string): Thought[] {
+  return (events ?? [])
+    .filter((e) => isThought(e) && dataOf(e).invoiceId === invoiceId)
+    .map((e) => ({ id: e.id, at: e.at, text: e.message, step: String(dataOf(e).step ?? "") }))
+    .reverse();
+}
+
 export function group(events: AuditEvent[]): Group[] {
   const out: Group[] = [];
   const byInv = new Map<string, Group>();
   for (const e of events) {
+    if (isThought(e)) continue;
     const inv = invoiceIdOf(e);
     if (!inv) {
       out.push({ key: e.id, invoiceId: null, events: [e], at: e.at });

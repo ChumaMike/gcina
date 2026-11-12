@@ -6,11 +6,12 @@
 // when a fooled agent tries to pay alone (1 of 2 signatures). Nothing here is simulated:
 // every state comes from an event the policy service recorded.
 
-import { Check, Clock, FileSearch, KeyRound, Landmark, Lock, ScanText, ShieldCheck, X } from "lucide-react";
+import { Bot, Check, Clock, FileSearch, KeyRound, Landmark, Lock, ScanText, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useData } from "@/components/data-provider";
 import { ExplorerLink } from "@/components/bits";
 import { TxQr } from "@/components/ledger-proof";
-import { agentStopped, amountOf, dataOf, group, isPayment, ledgerRefusal, type Group } from "@/lib/feed";
+import { agentStopped, amountOf, dataOf, group, isPayment, ledgerRefusal, thoughtsFor, type Group, type Thought } from "@/lib/feed";
 import { formatAmount, formatZar } from "@/lib/money";
 import { friendlyReason } from "@/lib/reasons";
 import type { Amount, AuditEvent } from "@/lib/types";
@@ -93,7 +94,7 @@ export function AgentAtWork() {
 
   if (!latest) {
     return (
-      <section aria-label="Gcina at work" className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-amber-100/40 p-5 dark:to-amber-500/5">
+      <section aria-label="Gcina at work" className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-gold/15 p-5 lift">
         <div className="flex items-center gap-4">
           <span className="relative flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <ScanText className="size-6" aria-hidden="true" />
@@ -121,7 +122,7 @@ export function AgentAtWork() {
       key={j.invoiceId}
       aria-label={`Gcina at work on ${j.invoiceId}`}
       className={cn(
-        "relative overflow-hidden rounded-2xl border-2 bg-card p-4 shadow-sm sm:p-5",
+        "relative overflow-hidden rounded-2xl border-2 bg-card p-4 lift sm:p-5",
         j.ending === "paid" && "border-ok/40",
         j.ending === "held" && "border-warn/50",
         bad && "border-danger/50",
@@ -170,6 +171,8 @@ export function AgentAtWork() {
         ))}
       </ol>
 
+      <AgentNotes notes={thoughtsFor(d.audit, j.invoiceId)} now={d.loadedAt ?? 0} working={j.ending === "working"} />
+
       {j.ending === "ledger-refused" && (
         <div className="mt-4 flex items-center gap-3 rounded-xl bg-danger px-4 py-3 text-white motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
           <Lock className="size-7 shrink-0" aria-hidden="true" />
@@ -180,6 +183,55 @@ export function AgentAtWork() {
       )}
       <span className="sr-only">{done} of 4 steps done.</span>
     </section>
+  );
+}
+
+/** The agent's own words, as it works: the newest note types itself out, older ones settle above it. */
+function AgentNotes({ notes, now, working }: { notes: Thought[]; now: number; working: boolean }) {
+  if (!notes.length) return null;
+  const shown = notes.slice(-4);
+  const last = shown[shown.length - 1];
+  return (
+    <div className="mt-4 rounded-xl border border-agent/15 bg-agent-soft/60 p-3 sm:p-4" aria-label="The agent's notes">
+      <p className="flex items-center gap-2 text-xs font-semibold tracking-wider text-agent uppercase">
+        <Bot className="size-4" aria-hidden="true" />
+        The agent, in its own words
+        {working && <span aria-hidden="true" className="ml-1 inline-flex gap-0.5">{[0, 1, 2].map((i) => <i key={i} className="size-1 rounded-full bg-agent motion-safe:animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />)}</span>}
+      </p>
+      <ol className="mt-2 flex flex-col gap-1.5 font-mono text-[0.82rem] leading-snug sm:text-sm">
+        {shown.slice(0, -1).map((n) => (
+          <li key={n.id} className="flex gap-2 text-muted-foreground">
+            <span aria-hidden="true">›</span>
+            <span className="min-w-0 break-words">{n.text}</span>
+          </li>
+        ))}
+        <li key={last.id} className="flex gap-2 font-medium text-foreground">
+          <span aria-hidden="true" className="text-agent">›</span>
+          <Typed text={last.text} animate={now - Date.parse(last.at) < 20_000} />
+        </li>
+      </ol>
+    </div>
+  );
+}
+
+function Typed({ text, animate }: { text: string; animate: boolean }) {
+  const [n, setN] = useState(animate ? 0 : text.length);
+  useEffect(() => {
+    if (n >= text.length) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const t = setTimeout(() => setN(text.length), 0);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setN((v) => Math.min(text.length, v + 2)), 16);
+    return () => clearTimeout(t);
+  }, [n, text]);
+  const typing = n < text.length;
+  return (
+    <span className="min-w-0 break-words" aria-live="polite">
+      <span aria-hidden={typing}>{text.slice(0, n)}</span>
+      {typing && <span aria-hidden="true" className="ml-0.5 inline-block h-[1em] w-[0.5ch] translate-y-0.5 bg-agent" style={{ animation: "gcina-caret 0.8s steps(1) infinite" }} />}
+      {typing && <span className="sr-only">{text}</span>}
+    </span>
   );
 }
 

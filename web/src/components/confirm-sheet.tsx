@@ -13,6 +13,8 @@ export type ConfirmRequest = {
   tone?: "default" | "danger";
   /** When set, the owner must tick this statement before the confirm button works. */
   requireCheck?: string;
+  /** When set, the owner must also type this (e.g. the supplier's name, any case) before confirming. */
+  requireType?: { label: string; value: string };
   onConfirm: () => Promise<void>;
 };
 
@@ -22,8 +24,12 @@ export function useConfirm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [checked, setChecked] = useState(false);
+  const [typed, setTyped] = useState("");
+  const norm = (v: string) => v.trim().replace(/\s+/g, " ").toLowerCase();
+  const typedOk = !req?.requireType || norm(typed) === norm(req.requireType.value);
   const open = (r: ConfirmRequest) => {
     setChecked(false);
+    setTyped("");
     setError(undefined);
     setReq(r);
   };
@@ -55,6 +61,24 @@ export function useConfirm() {
                 <span>{req.requireCheck}</span>
               </label>
             )}
+            {req.requireType && (
+              <div className="mx-4 flex flex-col gap-1.5">
+                <label htmlFor="confirm-typed" className="text-sm font-medium">
+                  {req.requireType.label}
+                </label>
+                <input
+                  id="confirm-typed"
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  autoComplete="off"
+                  autoCapitalize="words"
+                  spellCheck={false}
+                  placeholder={req.requireType.value}
+                  aria-invalid={typed !== "" && !typedOk}
+                  className="h-12 rounded-lg border-2 border-input bg-card px-3 text-base outline-none focus-visible:border-ring aria-invalid:border-danger"
+                />
+              </div>
+            )}
             <div className="px-4">
               <ErrorNote message={error} />
             </div>
@@ -66,7 +90,7 @@ export function useConfirm() {
                 size="lg"
                 variant={req.tone === "danger" ? "destructive" : "default"}
                 className={req.tone === "danger" ? "bg-danger text-white hover:bg-danger/90" : undefined}
-                disabled={busy || (!!req.requireCheck && !checked)}
+                disabled={busy || (!!req.requireCheck && !checked) || !typedOk}
                 onClick={async () => {
                   setBusy(true);
                   setError(undefined);
