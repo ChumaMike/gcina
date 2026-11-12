@@ -87,7 +87,7 @@ Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet 
 |---|---|---|
 | **Multi-signing** (`SignerListSet`) | `AGENT_ACCOUNT` has signers agent 1 · policy 1 · owner 2, quorum 2 | The rule "no single machine can pay" is enforced by the ledger protocol, not by a smart contract we wrote |
 | **Master key disabled** (`asfDisableMaster`) | Set right after the SignerList | Nobody can bypass the quorum with the account's own key (`tefMASTER_DISABLED`) |
-| **RLUSD** (trust lines + issued-currency `Payment`) | Suppliers are paid in testnet RLUSD; XRP only covers fees and reserves | A dollar-stable unit for invoices instead of a volatile asset |
+| **RLUSD** (trust lines + issued-currency `Payment`) | Suppliers are paid in testnet RLUSD (issuer [`rQhWct2f…`](https://testnet.xrpl.org/accounts/rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV)); XRP only covers fees and reserves. Even the agent account's RLUSD trust line had to be **multi-signed** (agent + policy): [`544BCD97…`](https://testnet.xrpl.org/transactions/544BCD9734958936C640B1A7430425617A67EFCCE27C7F030E821378541D4A39) | A dollar-stable unit for invoices instead of a volatile asset |
 | **Memos** | Every payment carries `{"invoiceId": "…", "app": "gcina"}` | The invoice ↔ payment audit trail lives on the ledger |
 | **Fast, final settlement** | Multi-signed payment fee is 30 drops (10 × (1 + 2 signers)); ledgers close every 3–5 s | A two-key-protected supplier payment costs a fraction of a cent and is final in seconds (`docs/research/05-xrpl-fit.md`) |
 
