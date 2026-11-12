@@ -4,71 +4,10 @@ import { ArrowRight, CheckCircle2, CircleSlash, Copy, Hand, Loader2, ShieldX } f
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/money";
-import type { Amount, AuditEvent, Invoice } from "@/lib/types";
+import type { AuditEvent, Invoice } from "@/lib/types";
+import { amountOf, dataOf, group, isPayment, ledgerRefusal, outcomeOf, type Group } from "@/lib/feed";
 import { cn } from "@/lib/utils";
 import { ActorChip, ExplorerLink, clock, timeAgo } from "./bits";
-
-const dataOf = (e: AuditEvent) => (e.data ?? {}) as Record<string, unknown>;
-
-/** A ledger engine result that means "not applied" (tef/tem/tel), e.g. tefBAD_QUORUM. */
-function ledgerRefusal(e: AuditEvent): string | null {
-  const d = dataOf(e);
-  const r = (d.engine_result ?? d.ledgerResult ?? d.result) as string | undefined;
-  if (typeof r === "string" && /^te[fml]/.test(r)) return r;
-  const m = e.message.match(/\bte[fml][A-Z_]+\b/);
-  return m ? m[0] : null;
-}
-
-function invoiceIdOf(e: AuditEvent): string | null {
-  const d = dataOf(e);
-  if (typeof d.invoiceId === "string") return d.invoiceId;
-  return e.message.match(/\binv-[\w-]+\b/)?.[0] ?? null;
-}
-
-function amountOf(e: AuditEvent): Amount | null {
-  const d = dataOf(e);
-  for (const v of [d.delivered, d.amount]) {
-    if (v && typeof v === "object" && "currency" in v && "value" in v) return v as Amount;
-  }
-  return null;
-}
-
-const isPayment = (e: AuditEvent) => e.kind === "payment.validated" || (e.actor === "ledger" && !!e.txHash && !ledgerRefusal(e));
-
-type Outcome = "paid" | "ledger-refused" | "declined" | "refused" | "held" | "working";
-type Group = { key: string; invoiceId: string | null; events: AuditEvent[]; at: string };
-
-function outcomeOf(g: Group): Outcome {
-  const ev = g.events; // newest first
-  if (ev.some(isPayment)) return "paid";
-  if (ev.some((e) => ledgerRefusal(e))) return "ledger-refused";
-  if (ev.some((e) => e.kind === "approval.rejected")) return "declined";
-  if (ev[0]?.kind === "approval.approved") return "working";
-  const last = ev.find((e) => /held|rejected|refused/.test(e.kind));
-  if (last && /rejected|refused/.test(last.kind)) return "refused";
-  if (last) return "held";
-  return "working";
-}
-
-function group(events: AuditEvent[]): Group[] {
-  const out: Group[] = [];
-  const byInv = new Map<string, Group>();
-  for (const e of events) {
-    const inv = invoiceIdOf(e);
-    if (!inv) {
-      out.push({ key: e.id, invoiceId: null, events: [e], at: e.at });
-      continue;
-    }
-    let g = byInv.get(inv);
-    if (!g) {
-      g = { key: `inv:${inv}`, invoiceId: inv, events: [], at: e.at };
-      byInv.set(inv, g);
-      out.push(g);
-    }
-    g.events.push(e);
-  }
-  return out;
-}
 
 /** The agent's own words for this invoice, if it gave any. */
 function reasoningOf(g: Group): string | null {
@@ -106,6 +45,7 @@ function Steps({ events }: { events: AuditEvent[] }) {
 
 const TONE = {
   "ledger-refused": { box: "border-danger/40 bg-danger-soft", icon: ShieldX, ic: "text-danger", title: "Ledger refused: agent alone" },
+  stopped: { box: "border-danger/40 bg-danger-soft", icon: ShieldX, ic: "text-danger", title: "Agent stopped it. Nothing signed" },
   declined: { box: "border-border bg-muted/50", icon: CircleSlash, ic: "text-muted-foreground", title: "You said no. Nothing paid" },
   refused: { box: "border-info/30 bg-info-soft", icon: Copy, ic: "text-info", title: "Refused by your rules" },
   held: { box: "border-warn/40 bg-warn-soft", icon: Hand, ic: "text-warn", title: "Held for you" },
@@ -152,7 +92,9 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
   const detail =
     outcome === "ledger-refused"
       ? `The agent tried to pay on its own signature. The XRP Ledger needs two keys and said no (${refusal}). No money moved.`
-      : outcome === "working"
+      : outcome === "stopped"
+        ? "The agent found something wrong in this invoice and refused to sign. Nothing was sent to the policy or the ledger."
+        : outcome === "working"
         ? (reasoningOf(g) ?? g.events[0].message)
         : (policyWords ?? g.events[0].message);
 
@@ -181,6 +123,11 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
           {outcome === "held" && pending && (
             <Link href="/approvals" className="inline-flex min-h-11 items-center gap-1 font-medium text-warn underline-offset-4 hover:underline">
               Review it <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          )}
+          {outcome === "stopped" && (
+            <Link href="/invoices" className="inline-flex min-h-11 items-center gap-1 font-medium text-danger underline-offset-4 hover:underline">
+              See what it found <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           )}
           <Steps events={g.events} />

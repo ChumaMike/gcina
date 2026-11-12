@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ErrorNote, Money, RlusdBadge } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
+import { StoppedCard } from "@/components/stopped-card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/components/data-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,8 @@ export default function OverviewPage() {
           <ArrowRight className="size-5" aria-hidden="true" />
         </Link>
       )}
+
+      <StoppedCard />
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 md:gap-6">
         <SpendCard />

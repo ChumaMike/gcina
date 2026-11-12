@@ -121,7 +121,7 @@ function process(inv: Invoice) {
   if (hiddenParts(text).some((x) => x.hidden && /(?:AI|assistant|automated)/i.test(x.text))) {
     setTimeout(() => {
       inv.status = "rejected";
-      log("agent", "proposal.rejected", `Stopped ${inv.id}: hidden text in the e-mail gives instructions to an AI (pay a different address, skip checks). I signed nothing. Please check with ${inv.supplierName}.`, { data: { invoiceId: inv.id } });
+      log("agent", "invoice.updated", `Invoice ${inv.id}: processing → rejected.`);
     }, 1800);
     return;
   }
