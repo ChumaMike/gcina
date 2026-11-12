@@ -107,7 +107,7 @@ On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testne
 
 | Folder | What | Run |
 |---|---|---|
-| [`ledger/`](ledger) | xrpl.js helpers, testnet setup, quorum proof | **[run commands from L?]** |
+| [`ledger/`](ledger) | xrpl.js helpers, testnet setup, quorum proof | `cd ledger && pnpm install && pnpm setup-testnet` (idempotent: funds accounts, SignerList, master key off, RLUSD trust lines, writes gitignored env files) · `pnpm prove-quorum` |
 | [`policy/`](policy) | Policy co-signer HTTP service (Hono, port 8787) | **[run commands from L?]** |
 | [`agent/`](agent) | The AP agent (Node + Claude API) | **[run commands from A?]** |
 | [`web/`](web) | Next.js operator dashboard (port 3000) | **[run commands from W?]** |
