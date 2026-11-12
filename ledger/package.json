@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Gcina XRPL Testnet helpers and setup scripts",
   "scripts": {
-    "setup": "tsx scripts/setup-testnet.ts",
+    "setup-testnet": "tsx scripts/setup-testnet.ts",
     "prove-quorum": "tsx scripts/prove-quorum.ts",
     "typecheck": "tsc --noEmit"
   },

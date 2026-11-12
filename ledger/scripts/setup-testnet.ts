@@ -7,7 +7,11 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AccountSetAsfFlags, type Client, type SignerListSet, type AccountSet, type Payment } from "xrpl";
-import { Wallet, connect, fundAccount, xrpBalanceDrops, explorerUrl, accountUrl, submitAndWait } from "../src/xrpl.ts";
+import {
+  Wallet, connect, fundAccount, xrpBalanceDrops, explorerUrl, accountUrl, submitAndWait,
+  buildRlusdTrustSet, rlusdBalance, buildPayment, toMinor, fromMinor, formatAmount, toLedgerAmount,
+  signPartial, combine, RLUSD_TESTNET_ISSUER,
+} from "../src/xrpl.ts";
 import { readEnv, upsertEnv } from "../src/envfile.ts";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
@@ -61,6 +65,7 @@ async function main() {
     await ensureAgentFloat(client, wallets, hashes);
     await ensureSignerList(client, wallets, hashes);
     await ensureMasterDisabled(client, wallets, hashes);
+    await ensureRlusd(client, wallets, hashes);
 
     writeEnvFiles(wallets, tokens);
     writeAddressesMd(wallets, hashes);
@@ -150,6 +155,59 @@ async function ensureMasterDisabled(client: Client, w: Record<Name, Wallet>, has
   hashes["AccountSet asfDisableMaster"] = r.hash;
 }
 
+const RLUSD_HOLDERS = ["TREASURY", "AGENT_ACCOUNT", "SUPPLIER_A", "SUPPLIER_B", "FRAUDSTER"] as const;
+const AGENT_RLUSD_FLOAT_CENTS = 20_000n; // $200.00 RLUSD float: room for several demo runs ($65 each)
+
+async function ensureRlusd(client: Client, w: Record<Name, Wallet>, hashes: Record<string, string>) {
+  for (const n of RLUSD_HOLDERS) {
+    const line = await rlusdBalance(client, w[n].classicAddress);
+    if (line) {
+      log(`RLUSD trustline ${n} ok (${formatAmount(line.balance)})`);
+      continue;
+    }
+    let blob: string;
+    if (n === "AGENT_ACCOUNT") {
+      // Master key is disabled: the TrustSet is multi-signed by agent + policy (quorum 2).
+      const tx = await buildRlusdTrustSet(client, w[n].classicAddress, "1000000", 2);
+      blob = combine([signPartial(w.AGENT_SIGNER, tx).tx_blob, signPartial(w.POLICY_SIGNER, tx).tx_blob]);
+    } else {
+      blob = w[n].sign(await buildRlusdTrustSet(client, w[n].classicAddress)).tx_blob;
+    }
+    const r = await submitAndWait(client, blob);
+    log(`RLUSD TrustSet ${n}: ${r.engineResult}`);
+    if (r.engineResult !== "tesSUCCESS") throw new Error(`TrustSet ${n} failed: ${r.engineResult}`);
+    hashes[`RLUSD trustline ${n}${n === "AGENT_ACCOUNT" ? " (multi-signed)" : ""}`] = r.hash;
+  }
+
+  const agent = await rlusdBalance(client, w.AGENT_ACCOUNT.classicAddress);
+  const agentCents = agent ? toMinor(agent.balance) : 0n;
+  if (agentCents >= AGENT_RLUSD_FLOAT_CENTS) {
+    log(`AGENT_ACCOUNT RLUSD float ok (${formatAmount(agent!.balance)})`);
+    return;
+  }
+  const treasury = await rlusdBalance(client, w.TREASURY.classicAddress);
+  const treasuryCents = treasury ? toMinor(treasury.balance) : 0n;
+  const need = AGENT_RLUSD_FLOAT_CENTS - agentCents;
+  const send = need < treasuryCents ? need : treasuryCents;
+  if (send <= 0n) {
+    log(`
+RLUSD NEEDED: TREASURY has no RLUSD. Get testnet RLUSD from https://tryrlusd.com for ${w.TREASURY.classicAddress} (trustline is set), then re-run pnpm setup-testnet.`);
+    return;
+  }
+  const amount = fromMinor("RLUSD", send);
+  const tx = await client.autofill({
+    TransactionType: "Payment" as const,
+    Account: w.TREASURY.classicAddress,
+    Destination: w.AGENT_ACCOUNT.classicAddress,
+    Amount: toLedgerAmount(amount) as { currency: string; issuer: string; value: string },
+    Flags: 0,
+  });
+  const r = await submitAndWait(client, w.TREASURY.sign(tx).tx_blob);
+  log(`TREASURY -> AGENT_ACCOUNT RLUSD float ${formatAmount(amount)}: ${r.engineResult}`);
+  if (r.engineResult !== "tesSUCCESS") throw new Error(`RLUSD float failed: ${r.engineResult}`);
+  hashes["Treasury funds agent RLUSD float"] = r.hash;
+}
+
 function saveLedgerEnv(w: Record<Name, Wallet>, tokens: Record<string, string>) {
   const vals: Record<string, string> = { XRPL_WSS: "wss://s.altnet.rippletest.net:51233", ...tokens };
   for (const n of [...FUNDED, ...KEYS_ONLY]) {
@@ -162,6 +220,8 @@ function saveLedgerEnv(w: Record<Name, Wallet>, tokens: Record<string, string>) 
 function writeEnvFiles(w: Record<Name, Wallet>, tokens: Record<string, string>) {
   const shared = {
     XRPL_WSS: "wss://s.altnet.rippletest.net:51233",
+    PAYMENT_CURRENCY: "RLUSD",
+    RLUSD_ISSUER: RLUSD_TESTNET_ISSUER,
     POLICY_URL: "http://localhost:8787",
     AGENT_ACCOUNT_ADDRESS: w.AGENT_ACCOUNT.classicAddress,
   };
@@ -175,6 +235,8 @@ function writeEnvFiles(w: Record<Name, Wallet>, tokens: Record<string, string>) 
   // The policy process gets ONLY the policy signer seed.
   upsertEnv(POLICY_ENV, {
     XRPL_WSS: shared.XRPL_WSS,
+    PAYMENT_CURRENCY: shared.PAYMENT_CURRENCY,
+    RLUSD_ISSUER: RLUSD_TESTNET_ISSUER,
     PORT: "8787",
     POLICY_SIGNER_SEED: w.POLICY_SIGNER.seed!,
     POLICY_SIGNER_ADDRESS: w.POLICY_SIGNER.classicAddress,
@@ -194,7 +256,7 @@ function writeAddressesMd(w: Record<Name, Wallet>, newHashes: Record<string, str
   const hashes = { ...prev, ...newHashes };
   writeFileSync(SETUP_HASHES, JSON.stringify(hashes, null, 2) + "\n");
   const roles: Record<Name, string> = {
-    TREASURY: "Business main account (operator); funds the agent float",
+    TREASURY: "Business main account (operator); funds the agent's RLUSD float",
     AGENT_ACCOUNT: "Account the agent pays from. Master key disabled; SignerList quorum 2",
     SUPPLIER_A: "Mzansi Meat Supplies (approved)",
     SUPPLIER_B: "Khaya Packaging (approved)",
@@ -222,6 +284,10 @@ ${rows}
 
 **AGENT_ACCOUNT SignerList:** quorum **2** — AGENT_SIGNER 1 · POLICY_SIGNER 1 · OPERATOR_SIGNER 2. Master key disabled.
 So the agent alone (weight 1) can never move money; the ledger itself rejects it.
+
+**Payment currency: RLUSD** (testnet issuer [\`${RLUSD_TESTNET_ISSUER}\`](${accountUrl(RLUSD_TESTNET_ISSUER)}), currency code \`524C555344000000000000000000000000000000\`).
+All five funded accounts hold an RLUSD trust line; AGENT_ACCOUNT's was multi-signed (agent + policy) because its master key is disabled.
+XRP only pays network fees and reserves.
 
 ## Setup transactions
 ${txs || "- (no new setup transactions on the latest run; state was already correct)"}
