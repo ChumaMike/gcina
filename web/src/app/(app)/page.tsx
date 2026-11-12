@@ -57,10 +57,16 @@ export default function OverviewPage() {
         </CardHeader>
         <CardContent>
           <ErrorNote message={d.errors.audit} className="mb-3" />
-          <ActivityFeed events={d.audit} limit={showAll ? 200 : 12} />
-          {(d.audit?.length ?? 0) > 12 && (
+          <ActivityFeed
+            events={d.audit}
+            invoices={d.invoices}
+            pendingInvoiceIds={pending.map((a) => a.invoiceId)}
+            quiet={!showAll}
+            limit={showAll ? 200 : 12}
+          />
+          {(d.audit?.length ?? 0) > 0 && (
             <Button variant="outline" className="mt-3 w-full" onClick={() => setShowAll((s) => !s)}>
-              {showAll ? "Show only the latest" : `Show all ${d.audit!.length} events`}
+              {showAll ? "Back to the summary" : `Show every event (${d.audit!.length})`}
             </Button>
           )}
         </CardContent>

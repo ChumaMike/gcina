@@ -19,6 +19,7 @@ const ALLOWED: [string, RegExp][] = [
   ["POST", /^\/approvals\/[\w-]+\/(approve|reject)$/],
   ["GET", /^\/audit$/],
   ["GET", /^\/balances$/],
+  ["POST", /^\/admin\/reset$/],
 ];
 
 const QUERY_KEYS = new Set(["status", "limit"]);

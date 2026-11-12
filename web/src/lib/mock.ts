@@ -25,7 +25,7 @@ type Store = {
   invoices: Invoice[];
   approvals: Approval[];
   audit: AuditEvent[];
-  paid: { invoiceId: string; amount: Amount; at: string; destination: string }[];
+  paid: { invoiceId: string; amount: Amount; at: string; destination: string; ref?: string }[];
   balances: { treasuryRl: bigint; agentRl: bigint; treasuryXrp: number; agentXrp: number };
 };
 
@@ -42,15 +42,15 @@ function seed(): Store {
       updatedBy: "operator",
     },
     suppliers: [
-      { id: "sup-a", name: "Mzansi Meat Supplies", xrplAddress: ADDR.mzansi, status: "approved", createdAt: at(1) },
-      { id: "sup-b", name: "Khaya Packaging", xrplAddress: ADDR.khaya, status: "approved", createdAt: at(2) },
+      { id: "sup-a", name: "Mzansi Catering", xrplAddress: ADDR.mzansi, status: "approved", createdAt: at(1) },
+      { id: "sup-b", name: "Khaya Print & Stationery", xrplAddress: ADDR.khaya, status: "approved", createdAt: at(2) },
     ],
     invoices: [],
     approvals: [],
     audit: [
       { id: id("ev"), at: at(0), actor: "operator", kind: "policy.updated", message: "You set the limits: $ 50.00 per payment, $ 120.00 a day, ask you above $ 30.00." },
-      { id: id("ev"), at: at(1), actor: "operator", kind: "supplier.approved", message: "You approved Mzansi Meat Supplies." },
-      { id: id("ev"), at: at(2), actor: "operator", kind: "supplier.approved", message: "You approved Khaya Packaging." },
+      { id: id("ev"), at: at(1), actor: "operator", kind: "supplier.approved", message: "You approved Mzansi Catering." },
+      { id: id("ev"), at: at(2), actor: "operator", kind: "supplier.approved", message: "You approved Khaya Print & Stationery." },
       { id: id("ev"), at: at(3), actor: "agent", kind: "agent.started", message: "Your agent is watching for new invoices." },
     ],
     paid: [],
@@ -59,6 +59,12 @@ function seed(): Store {
 }
 
 const g = globalThis as unknown as { __gcinaMock?: Store };
+/** Supplier's own invoice number (MC-2611…) per invoice id, for the repeat-payment rule. */
+const refs = new Map<string, string | undefined>();
+const timeAgoShort = (iso: string) => {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
+};
 const db = (): Store => (g.__gcinaMock ??= seed());
 
 function log(actor: AuditEvent["actor"], kind: string, message: string, extra: Partial<AuditEvent> = {}) {
@@ -80,11 +86,11 @@ function settle(inv: Invoice, amount: Amount, destination: string, viaApproval =
   const s = db();
   const tx = hash();
   inv.status = "paid";
-  s.paid.push({ invoiceId: inv.id, amount, at: now(), destination });
+  s.paid.push({ invoiceId: inv.id, amount, at: now(), destination, ref: refs.get(inv.id) });
   s.balances.agentRl -= toMinor(amount);
   s.balances.agentXrp -= 0.000024;
   const sup = supplierFor(destination);
-  log("policy", "cosigned", `Within your limits${viaApproval ? " (you approved it)" : ""}. Policy co-signed the payment (2 of 2).`);
+  log("policy", "cosigned", `Within your limits${viaApproval ? " (you approved it)" : ""}. Policy co-signed ${inv.id} (2 of 2).`);
   log("ledger", "payment.validated", `Your agent paid ${sup?.name ?? destination} ${fmt(amount)} RLUSD. Confirmed on the XRP Ledger.`, { txHash: tx, data: { invoiceId: inv.id, amount } });
 }
 
@@ -100,22 +106,22 @@ function hold(inv: Invoice, amount: Amount, destination: string, reasons: string
 function process(inv: Invoice) {
   const s = db();
   const text = inv.rawText;
-  const amount = rl((text.match(/Amount due:\s*([\d.]+)/)?.[1] ?? "0").replace(/^(\d+)$/, "$1.00"));
-  const destination = text.match(/Pay to:\s*(r\w+)/)?.[1] ?? "";
+  // Same fields the agent pulls out of A's fixtures: total, pay-to address, our order, their invoice number.
+  const total = text.match(/TOTAL DUE \(USD\)\s+([\d.]+)/)?.[1] ?? text.match(/USD\s+([\d.]+)/)?.[1] ?? "0";
+  const amount = rl(Number(total).toFixed(2));
+  const destination = text.match(/\br[1-9A-HJ-NP-Za-km-z]{24,34}\b/)?.[0] ?? "";
+  const po = text.match(/\bPO-\d+\b/)?.[0];
+  const ref = text.match(/\b(?:MC|KPS)-\d+\b/)?.[0];
+  refs.set(inv.id, ref);
   inv.status = "processing";
-  log("agent", "invoice.read", `Read ${inv.id} from ${inv.supplierName}: ${fmt(amount)} for ${inv.poNumber ?? "no order number"}.`);
+  log("agent", "invoice.read", `Read ${inv.id} from ${inv.supplierName}: ${fmt(amount)} for ${po ?? "no order number"}.`);
 
   setTimeout(() => {
     const p = s.policy;
-    log("agent", "proposal.signed", `Proposed paying ${fmt(amount)} to ${inv.supplierName}. Signed 1 of 2.`);
+    log("agent", "proposal.signed", `Proposed paying ${fmt(amount)} to ${inv.supplierName} for ${inv.id}. Signed 1 of 2.`);
     if (p.paused) {
       inv.status = "rejected";
       log("policy", "rejected", `Refused ${inv.id}: you've paused the agent.`);
-      return;
-    }
-    if (s.paid.some((x) => x.invoiceId !== inv.id && x.destination === destination && x.amount.value === amount.value && /copy of|duplicate/i.test(text))) {
-      inv.status = "rejected";
-      log("policy", "rejected", `Refused ${inv.id}: this invoice was already paid (same bill as inv-001). Nothing sent.`);
       return;
     }
     const sup = supplierFor(destination);
@@ -127,7 +133,13 @@ function process(inv: Invoice) {
       hold(inv, amount, destination, [
         `Destination is not the registered address for ${inv.supplierName}. Possible changed-banking-details fraud.`,
       ]);
-      log("ledger", "agent_only.refused", "Agent tried to send it alone (1 of 2 signatures). The XRP Ledger refused: tefBAD_QUORUM. No money moved.", { data: { engine_result: "tefBAD_QUORUM", applied: false } });
+      log("ledger", "agent_only.refused", `Agent tried to send ${inv.id} alone (1 of 2 signatures). The XRP Ledger refused: tefBAD_QUORUM. No money moved.`, { data: { invoiceId: inv.id, engine_result: "tefBAD_QUORUM", applied: false } });
+      return;
+    }
+    const twin = s.paid.find((x) => x.invoiceId !== inv.id && x.destination === destination && x.amount.value === amount.value && x.ref === ref);
+    if (twin) {
+      inv.status = "rejected";
+      log("policy", "rejected", `Refused ${inv.id}: looks like a repeat of ${twin.invoiceId} (${ref ?? "same bill"}), paid ${timeAgoShort(twin.at)}. Nothing sent.`);
       return;
     }
     const a = toMinor(amount);
@@ -218,6 +230,10 @@ export async function mockRequest(method: string, path: string, body: unknown): 
     }
     return ok(a);
   }
+  if (pathname === "/admin/reset" && method === "POST") {
+    resetMock();
+    return ok({ ok: true });
+  }
   if (pathname === "/audit" && method === "GET") return ok(s.audit.slice(0, 200));
   if (pathname === "/balances" && method === "GET") {
     const v = (n: bigint) => fromMinor("RLUSD", n).value;
@@ -237,4 +253,5 @@ export async function mockRequest(method: string, path: string, body: unknown): 
 
 export function resetMock() {
   g.__gcinaMock = seed();
+  refs.clear();
 }

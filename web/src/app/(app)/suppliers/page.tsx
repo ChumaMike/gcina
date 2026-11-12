@@ -62,11 +62,27 @@ export default function SuppliersPage() {
               Phone {s.name} on a number you already had, not one from the invoice or email.
             </p>
           )}
-          <p className="text-sm text-muted-foreground">Address</p>
-          <p className="font-mono text-sm break-all">{s.xrplAddress}</p>
+          {old ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-border p-2">
+                <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase">Old (approved)</p>
+                <p className="font-mono text-xs break-all">{old.xrplAddress}</p>
+              </div>
+              <div className="rounded-lg border-2 border-danger p-2">
+                <p className="mb-1 text-xs font-semibold text-danger uppercase">New</p>
+                <p className="font-mono text-xs break-all text-danger">{s.xrplAddress}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">Address</p>
+              <p className="font-mono text-sm break-all">{s.xrplAddress}</p>
+            </>
+          )}
         </div>
       ),
-      confirmLabel: old ? "I've checked. Approve" : "Approve supplier",
+      requireCheck: `I confirmed this ${old ? "new address" : "address"} with ${s.name} on a number I already had.`,
+      confirmLabel: old ? "Approve new address" : "Approve supplier",
       tone: old ? "danger" : "default",
       onConfirm: () => setStatus(s, "approved"),
     });

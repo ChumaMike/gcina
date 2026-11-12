@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { supplierByAddress } from "@/lib/derive";
+import { registeredFor, supplierByAddress } from "@/lib/derive";
 import { formatAmount, formatZar, shortAddr } from "@/lib/money";
 import { friendlyReason } from "@/lib/reasons";
-import type { Approval } from "@/lib/types";
+import type { Approval, Supplier } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function ApprovalsPage() {
@@ -25,7 +25,9 @@ export default function ApprovalsPage() {
   const who = (a: Approval) => {
     const sup = supplierByAddress(suppliers, a.destination);
     const inv = invoices?.find((i) => i.id === a.invoiceId);
-    return { sup, name: sup?.status === "approved" ? sup.name : inv?.supplierName ?? sup?.name ?? "Unknown payee" };
+    // Going to an address that isn't an approved supplier's: find whose it claims to be.
+    const registered = sup?.status === "approved" ? undefined : registeredFor(suppliers, inv?.supplierName, a.reasons, a.destination);
+    return { sup, registered, name: sup?.status === "approved" ? sup.name : inv?.supplierName ?? registered?.name ?? sup?.name ?? "Unknown payee" };
   };
 
   const decide = async (a: Approval, verb: "approve" | "reject") => {
@@ -35,8 +37,8 @@ export default function ApprovalsPage() {
   };
 
   const ask = (a: Approval, verb: "approve" | "reject") => {
-    const { name } = who(a);
-    const fraud = a.reasons.some((r) => friendlyReason(r).fraud);
+    const { name, registered } = who(a);
+    const fraud = !!registered || a.reasons.some((r) => friendlyReason(r).fraud);
     confirm(
       verb === "approve"
         ? {
@@ -44,7 +46,9 @@ export default function ApprovalsPage() {
             description: fraud
               ? "Careful: this goes to an address that isn't the supplier's registered one. Only approve if you've phoned them to check."
               : `About ${formatZar(a.amount)}. The agent will send it straight away.`,
-            body: (
+            body: registered ? (
+              <AddressPair registered={registered} destination={a.destination} compact />
+            ) : (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                 <dt className="text-muted-foreground">Invoice</dt>
                 <dd className="font-medium">{a.invoiceId}</dd>
@@ -52,7 +56,8 @@ export default function ApprovalsPage() {
                 <dd className="font-mono break-all">{a.destination}</dd>
               </dl>
             ),
-            confirmLabel: fraud ? "I've checked. Pay it" : "Approve and pay",
+            requireCheck: fraud ? `I confirmed this new address with ${registered?.name ?? name} on a number I already had.` : undefined,
+            confirmLabel: fraud ? "Pay the new address" : "Approve and pay",
             tone: fraud ? "danger" : "default",
             onConfirm: () => decide(a, "approve"),
           }
@@ -84,9 +89,9 @@ export default function ApprovalsPage() {
 
       <ul className="mb-10 flex flex-col gap-4">
         {pending.map((a) => {
-          const { name } = who(a);
+          const { name, registered } = who(a);
           const reasons = a.reasons.map(friendlyReason);
-          const fraud = reasons.some((r) => r.fraud);
+          const fraud = !!registered || reasons.some((r) => r.fraud);
           return (
             <li key={a.id}>
               <Card className={cn("border-2", fraud ? "border-danger/50" : "border-warn/40")}>
@@ -100,6 +105,7 @@ export default function ApprovalsPage() {
                     </div>
                     <Money amount={a.amount} size="lg" className="sm:items-end sm:text-right" />
                   </div>
+                  {registered && <AddressPair registered={registered} destination={a.destination} />}
                   <ul className="flex flex-col gap-2">
                     {reasons.map((r, i) => (
                       <li
@@ -158,5 +164,21 @@ export default function ApprovalsPage() {
       )}
       {sheet}
     </>
+  );
+}
+
+/** Old (registered) vs new address, side by side: the "changed banking details" moment. */
+function AddressPair({ registered, destination, compact = false }: { registered: Supplier; destination: string; compact?: boolean }) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div className="rounded-lg border border-border bg-card p-3">
+        <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{registered.name}&apos;s registered address</p>
+        <p className={cn("font-mono break-all", compact ? "text-xs" : "text-sm")}>{registered.xrplAddress}</p>
+      </div>
+      <div className="rounded-lg border-2 border-danger bg-card p-3">
+        <p className="mb-1 text-xs font-semibold tracking-wide text-danger uppercase">New address on this invoice (not approved)</p>
+        <p className={cn("font-mono break-all text-danger", compact ? "text-xs" : "text-sm")}>{destination}</p>
+      </div>
+    </div>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { Copy, Hand, Send, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Copy, Hand, RotateCcw, Send, ShieldAlert, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ErrorNote, ExplorerLink, InvoiceChip, PageHeader, timeAgo } from "@/components/bits";
+import { useConfirm } from "@/components/confirm-sheet";
 import { useData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,12 +31,13 @@ function eventsFor(id: string, audit: AuditEvent[] | null) {
 export default function InvoicesPage() {
   const { invoices, audit, errors, refresh } = useData();
   const [sending, setSending] = useState<string | null>(null);
+  const { confirm, sheet } = useConfirm();
   const extra = (invoices ?? []).filter((i) => !DEMO_INVOICES.some((d) => d.id === i.id));
 
   const send = async (d: DemoInvoice) => {
     setSending(d.id);
     try {
-      await api("POST", "/invoices", { id: d.id, supplierName: d.supplierName, rawText: d.rawText, poNumber: d.poNumber });
+      await api("POST", "/invoices", { id: d.id, supplierName: d.supplierName, rawText: d.rawText });
       await refresh();
       toast.success(`${d.id} has arrived. Watch the agent pick it up.`);
     } catch (e) {
@@ -58,7 +60,29 @@ export default function InvoicesPage() {
             .
           </>
         }
-      />
+      >
+        <Button
+          size="lg"
+          variant="outline"
+          disabled={sending !== null}
+          onClick={() =>
+            confirm({
+              title: "Start the demo again?",
+              description: "Clears every demo invoice, approval and payment record on the policy service. Money already sent on the XRP Ledger stays sent.",
+              confirmLabel: "Reset the demo",
+              tone: "danger",
+              onConfirm: async () => {
+                await api("POST", "/admin/reset");
+                await refresh();
+                toast.success("Demo reset. Ready for inv-001.");
+              },
+            })
+          }
+        >
+          <RotateCcw aria-hidden="true" /> Reset demo
+        </Button>
+      </PageHeader>
+      {sheet}
       <ErrorNote message={errors.invoices} className="mb-4" />
 
       <ol className="grid gap-4 md:grid-cols-2">
@@ -107,7 +131,7 @@ export default function InvoicesPage() {
                     onClick={() => send(d)}
                   >
                     <Send aria-hidden="true" />
-                    {sending === d.id ? "Sending…" : inv ? "Sent" : "Simulate incoming invoice"}
+                    {sending === d.id ? "Sending…" : inv ? `${d.id} has arrived` : `${d.id} arrives`}
                   </Button>
                 </CardContent>
               </Card>

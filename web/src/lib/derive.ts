@@ -14,7 +14,7 @@ function amountFrom(v: unknown): Amount | null {
 
 /**
  * Today's (SAST) spend. Prefers a server figure (`spentToday` on GET /policy) and
- * otherwise adds up validated payments in the audit log that carry `data.amount`.
+ * otherwise adds up validated payments in the audit log (`data.amount` or L's `data.delivered`).
  */
 export function spentToday(raw: unknown, audit: AuditEvent[] | null, currency: Currency): Amount {
   const server = amountFrom(raw) ?? (typeof raw === "string" ? { currency, value: raw } : null);
@@ -24,7 +24,7 @@ export function spentToday(raw: unknown, audit: AuditEvent[] | null, currency: C
   for (const e of audit ?? []) {
     if (!e.txHash || e.actor !== "ledger" || sastDay(e.at) !== today) continue;
     const d = e.data as Record<string, unknown> | undefined;
-    const a = amountFrom(d?.amount) ?? amountFrom(d?.delivered_amount);
+    const a = amountFrom(d?.amount) ?? amountFrom(d?.delivered) ?? amountFrom(d?.delivered_amount);
     if (a && a.currency === currency) sum += toMinor(a);
   }
   return fromMinor(currency, sum);
@@ -40,6 +40,22 @@ export function addressChanges(suppliers: Supplier[]): Map<string, Supplier> {
     if (old) out.set(s.id, old);
   }
   return out;
+}
+
+/**
+ * The approved supplier a held payment claims to be for, when it's going somewhere else:
+ * the "old vs new address" pair. Matches the invoice's sender name, a supplier named in the
+ * policy's reasons, or the same first word ("Mzansi …"), in that order.
+ */
+export function registeredFor(suppliers: Supplier[] | null, senderName: string | undefined, reasons: string[], destination: string): Supplier | undefined {
+  const approved = (suppliers ?? []).filter((s) => s.status === "approved" && s.xrplAddress !== destination);
+  const norm = (s: string) => s.trim().toLowerCase();
+  const first = (s: string) => norm(s).split(/\s+/)[0];
+  return (
+    (senderName && approved.find((s) => norm(s.name) === norm(senderName))) ||
+    approved.find((s) => reasons.some((r) => r.includes(s.name))) ||
+    (senderName ? approved.find((s) => first(s.name) === first(senderName)) : undefined)
+  );
 }
 
 export function supplierByAddress(suppliers: Supplier[] | null, addr: string): Supplier | undefined {
