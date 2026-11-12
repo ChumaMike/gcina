@@ -138,3 +138,19 @@ Default demo policy: perPayment 50 RLUSD, daily 120 RLUSD, requireHumanAbove 30 
 - **23:00**: full run of all 4 fixtures on testnet from the deployed dashboard; hashes in `docs/demo-evidence.md`.
 
 Status: append one line to `docs/status.md` at every milestone: `HH:MM [TAB] done / next / blocked-by`.
+
+## 8. Accepted XRPL corrections (from R's fact-check, 16:08; details in docs/research/05-xrpl-fit.md)
+- **C1** Names: agent-only multi-sign → `tefBAD_QUORUM`; agent single-sign → `tefBAD_AUTH`; master key → `tefMASTER_DISABLED`.
+- **C2** `tef*` results never reach a ledger, so there's no explorer page and no fee. Omit `explorerUrl` for tef/tem/tel; store the raw submit response (`engine_result`, `applied:false`) in audit. The on-chain proof is the SignerList account page + validated 2-signer payments.
+- **C3** For the agent-only attempt use `client.submit`, never `submitAndWait` (it hangs on tef).
+- **C4** Policy rule 2 also rejects: `Fee` > 1000 drops; any `SendMax` / `Paths` / `DeliverMin`; `Flags` ≠ 0 (especially `tfPartialPayment` 0x00020000); a missing or far-off `LastLedgerSequence`. The RLUSD Amount must be exactly `{currency:"524C555344000000000000000000000000000000", issuer:<testnet RLUSD issuer>, value}`. Read `delivered_amount` from meta, never `Amount`.
+- **C5** "TransactionType must be Payment" is the **first** check, with a test (agent + policy together = quorum for SignerListSet / SetRegularKey).
+- **C9** Policy signs the agent's **exact** tx with `Signers` stripped; it never re-autofills. `multisign()` needs identical Fee/Sequence/LastLedgerSequence.
+- **C10** Autofill right before signing; process invoices **one at a time** (parallel autofill → same Sequence → `tefPAST_SEQ`). A stale blob = re-propose, not fraud.
+- **C14** The duplicate check runs right after rule 2.
+- **C12** Faucet gives 100 XRP/call, used for fees and reserves only.
+
+## 9. Named customer = MTA (Meyiswa Training Academy), decided by Chuma 16:10
+- MTA is a Soweto-based skills-training provider that pays suppliers (venues, catering, printing, transport) and learner stipends for corporate-funded programmes. The money moves from funders → MTA → many small payees, exactly where changed-banking-details fraud bites.
+- **Disclosure (always):** MTA is run by Chuma's brother, so it's a connected **design partner**, not independent validation. Say so on stage if asked. Gumede (Kota~tainment) stays the secondary design partner.
+- **Privacy:** never put learner names, IDs, bank details or funder contract values in the repo, slides or video. Use invented demo suppliers only (Mzansi Meat → keep for the demo, or rename to an MTA-style supplier such as a catering or venue company; P + A decide together, and A owns fixtures).
