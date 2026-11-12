@@ -54,23 +54,23 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
       </a>
 
       {/* Desktop / projector sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex lg:w-72">
-        <Link href="/" className="flex items-center gap-3 rounded-lg px-2 py-2">
-          <Logo />
+      <aside className="brand-field sticky top-0 hidden h-dvh w-64 shrink-0 flex-col p-4 text-white md:flex lg:w-72">
+        <Link href="/" className="flex items-center gap-3 rounded-xl px-2 py-2">
+          <Logo onDark className="size-10" />
           <span>
-            <span className="block text-lg font-semibold leading-tight">Gcina</span>
-            <span className="block text-xs text-muted-foreground">The agent pays. The ledger keeps.</span>
+            <span className="block text-xl font-bold leading-tight tracking-tight">Gcina</span>
+            <span className="block text-xs text-white/70">The agent pays. The ledger keeps.</span>
           </span>
         </Link>
-        <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
+        <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
           {[...nav, { href: "/how-it-works", label: "How it works", short: "How", icon: HelpCircle }].map((n) => (
             <Link
               key={n.href}
               href={n.href}
               aria-current={active(n.href) ? "page" : undefined}
               className={cn(
-                "flex min-h-11 items-center gap-3 rounded-lg px-3 text-[0.95rem] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                active(n.href) && "bg-accent text-foreground",
+                "flex min-h-12 items-center gap-3 rounded-xl px-3 text-[0.95rem] font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white",
+                active(n.href) && "bg-white text-brand-deep shadow-lg hover:bg-white hover:text-brand-deep",
               )}
             >
               <n.icon className={cn("size-5", active(n.href) && "text-primary")} aria-hidden="true" />
@@ -81,9 +81,9 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
         </nav>
         <div className="mt-auto flex flex-col gap-3">
           <RlusdBadge className="self-start" />
-          <NetworkLine mock={mock} offline={offline} network={health?.network} />
+          <NetworkLine mock={mock} offline={offline} network={health?.network} onDark />
           <form action={logout}>
-            <button className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+            <button className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/75 hover:bg-white/10 hover:text-white">
               <LogOut className="size-4" aria-hidden="true" /> Sign out
             </button>
           </form>
@@ -91,7 +91,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
       </aside>
 
       {/* Phone header */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-2 backdrop-blur md:hidden">
+      <header className="glass sticky top-0 z-30 flex items-center gap-3 px-4 py-2 md:hidden">
         <Link href="/" className="flex min-h-11 items-center gap-2" aria-label="Gcina overview">
           <Logo className="size-8" />
           <span className="text-lg font-semibold">Gcina</span>
@@ -117,7 +117,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
       {/* Phone bottom nav */}
       <nav
         aria-label="Main"
-        className={cn("fixed inset-x-0 bottom-0 z-30 grid border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden", judge ? "grid-cols-2" : "grid-cols-5")}
+        className={cn("glass fixed inset-x-3 bottom-[max(0.6rem,env(safe-area-inset-bottom))] z-30 grid rounded-full p-1 md:hidden", judge ? "grid-cols-2" : "grid-cols-5")}
       >
         {nav.map((n) => (
           <Link
@@ -125,8 +125,8 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
             href={n.href}
             aria-current={active(n.href) ? "page" : undefined}
             className={cn(
-              "relative flex min-h-16 flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-muted-foreground",
-              active(n.href) && "text-primary",
+              "relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[0.68rem] font-medium text-muted-foreground transition-colors",
+              active(n.href) && "bg-primary text-white shadow-md",
             )}
           >
             <n.icon className="size-5" aria-hidden="true" />
@@ -139,12 +139,12 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
   );
 }
 
-function NetworkLine({ mock, offline, network, compact }: { mock: boolean; offline: boolean; network?: string; compact?: boolean }) {
+function NetworkLine({ mock, offline, network, compact, onDark }: { mock: boolean; offline: boolean; network?: string; compact?: boolean; onDark?: boolean }) {
   const label = offline ? "Can't reach the policy service" : mock ? "Demo data" : "XRP Ledger Testnet";
   return (
-    <span className={cn("inline-flex items-center gap-2 text-xs", offline ? "text-danger" : "text-muted-foreground")} title={network}>
+    <span className={cn("inline-flex items-center gap-2 text-xs", offline ? (onDark ? "font-semibold text-gold" : "text-danger") : onDark ? "text-white/75" : "text-muted-foreground")} title={network}>
       <span
-        className={cn("size-2 rounded-full", offline ? "bg-danger" : mock ? "bg-warn" : "bg-ok animate-pulse")}
+        className={cn("size-2 rounded-full", offline ? "bg-danger" : mock ? "bg-warn" : "bg-gold animate-pulse")}
         aria-hidden="true"
       />
       {compact && !offline ? (mock ? "Demo" : "Testnet") : label}
