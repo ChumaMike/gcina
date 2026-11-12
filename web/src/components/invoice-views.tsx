@@ -56,7 +56,7 @@ export function InvoiceTwoViews({ id, raw }: { id: string; raw: string }) {
             title={`${id} as an e-mail, the way a person sees it`}
             sandbox=""
             referrerPolicy="no-referrer"
-            srcDoc={body}
+            srcDoc={`<style>body{margin:12px;overflow-wrap:anywhere}</style>${body}`}
             className="block h-80 w-full bg-white"
           />
         </div>
