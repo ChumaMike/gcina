@@ -152,7 +152,10 @@ earlier project. What we used that already existed:
 
 ## Team
 
-**[Chuma? names + roles only, no contact details]**
+| Name | Role |
+|---|---|
+| **Chuma Meyiswa** | Founder · product and pitch **[role TBC]** |
+| **Dalindyebo Mdledle** | Developer **[role TBC]** |
 
 ## Hackathon
 
