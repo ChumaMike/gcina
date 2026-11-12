@@ -1,4 +1,5 @@
 import "server-only";
+import { hiddenParts } from "./hidden-text";
 // In-memory stand-in for the policy service (USE_MOCK=1). It speaks the contract's
 // operator API in the new Amount shape and plays the agent + policy + ledger, so every
 // screen and all four fixtures can be clicked through before the real service is up.
@@ -115,6 +116,15 @@ function process(inv: Invoice) {
   refs.set(inv.id, ref);
   inv.status = "processing";
   log("agent", "invoice.read", `Read ${inv.id} from ${inv.supplierName}: ${fmt(amount)} for ${po ?? "no order number"}.`);
+
+  // Like the real agent: text a person can't see that gives orders to an AI = stop, sign nothing.
+  if (hiddenParts(text).some((x) => x.hidden && /(?:AI|assistant|automated)/i.test(x.text))) {
+    setTimeout(() => {
+      inv.status = "rejected";
+      log("agent", "proposal.rejected", `Stopped ${inv.id}: hidden text in the e-mail gives instructions to an AI (pay a different address, skip checks). I signed nothing. Please check with ${inv.supplierName}.`, { data: { invoiceId: inv.id } });
+    }, 1800);
+    return;
+  }
 
   setTimeout(() => {
     const p = s.policy;

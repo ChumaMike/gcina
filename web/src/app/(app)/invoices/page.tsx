@@ -1,16 +1,18 @@
 "use client";
 
-import { Copy, Hand, RotateCcw, Send, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Bot, Copy, Hand, RotateCcw, Send, ShieldAlert, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ErrorNote, ExplorerLink, InvoiceChip, PageHeader, timeAgo } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
+import { InvoiceTwoViews } from "@/components/invoice-views";
 import { useData } from "@/components/data-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { DEMO_INVOICES, type DemoInvoice } from "@/lib/demo-invoices";
+import { isHtmlInvoice } from "@/lib/hidden-text";
 import type { AuditEvent, Invoice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,7 @@ const TONE_ICON = {
   bad: { icon: ShieldAlert, cls: "bg-danger-soft text-danger" },
   human: { icon: Hand, cls: "bg-warn-soft text-warn" },
   dup: { icon: Copy, cls: "bg-info-soft text-info" },
+  inject: { icon: Bot, cls: "bg-danger-soft text-danger" },
 } as const;
 
 function eventsFor(id: string, audit: AuditEvent[] | null) {
@@ -110,10 +113,14 @@ export default function InvoicesPage() {
                   </div>
                   <p className="text-[0.95rem] text-muted-foreground">{d.expect}</p>
 
-                  <details className="group rounded-lg border border-border bg-muted/50">
-                    <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium">Show the invoice text</summary>
-                    <pre className="overflow-x-auto px-3 pb-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">{d.rawText}</pre>
-                  </details>
+                  {isHtmlInvoice(d.rawText) ? (
+                    <InvoiceTwoViews id={d.id} raw={d.rawText} />
+                  ) : (
+                    <details className="group rounded-lg border border-border bg-muted/50">
+                      <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium">Show the invoice text</summary>
+                      <pre className="overflow-x-auto px-3 pb-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">{d.rawText}</pre>
+                    </details>
+                  )}
 
                   {latest && (
                     <div className="rounded-lg bg-muted/60 p-3 text-sm" aria-live="polite">
