@@ -61,11 +61,10 @@ Yes, the limits and the supplier list live in our co-signer service. What the le
 *(Be exact here. Don't claim the ledger itself checks the supplier list: 03-competitors.md §D point 3.)*
 It's one vote out of two, not a gatekeeper with the keys to the money. The owner holds the override, so the business never depends on us to get its money out.
 
-### 11. What's different from Xero, Sage or Ramp?
-Sage and Ramp ask their AI to spot the fraud inside their own platform; Gcina makes the XRP Ledger refuse
-the payment, so the agent can't pay a new bank account until a human co-signs. In SA today, Xero has no
-native bill pay, Ramp and BILL aren't available, and bank account verification only proves an account
-belongs to the named company, not that it's the account this supplier has always used. *(Source: 03-competitors.md §D–E.)*
+### 11. What's different from Ramp, Sage or Xero?
+They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams. *(docs/problem-statement.md, C 17:45. Ramp flags changed bank details too (US); Visa + BILL + Billtrust
+piloted agent-executed, human-approved invoice payments on 20 Oct 2026; Sage SA has an AP agent. Never say "first",
+"only" or "nobody".)*
 
 ### 11a. What makes Gcina different from other teams' agent wallets?
 Three independent locks: the AI's own judgement, a rule-keeper with its own key that the AI can't override, and the
@@ -73,8 +72,8 @@ XRP Ledger refusing the agent on its own. Each one still holds if the one before
 built around a real SA failure ("you pay twice"), not around the technology.
 
 ### 11b. Coinbase, Privy, Turnkey and Safe already enforce agent limits. Why you?
-They enforce limits in a vendor's enclave or a smart contract, and none of them has an invoice-to-payment
-workflow or a South African focus. Gcina's quorum is the XRP Ledger's own multi-sign (no contract, no
+They enforce limits in a vendor's enclave or a smart contract, and they're built for developers and
+agent-to-API payments rather than a small business's supplier and fraud workflow in South Africa. Gcina's quorum is the XRP Ledger's own multi-sign (no contract, no
 custodian), and a changed bank account can only get past it with the owner's key. *(Source: 03-competitors.md §D. **Never say "nobody else does external limits"**: that's false.)*
 
 ### 12. Who's your customer, and have you spoken to them?

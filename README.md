@@ -4,6 +4,8 @@
 
 > **Gcina is the AI payments clerk your CFO can sign off on: it pays the right supplier, once, within your limits, and even if it's fooled or hacked, it still can't pay on its own.**
 
+**Gcina: autonomous supplier payments, independent financial control. We separate the agent's ability to initiate a payment from its authority to spend.**
+
 **Gcina** (isiZulu/isiXhosa: *"keep, protect"*) is an AI accounts-payable agent for South African small
 businesses. It reads supplier invoices, matches them to orders, and pays suppliers on the **XRP Ledger**,
 inside limits the business owner sets and the agent **cannot change or get around**, even when it's fooled
@@ -97,7 +99,7 @@ Suppliers are paid in **RLUSD** (Ripple's US-dollar stablecoin on XRPL, testnet 
 | XRPL feature | How Gcina uses it | Why it matters |
 |---|---|---|
 | **Multi-signing** (`SignerListSet`) | `AGENT_ACCOUNT` has signers agent 1 · policy 1 · owner 2, quorum 2 | The rule "no single machine can pay" is enforced by the ledger protocol, not by a smart contract we wrote |
-| **Master key disabled** (`asfDisableMaster`) | Set right after the SignerList | Nobody can bypass the quorum with the account's own key (`tefMASTER_DISABLED`) |
+| **Master key disabled** (`asfDisableMaster`) | Set right after the SignerList | The account's own key can't bypass the quorum (`tefMASTER_DISABLED`) |
 | **RLUSD** (trust lines + issued-currency `Payment`) | Suppliers are paid in testnet RLUSD (issuer [`rQhWct2f…`](https://testnet.xrpl.org/accounts/rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV)); XRP only covers fees and reserves. Even the agent account's RLUSD trust line had to be **multi-signed** (agent + policy): [`544BCD97…`](https://testnet.xrpl.org/transactions/544BCD9734958936C640B1A7430425617A67EFCCE27C7F030E821378541D4A39) | A dollar-stable unit for invoices instead of a volatile asset |
 | **Memos** | Every payment carries `{"invoiceId": "…", "app": "gcina"}` | The invoice ↔ payment audit trail lives on the ledger |
 | **Fast, final settlement** | Multi-signed payment fee is 30 drops (10 × (1 + 2 signers)); ledgers close every 3–5 s | A two-key-protected supplier payment costs a fraction of a cent and is final in seconds (`docs/research/05-xrpl-fit.md`) |
@@ -140,6 +142,13 @@ Each folder is its own package (pnpm, TypeScript via `tsx`, Node 24). Secrets li
 - **Held payments can't be replayed later.** Signed blobs expire; after a human approves, the agent signs a fresh payment for that exact destination + amount.
 - **Every payment carries its invoice ID** as an on-ledger memo, and every decision is in the audit log.
 - **Quiet when normal:** routine payments show as one-line ticks; anything held goes to the top for the owner. *You only hear from Gcina when something's wrong.*
+
+## Why not Ramp, Sage or Xero?
+
+They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams.
+
+Each building block exists elsewhere; Gcina's contribution is the combination, with spending authority kept outside
+the agent. Competitor detail: [`docs/research/03-competitors.md`](docs/research/03-competitors.md).
 
 ## Testnet demo vs production path (honest)
 

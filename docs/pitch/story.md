@@ -33,8 +33,14 @@ nothing stops an AI from paying wrong.*
 - **Duplicates hide in manual workflows**: registers, spreadsheets, re-sent invoices (seen at MTA).
 - The fraud is **social, not technical** (SABRIC), and **AI makes it worse first**: better fake invoices, and paying agents that can be prompt-injected.
 
-**Nobody offers** an AI that does the payables work **plus** a rule-keeper the AI can't override **plus** a ledger that
-refuses the AI on its own, all controlled by the owner from a phone.
+**Positioning line (C, 17:45):** *Gcina: autonomous supplier payments, independent financial control. We separate the agent's ability to initiate a payment from its authority to spend.*
+
+Each part exists somewhere; what Gcina adds is the **combination**: an AI that does the payables work **plus** a
+rule-keeper the AI can't override **plus** a ledger that refuses the AI on its own, all controlled by the owner from a phone.
+
+> **Rule (C, 17:45): never say "first", "only" or "nobody"** about our position. Ramp already flags changed bank
+> details (US), a Visa + BILL + Billtrust pilot (20 Oct 2026) lets agents execute human-approved invoice payments,
+> Sage SA has an AP agent, and SA Xero add-ons (Payaccsys, Paysoft, Netcash) run account checks.
 
 ## Against other teams in this track
 - Most will show "an agent with a wallet and a spending cap". We show **why the cap matters**: a live fake invoice, a
@@ -154,17 +160,19 @@ Testnet proof:
 
 That's the answer to "would your CFO sign off?": **even if the AI is fooled, the money doesn't move.**
 
-## Positioning (from `docs/research/03-competitors.md` §D)
+## Positioning (from `docs/research/03-competitors.md` §D and C 17:45)
+
+- **Why not Ramp or Sage?** "They automate accounts payable and add fraud checks inside their own platform, and Visa's new pilot lets agents pay invoices a human already approved. Gcina is built for the next step, letting the agent decide, so we take spending authority *out of the agent's hands*: a separate co-signer holds the second key, and the XRP Ledger refuses anything without both. That's verifiable on a public ledger, not just in our logs, and it's built for SA small businesses that can't afford Ramp-style finance teams."
 
 - Say: **"Sage and Ramp ask their AI to spot the fraud. Gcina makes the XRP Ledger refuse the payment: an
   accounts-payable agent that can't pay a new bank account until a human co-signs."**
-- Short: "The first accounts-payable agent for SA small businesses that the ledger itself won't let go rogue."
-  Always keep "AP" / "for SA small businesses" in that sentence.
+- Positioning line: "Gcina: autonomous supplier payments, independent financial control. We separate the agent's ability to initiate a payment from its authority to spend."
 - **Never say** "nobody else enforces limits outside the agent" (Coinbase, Privy, Turnkey, Safe and Crossmint do).
 - **Be exact:** the ledger enforces the *quorum*; the supplier list and limits live in our co-signer service.
   The claim is "the agent alone can't pay, and beating the rules needs a second, independent key".
-- Why it matters for SA: none of the global agentic AP tools is live here, Xero has no native bill pay in SA,
-  and bank account verification proves who owns an account, not that it's the account this supplier always used.
+- Why it matters for SA: Ramp and BILL aren't available here, Xero has no native bill pay in SA, Sage SA's AP agent
+  runs inside Sage's own platform, and bank account verification proves who owns an account, not that it's the
+  account this supplier always used.
 
 ## Business model and go-to-market
 
