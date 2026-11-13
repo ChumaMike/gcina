@@ -1,10 +1,12 @@
 "use client";
 
 // Accessibility concept only. Text selection and reading pace are preserved, but
-// the character never derives invented signs or mouth movements from page text.
-import { Hand, Pause, Play, RotateCcw, Snail, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+// the character never derives invented signs from page text. Speech uses an
+// approximate jaw envelope, not phoneme/viseme or SASL animation.
+import { Hand, Pause, Play, RotateCcw, Snail, Square, Volume2, X } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { AvatarViewport } from "./sasl-avatar/viewport";
+import { useAvatarSpeech } from "./sasl-avatar/use-speech";
 
 const BLOCKS = "h1,h2,h3,h4,h5,h6,p,li,td,th,label,button,a,dt,dd,figcaption,legend,summary,[role=button],[data-sasl]";
 const SKIP = "[data-sasl-ignore],script,style,svg,canvas,input,textarea,select,[aria-hidden=true]";
@@ -83,21 +85,43 @@ export function SaslPreview() {
   const [slow, setSlow] = useState(false);
   const [paused, setPaused] = useState(false);
   const [demo, setDemo] = useState(false);
+  const [voiceUsed, setVoiceUsed] = useState(false);
+  const voice = useAvatarSpeech(setCurrent);
+  const speechActive = ["starting", "speaking", "paused"].includes(voice.speech.status);
+  const voiceActions = useRef(voice);
+  useEffect(() => { voiceActions.current = voice; }, [voice]);
+  const voiceSelect = useId(), rateSelect = useId();
   const reduced = useSyncExternalStore(subscribeMotion, motionSnapshot, serverMotionSnapshot);
   const active = useRef<Element | null>(null);
   const wordRefs = useRef<Word[]>([]);
   const launcher = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => {
+    voiceActions.current.stop();
+    setVoiceUsed(false);
     setOn(false);
     setDemo(false);
     requestAnimationFrame(() => launcher.current?.focus());
   }, []);
-  const replay = useCallback(() => {
+  const listen = () => {
+    setVoiceUsed(true);
+    setPaused(false);
+    voice.listen(words.join(" "), slow);
+  };
+  const replay = () => {
+    if (voiceUsed) { listen(); return; }
     setCurrent(0);
     setPaused(false);
     setRun((n) => n + 1);
-  }, []);
+  };
+  const togglePause = () => {
+    if (paused) voice.resume(); else voice.pause();
+    setPaused((value) => !value);
+  };
+  const stopVoice = () => {
+    voice.stop();
+    setPaused(true);
+  };
 
   useEffect(() => {
     if (!on) return;
@@ -108,6 +132,8 @@ export function SaslPreview() {
       if (!el || el === active.current) return;
       const ws = wordsIn(el);
       if (!ws.length) return;
+      voiceActions.current.stop();
+      setVoiceUsed(false);
       active.current?.classList.remove("sasl-highlight");
       el.classList.add("sasl-highlight");
       active.current = el;
@@ -153,19 +179,19 @@ export function SaslPreview() {
       return;
     }
     markWord(wordRefs.current[current]);
-    if (paused) return;
+    if (paused || voiceUsed) return;
     const timer = setTimeout(() => setCurrent((c) => c + 1), wordMs(w) * (slow ? 1.7 : 1));
     return () => clearTimeout(timer);
-  }, [on, current, words, slow, run, paused]);
+  }, [on, current, words, slow, run, paused, voiceUsed]);
 
   const done = words.length > 0 && current >= words.length;
-  const button = "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-40";
+  const button = "inline-flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl border px-1 text-[10px] font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-40";
   const inactive = "border-slate-200 hover:bg-slate-100 dark:border-white/15 dark:hover:bg-white/10";
   const selected = "border-teal-700 bg-teal-700 text-white";
 
   return (
     <>
-      <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}.sasl-studio{height:min(280px,27dvh)}@media(min-width:768px){.sasl-studio{height:min(350px,40dvh)}}@media(max-height:560px) and (min-width:768px){.sasl-studio{height:240px}}`}</style>
+      <style>{`.sasl-highlight{outline:2px dashed #f59e0b;outline-offset:3px;border-radius:6px;background:color-mix(in srgb,#fde68a 35%,transparent)}::highlight(sasl-word){background-color:#fbbf24;color:#0f172a}#sasl-preview-panel .sasl-studio{height:190px;width:100%}`}</style>
       {!on ? (
         <button
           ref={launcher}
@@ -185,7 +211,7 @@ export function SaslPreview() {
           id="sasl-preview-panel"
           data-sasl-ignore
           aria-label="South African Sign Language concept preview"
-          className="fixed right-3 bottom-24 z-50 max-h-[64dvh] w-[min(23rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-3xl border border-black/10 bg-white p-3 text-slate-900 shadow-[0_16px_64px_-12px_#123f3b55] md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+          className="fixed right-3 bottom-24 z-50 max-h-[64dvh] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-3xl border border-black/10 bg-white p-3 text-slate-900 shadow-[0_16px_64px_-12px_#123f3b55] md:bottom-6 md:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
         >
           <div className="mb-3 flex items-center justify-between gap-2 pl-1">
             <div>
@@ -196,38 +222,55 @@ export function SaslPreview() {
               <X className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <AvatarViewport paused={paused} reduced={reduced} demo={demo} slow={slow} />
-          <div className="mt-3 px-1">
-            <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-slate-400">
-              <span>{words.length ? "Selected text" : "Explore the concept"}</span>
-              {words.length > 0 && <span>{done ? "Complete" : `${Math.min(current + 1, words.length)} / ${words.length}`}</span>}
+          <div className="grid grid-cols-[min(160px,55%)_minmax(0,1fr)] items-center gap-2">
+            <AvatarViewport paused={paused} reduced={reduced} demo={demo} slow={slow} speaking={voice.speech.status === "speaking"} />
+            <div data-avatar-text className="min-w-0">
+              <div className="mb-1.5 flex flex-col gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                <span>{words.length ? "Selected text" : "Explore the concept"}</span>
+                {words.length > 0 && <span>{done ? "Complete" : current < 0 ? "Ready to read" : `${Math.min(current + 1, words.length)} / ${words.length}`}</span>}
+              </div>
+              <div className="max-h-32 min-h-10 overflow-y-auto break-words text-sm leading-relaxed">
+                {words.length ? (
+                  <p>{words.map((w, i) => <span key={i} className={i === current ? "rounded bg-amber-200 px-0.5 font-medium text-slate-900" : i < current ? "text-slate-500 dark:text-slate-400" : ""}>{w}{" "}</span>)}</p>
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-300">Hover, tap or tab to page text, then press Listen.</p>
+                )}
+              </div>
+              <p className="sr-only" role="status">{words.length ? `Selected text: ${words.join(" ")}` : "Select page text to explore the concept. This is not SASL translation."}</p>
             </div>
-            <div className="max-h-20 min-h-10 overflow-y-auto text-sm leading-relaxed">
-              {words.length ? (
-                <p>{words.map((w, i) => <span key={i} className={i === current ? "rounded bg-amber-200 px-0.5 font-medium text-slate-900" : i < current ? "text-slate-500 dark:text-slate-400" : ""}>{w}{" "}</span>)}</p>
-              ) : (
-                <p className="text-slate-600 dark:text-slate-300">Hover over, tap or tab to page text to preview the reading flow.</p>
-              )}
-            </div>
-            <p className="sr-only" role="status">{words.length ? `Selected text: ${words.join(" ")}` : "Select page text to explore the concept. This is not SASL translation."}</p>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" onClick={replay} disabled={!words.length} className={`${button} ${inactive}`}>
-              <RotateCcw className="size-3.5" aria-hidden="true" />{done ? "Replay text" : "Replay"}
-            </button>
-            <button type="button" onClick={() => setSlow((s) => !s)} aria-pressed={slow} className={`${button} ${slow ? selected : inactive}`}>
-              <Snail className="size-3.5" aria-hidden="true" /> Slower
-            </button>
-            <button type="button" onClick={() => setPaused((v) => !v)} aria-pressed={paused} className={`${button} ${paused ? selected : inactive}`}>
+          <div className="mt-3 grid grid-cols-5 gap-1.5">
+            {speechActive ? (
+              <button type="button" onClick={stopVoice} aria-label="Stop audio" className={`${button} ${selected}`}><Square className="size-3.5" aria-hidden="true" /> Stop</button>
+            ) : (
+              <button type="button" onClick={listen} disabled={!words.length || voice.speech.status === "unsupported"} className={`${button} ${selected}`}><Volume2 className="size-3.5" aria-hidden="true" /> Listen</button>
+            )}
+            <button type="button" onClick={togglePause} disabled={voice.speech.status === "starting"} aria-pressed={paused} className={`${button} ${paused ? selected : inactive}`}>
               {paused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}{paused ? "Resume" : "Pause"}
             </button>
-            <button type="button" onClick={() => { setDemo((v) => !v); setPaused(false); }} disabled={reduced} aria-pressed={demo && !reduced} title={reduced ? "Rig motion is disabled by your reduced-motion preference" : "Inspect the rig with a fixed movement study"} className={`${button} ${demo && !reduced ? selected : inactive}`}>
-              <Hand className="size-3.5" aria-hidden="true" /> {demo && !reduced ? "Stop rig demo" : "Try rig demo"}
-            </button>
+            <button type="button" onClick={replay} disabled={!words.length} aria-label={done && !voiceUsed ? "Replay text" : "Replay"} className={`${button} ${inactive}`}><RotateCcw className="size-3.5" aria-hidden="true" /> Replay</button>
+            <button type="button" onClick={() => { if (speechActive) stopVoice(); setSlow((value) => !value); }} aria-pressed={slow} className={`${button} ${slow ? selected : inactive}`}><Snail className="size-3.5" aria-hidden="true" /> Slower</button>
+            <button type="button" onClick={() => { setDemo((value) => !value); voice.resume(); setPaused(false); }} disabled={reduced} aria-pressed={demo && !reduced} aria-label={demo && !reduced ? "Stop rig demo" : "Try rig demo"} title={reduced ? "Rig motion is disabled by your reduced-motion preference" : "Inspect the rig with a fixed movement study"} className={`${button} ${demo && !reduced ? selected : inactive}`}><Hand className="size-3.5" aria-hidden="true" /> Rig demo</button>
           </div>
-          <p className="mt-3 border-t border-slate-100 px-1 pt-2.5 text-[11px] leading-relaxed text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <p role="status" className="mt-1.5 px-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">{voice.speech.message}</p>
+          <details className="mt-2 px-1 text-xs">
+            <summary className="min-h-8 cursor-pointer py-1.5 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700 dark:text-slate-300">Voice settings</summary>
+            <div className="grid gap-2 pb-2">
+              <label htmlFor={voiceSelect}>Installed voice</label>
+              <select id={voiceSelect} value={voice.voiceURI} onChange={(event) => { if (speechActive) stopVoice(); voice.setVoiceURI(event.target.value); }} className="min-h-10 w-full rounded-lg border border-slate-300 bg-white px-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                {!voice.voices.length && <option value="">System default · if available</option>}
+                {voice.voices.map((v) => <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
+              </select>
+              {!voice.voices.length && <p className="text-[10px] text-slate-500">No voices listed yet. Listen will try your system default. Voice availability depends on your browser and device.</p>}
+              <label htmlFor={rateSelect}>Speech speed</label>
+              <select id={rateSelect} value={voice.rate} onChange={(event) => { if (speechActive) stopVoice(); voice.setRate(Number(event.target.value)); }} className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                <option value="0.75">0.75× · slower</option><option value="1">1× · normal</option><option value="1.25">1.25× · faster</option>
+              </select>
+            </div>
+          </details>
+          <p className="mt-2 border-t border-slate-100 px-1 pt-2 text-[11px] leading-relaxed text-slate-500 dark:border-white/10 dark:text-slate-400">
             <strong className="font-semibold text-slate-700 dark:text-slate-300">Movement study, not SASL translation.</strong>{" "}
-            Authentic signing requires animation built and validated with Deaf SASL experts.
+            <span className="sr-only md:not-sr-only">Authentic signing requires animation built and validated with Deaf SASL experts.</span>
           </p>
         </aside>
       )}

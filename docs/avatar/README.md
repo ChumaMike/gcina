@@ -1,101 +1,212 @@
-# Gcina avatar concept
+# Gcina Avatar V2 + voice
 
-A custom, interactive Three.js human character for the existing SASL concept panel. This is an original procedural model with a hierarchical transform rig, not an imported GLB. No runtime dependency, remote asset, texture download or licence attribution is required for the character.
+A rigged, animatable GLB replaces the V1 primitive character in the existing
+accessibility panel. It has continuous anatomical hands, independent finger
+chains and thumb opposition, a weighted face/jaw, textured swept hair and a teal
+Gcina uniform. The existing Three.js dependency is reused; no runtime packages
+were added. [Asset licence and provenance](THIRD_PARTY.md).
 
-**This does not translate South African Sign Language.** Text selection demonstrates a reading flow. The optional **Try rig demo** button plays the same gentle range-of-motion study for all text. There is no invented vocabulary, number fingerspelling or text-driven mouthing. Authentic signing, timing and facial grammar need Deaf SASL experts and validated animation data.
+**Movement study, not SASL translation.** The rig demo is a fixed animation,
+independent of selected words. Speech is optional browser read-aloud with
+approximate jaw motion; it is not phoneme lip-sync or signing. Authentic SASL
+animation and facial grammar require Deaf SASL experts and validated data.
 
-## Preview
+## Open the interactive preview in Chrome
 
-The standalone `preview.html` embeds the same scene and rig used by the application and makes no external requests. Download it first if viewing on GitHub. You can open it directly where browser policy allows local files, or serve it locally:
+**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/refs/heads/feat/avatar-v2-voice/docs/avatar/preview.html)**.
+This viewer runs the standalone HTML from the review branch.
+GitHub's file page cannot run HTML and reports that this bundled file is too large
+to display; use the browser preview above or download it using the instructions below.
 
-```bash
-python3 -m http.server 3002 --directory docs/avatar
-# Open http://localhost:3002/preview.html in Chrome.
-``` The standalone preview has view, motion and rig controls. The actual application integration is shown in the captures below.
+The app keeps the original **320px maximum panel width** and **160 × 190px avatar**,
+with selected text beside the character. On narrow phones the avatar width shrinks
+slightly to fit. The standalone preview opens at this compact size too.
+**Enlarge inspection** and the detail views enlarge only the standalone preview;
+**Show app size**, **Front** or **Reset view** restores the compact presentation.
 
-![The avatar in the application](avatar.webp)
+Download [preview.html](preview.html) from this branch, then open the downloaded
+file in Chrome. It contains the actual GLB, renderer and controls in one file;
+GitHub's HTML source viewer does not execute it. If your browser blocks local
+files, serve it from the repository root:
 
-[Standalone preview capture](standalone.webp) · [Desktop capture](desktop.webp) · [Mobile capture](mobile.webp) · [Rig demonstration](rig-demo.webp) · [Reduced motion](reduced-motion.webp)
+```sh
+python3 -m http.server 8000 --directory docs/avatar
+# Open http://localhost:8000/preview.html
+```
 
-## Run the application
+Use **Front / Side / Face / Left hand / Right hand**, inspect **Open / Relaxed /
+Closed**, select an individual digit and change its curl. Drag or use arrow keys
+to turn; Home/reset restores the view. The lower controls provide rig demo,
+pause/resume and slower motion. The preview respects reduced motion, including
+preference changes while open. Explicit, manual pose/view changes remain usable.
 
-Use Node 24 LTS and pnpm. From the repository root:
+Enter a payment warning and press **Listen**. The text stays available throughout
+playback. **Pause/Resume**, **Replay** and **Stop audio** control the same utterance.
+Voice settings list the browser's available voices and speech speeds. Installed
+South African English (`en-ZA`) is preferred when available; a particular voice
+or naturalness cannot be guaranteed across devices. With an empty list, Listen
+tries the system default and reports a useful error if playback cannot start.
 
-```bash
-git switch feat/polished-sasl-avatar
+The character preview needs no network. Some browser-provided speech voices may
+use their provider's network service. No backend TTS service is added by Gcina.
+
+## Actual visual previews
+
+[Compact app size](v2/app-size.webp) · [Enlarged character inspection](v2/full-character.webp) · [Face](v2/face.webp) ·
+[Left open](v2/left-open.webp) · [Left closed](v2/left-closed.webp) ·
+[Right open](v2/right-open.webp) · [Right closed](v2/right-closed.webp) ·
+[Side profile](v2/side.webp) · [Dashboard](v2/desktop.webp) ·
+[Mobile dashboard](v2/mobile.webp) · [Mobile studio](v2/studio-mobile.webp)
+
+![V2 compact interactive preview](v2/app-size.webp)
+
+| V1 baseline | V2 implementation |
+|---|---|
+| ![V1 character](standalone.webp) | ![V2 character](v2/full-character.webp) |
+| Separate rounded palm/finger meshes | One connected weighted skin surface per hand |
+| Primitive face and instanced hair balls | Anatomical facial mesh, eyelid/brow/jaw bones and shaped hair |
+| Reading flow only | Written flow plus explicit, optional browser speech |
+| Four core controls | Same controls, consolidated with Listen/Stop for mobile |
+| Procedural transform hierarchy | 163-bone GLB with named arm, hand and facial controls |
+
+All images are captures of the running implementation, converted to WebP. They
+are not generated concept art. Both hands were inspected in open and closed
+poses. See [verification.md](verification.md) for tests and practical limits.
+
+## Run Gcina locally
+
+From the repository root, using Node 24 and pnpm:
+
+```sh
+git switch feat/avatar-v2-voice
 cd web
 pnpm install --frozen-lockfile
 USE_MOCK=1 \
-DASHBOARD_PASSCODE=avatar-local-demo \
-SESSION_SECRET=local-avatar-preview-secret-at-least-32-characters \
+DASHBOARD_PASSCODE=gcina-local-demo \
+SESSION_SECRET=gcina-local-preview-only-session-key-2026 \
 pnpm dev
 ```
 
-These example credentials are for local mock testing only. Open `http://localhost:3000`, sign in with `avatar-local-demo`, then open the teal hand button at the bottom right. Existing real-service settings can be used instead; no backend changes are needed.
+These are **local mock example values**, not production credentials. Open
+`http://localhost:3000`, sign in with `gcina-local-demo`, and open the floating teal
+hand button. No financial dashboard, policy, payment-agent or blockchain code
+was changed. Existing real-service configuration still works.
 
-- Hover over page text, tap it, or focus a link/button to select it.
-- Replay and Slower retain the existing reading flow. Pause stops both reading and character animation.
-- Try rig demo enables the explicitly labelled movement study. It is independent of selected words.
-- Drag horizontally to inspect the character within ±17° of the front. With the viewer focused, use Left/Right; Home or the reset icon returns to the front.
-- Escape closes the panel, clears page highlights and returns focus to the launcher.
-- OS/browser reduced-motion preference disables the rig demo and idle movement immediately, including when changed while the panel is open. Explicit view rotation remains available.
-- Small/landscape screens can scroll within the panel to reach every control.
+Hover over text, tap it, or focus a link/button. Text selection never starts
+speech. Press Listen explicitly. A new selection stops the previous utterance.
+Replay repeats audio after Listen has been used, or repeats the original written
+reading flow otherwise. Pause freezes reading, speech and avatar motion; Stop
+stops audio. Slower affects the reading pace and the next speech request. Changing
+voice/speed stops active speech and requires another explicit Listen. Closing or
+unmounting cancels owned speech and releases the viewer.
 
-## Implementation
+Spoken highlights use reliable browser **word-boundary events only**. When those
+are absent, the full text stays visible with a timing-unavailable message; the
+app does not simulate word timing. Reduced motion suppresses idle, blink, rig and
+mouth animation while allowing explicitly requested audio. The panel remains
+nonmodal, keyboard accessible and optional. WebGL failure leaves text and voice
+controls available. Small/landscape screens can scroll the panel when necessary.
 
-- `web/src/components/sasl-preview.tsx`: existing text picking, CSS highlights, replay/speed controls and responsive panel. The previous word-hashed gesture generator and false translation copy are removed.
-- `web/src/components/sasl-avatar/rig.ts`: sculpted head, layered eyes, brows, lips, ears, instanced curls, teal polo/collar/embroidery, arms and hands. Each arm exposes shoulder, elbow and wrist transforms; each finger has three phalanges, each thumb two. Skin, nails, fabric and hair have separate PBR materials.
-- `web/src/components/sasl-avatar/scene.ts`: portrait camera, warm key/cool fill/rim lighting, soft shadows, constrained rotation, visibility scheduling and explicit GPU cleanup.
-- `web/src/components/sasl-avatar/viewport.tsx`: lazy scene import, loading/failure/retry UI, accessible viewer instructions and lifecycle ownership.
+## 10–15 second presentation
 
-Three.js loads only when the preview opens. Geometry is shared; hair curls use two instanced draws. The portrait contains 52,928 triangles. Rendering is capped at 30 fps and device pixel ratio at 1.75, with a 512px shadow map. A measured slow-renderer fallback disables shadow passes and uses native pixel resolution; the rig and controls remain identical. The loop stops when paused, reduced motion is enabled, the page is hidden, or the viewport is offscreen. Closing disposes geometry, materials, instances, shadow targets and the WebGL context, and removes observers/listeners.
+1. Open the avatar and select a short payment-warning message (about 3 seconds).
+2. Press **Listen**; let the warning play with approximate mouth movement
+   (about 6–8 seconds). Written text remains on screen.
+3. Press **Rig demo** and briefly drag the avatar (about 3 seconds).
 
-The UI preserves text access if WebGL fails. The selected sentence is announced once, rather than announcing every highlighted word. The panel is a nonmodal complementary region: the rest of the application remains keyboard accessible.
+Use the standalone sample if no warning is available in the dashboard. Windows
+Chrome played it through an installed Microsoft English voice in about 7.5
+seconds. The system audio meter detected output and the browser reported word
+boundaries. Audibly check the voice on the presentation laptop before the demo.
+The Linux browser supplied the separate empty-voice and speech-double checks.
 
-## Future authentic SASL animation
+## Character and animation interfaces
 
-`createAvatar()` returns named `head`, `eyes`, `brows`, `mouth`, `chest`, `left` and `right` controls. Side names are the character's anatomical sides. Units are arbitrary scene units; the character faces +Z, up is +Y. Angles are radians; finger curl values are normalised control inputs.
+`await createAvatar(source?, signal?)` loads `/avatars/gcina-v2.glb` by default,
+or accepts an ArrayBuffer for an offline/test preview. Loading is now asynchronous;
+scene ownership stays synchronous through `createAvatarScene(...).ready`. Abort,
+close-during-load, retry, GPU loss and resource teardown are handled explicitly.
 
-`poseArm(arm, pose)` accepts shoulder/elbow/wrist XYZ rotations and five curls in **index, middle, ring, little, thumb** order. Each finger joint is separately accessible for future spread, opposition and phalange-specific motion. Direct group tracks can use stable names such as `shoulder.R`, `wrist.L` and `index.02.R`.
+The familiar `root`, `chest`, `head`, `eyes`, `brows`, `mouth`, `left`, `right`,
+`poseArm`, `update` and `dispose` handles remain. They now expose actual `Bone`
+objects. The source skeleton includes intermediate forearm/metacarpal joints;
+elbow/wrist/digits are descendants rather than necessarily direct children.
+Character left/right are anatomical sides. Up is +Y, front is +Z; rotations are
+radians and curl inputs are clamped to 0–1.
 
-The current `update()` method supplies idle and demo animation. A future animation driver must replace that arm update or apply validated poses after it; otherwise idle will overwrite supplied arm transforms. Facial groups are available, but this procedural character has no full facial blendshape set or skinned deformation. A production signing rig may need skinning, facial morph targets, collision constraints and retargeting. Do not treat the movement study as training data or a signing implementation.
+- `poseArm(arm, { shoulder, elbow, wrist, curls })` uses bind-relative XYZ rotations;
+  curls remain ordered **index, middle, ring, little, thumb**.
+- `setFinger(arm, name, curl)` addresses one digit. Four fingers have three
+  phalanges. The thumb has two phalanges plus its own opposition joint.
+- `update(seconds, demo, still, speechEnvelope?, inspection?)` supplies neutral
+  posture, breathing, eyelid blink, the fixed movement study and approximate jaw
+  movement. Inspection supports relaxed/open/closed and per-digit overrides.
+- `bounds('head' | 'left' | 'right')` measures the **deformed skin**, not empty bone
+  handles. `bones` and `meshes` expose the underlying rig for later animation work.
+- Stable bone names include `upperarm01.L`, `lowerarm01.L`, `wrist.L`,
+  `finger2-1.L` (index proximal), `finger1-1.L` (thumb CMC), `head` and `jaw`.
 
-## Checks
+Future validated animation should replace the procedural update or apply its
+tracks afterward; otherwise that update will overwrite the same joints. This
+rig has facial bones, not a complete viseme/morph-target library. The included
+pose presets are constrained demonstrations, not a general collision solver or
+SASL training data. Retargeting and nonmanual signing grammar still need expert
+validation.
 
-```bash
-cd web
-pnpm lint
-pnpm exec tsc --noEmit
-pnpm build
-node --test tests/avatar-rig.test.mjs
+Three.js and the GLB load only after the panel opens. The renderer caps at 30 fps,
+limits pixel density, stops offscreen/hidden/paused/reduced-motion work, and
+adapts to a slow renderer. Its fallback computes the same weighted skin surface
+in dynamic buffers and uses cheaper diffuse studio materials. Hardware rendering
+uses PBR materials. All owned geometry, materials, skeleton textures, observers,
+listeners, scheduled frames and the WebGL context are disposed on close.
+
+## Rebuild and test
+
+The checked-in model works without Blender. To edit/rebuild it, use Blender 4.3.2
+and the [pinned source assets](../../web/assets/avatar-source/README.md):
+
+```sh
+blender --background --python web/scripts/build-avatar-model.py
 ```
 
-The rig tests require Node 22.18+ (native TypeScript stripping), with Node 24 used for verification. Node may print a harmless module-type detection warning for the directly imported TS file; application build settings are unchanged.
+Rebuild the self-contained HTML after changing model/scene/preview code:
 
-The four rig tests check independent anatomical chains, camera containment of the head and hands through the movement study/rotation range, reduced-motion stability/blinking/breathing, and geometry budget/resource disposal.
-
-For browser checks, keep the local mock app running, then in another terminal from `web`:
-
-```bash
-# Optional test tools live outside the application dependency tree.
-npm install --prefix ../work/avatar-test-tools --no-save playwright
-../work/avatar-test-tools/node_modules/.bin/playwright install chromium
-PLAYWRIGHT_MODULE="$PWD/../work/avatar-test-tools/node_modules/playwright" \
-AVATAR_TEST_PASSCODE=avatar-local-demo \
-node scripts/verify-avatar.mjs
-```
-
-The script captures the real app and checks desktop/mobile/landscape layouts, touch and keyboard text selection, replay/speed/pause, rotation/reset, reduced-motion changes, WebGL failure/retry and repeated open/close cleanup. Set `AVATAR_CAPTURE_DIR` to choose the capture folder, `AVATAR_BASE_URL` for another local port, and `CHROMIUM_PATH` to use an installed Chrome/Chromium executable. `AVATAR_SOFTWARE_GPU=1` enables SwiftShader in headless environments.
-
-## Verification record
-
-To rebuild the standalone preview after changing the rig/scene, install esbuild into a scratch tools directory (it is not an app dependency):
-
-```bash
-# From the repository root:
-npm install --prefix work/avatar-preview-tools --no-save esbuild
-ESBUILD_MODULE="$PWD/work/avatar-preview-tools/node_modules/esbuild/lib/main.js" \
+```sh
+npm install --prefix /tmp/gcina-preview-tools --no-save esbuild
+ESBUILD_MODULE=/tmp/gcina-preview-tools/node_modules/esbuild/lib/main.js \
 node web/scripts/build-avatar-preview.mjs
 ```
 
-See `verification.md` for the completed run and environment limitations. Preview assets are captures of the actual implementation, not generated concept art.
+Core checks from `web/`:
+
+```sh
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm build
+node --test tests/avatar-rig.test.mjs tests/avatar-hands.test.mjs tests/avatar-speech.test.mjs
+```
+
+Tests use Node's TypeScript stripping (Node 24 recommended). The module-type
+warning on direct TS imports is harmless; package build settings are unchanged.
+
+Optional browser tools stay outside the application dependency tree:
+
+```sh
+npm install --prefix /tmp/gcina-browser-tools --no-save playwright
+/tmp/gcina-browser-tools/node_modules/.bin/playwright install chromium
+export PLAYWRIGHT_MODULE=/tmp/gcina-browser-tools/node_modules/playwright
+export AVATAR_TEST_PASSCODE=gcina-local-demo
+# Keep the local mock app running; from web/:
+node scripts/verify-avatar.mjs
+node scripts/verify-avatar-voice.mjs
+# Serve docs/avatar on port 8000 as above:
+node scripts/verify-avatar-preview.mjs
+```
+
+Optional settings: `AVATAR_BASE_URL`, `AVATAR_PREVIEW_URL`, `AVATAR_CAPTURE_DIR`,
+`CHROMIUM_PATH` and `AVATAR_SOFTWARE_GPU=1` for headless SwiftShader. The browser
+scripts cover real rendered output, input, cleanup and accessibility. Speech
+integration explicitly reports which tests use a double and lists native voices.
+
+This branch is for review against `feat/polished-sasl-avatar`. Nothing is merged
+into main or deployed to production.

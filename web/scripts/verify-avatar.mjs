@@ -11,6 +11,15 @@ if (!passcode) throw new Error('Set AVATAR_TEST_PASSCODE to your local mock dash
 const output = path.resolve(process.env.AVATAR_CAPTURE_DIR || '../work/avatar-captures');
 fs.mkdirSync(output, { recursive: true });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function checkCompactLayout(page) {
+  const panel = await page.locator('#sasl-preview-panel').boundingBox();
+  const avatar = await page.locator('.sasl-studio').boundingBox();
+  const text = await page.locator('[data-avatar-text]').boundingBox();
+  assert.ok(panel.width <= 320, 'panel must retain the original 320px maximum width');
+  assert.ok(avatar.width <= 160 && avatar.width >= 140, 'avatar must fit the original compact width');
+  assert.equal(avatar.height, 190, 'avatar must retain the original 190px height');
+  assert.ok(text.x >= avatar.x + avatar.width && text.y < avatar.y + avatar.height, 'text must remain beside the avatar');
+}
 
 (async () => {
   const browser = await chromium.launch({
@@ -40,7 +49,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     });
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
-    await page.goto(base);
+    await page.goto(`${base}/login`);
     await page.locator('input[type="password"]').fill(passcode);
     await page.getByRole('button', { name: 'Open my dashboard' }).click();
     await page.waitForURL(`${base}/`);
@@ -54,6 +63,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
       await page.getByText('Preparing your avatar…').waitFor({ state: 'hidden' });
     };
     await open();
+    await checkCompactLayout(page);
     assert.equal(await page.locator('canvas').count(), 1);
     assert.match(await panel.innerText(), /Movement study, not SASL translation/);
     await button('Pause').click();
@@ -175,6 +185,21 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     }
     await page.keyboard.press('Escape');
 
+    // The GLB is new in V2: closing during an in-flight load must not revive it.
+    await page.route('**/avatars/gcina-v2.glb', async route => {
+      await delay(350);
+      try { await route.continue(); } catch { /* Closing legitimately aborts the request. */ }
+    });
+    await button('Sign language preview').click();
+    await page.getByText('Preparing your avatar…').waitFor();
+    await page.keyboard.press('Escape');
+    await delay(500);
+    assert.equal(await page.locator('canvas').count(), 0, 'late model load must not revive a closed viewer');
+    await page.unroute('**/avatars/gcina-v2.glb');
+    await open();
+    assert.equal(await page.locator('canvas').count(), 1);
+    await page.keyboard.press('Escape');
+
     // Real mobile viewport/touch context, plus compact and landscape layouts.
     const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, storageState: await context.storageState() });
     const phone = await mobile.newPage();
@@ -185,6 +210,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     await phone.getByText('Preparing your avatar…').waitFor({ state: 'hidden' });
     await phone.getByRole('button', { name: 'Pause', exact: true }).tap();
     const mobilePanel = phone.locator('#sasl-preview-panel');
+    await checkCompactLayout(phone);
     const mobileBox = await mobilePanel.boundingBox();
     assert.ok(mobileBox.x >= 0 && mobileBox.y >= 0 && mobileBox.x + mobileBox.width <= 390 && mobileBox.y + mobileBox.height <= 844);
     await phone.screenshot({ path: path.join(output, 'mobile.png') });
@@ -194,6 +220,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     assert.match(await phone.locator('main h1').first().getAttribute('class'), /sasl-highlight/);
     await phone.setViewportSize({ width: 320, height: 568 });
     await delay(150);
+    await checkCompactLayout(phone);
     assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await mobilePanel.getByRole('button', { name: 'Slower', exact: true }).scrollIntoViewIfNeeded();
     await phone.screenshot({ path: path.join(output, 'mobile-small.png') });
