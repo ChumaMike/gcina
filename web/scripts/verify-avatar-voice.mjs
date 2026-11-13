@@ -31,7 +31,7 @@ try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
   await context.addInitScript(speechDouble);
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base);await page.locator('input[type=password]').fill(passcode);await page.getByRole('button',{name:'Open my dashboard'}).click();await page.waitForURL(`${base}/`);
+  await page.goto(`${base}/login`);await page.locator('input[type=password]').fill(passcode);await page.getByRole('button',{name:'Open my dashboard'}).click();await page.waitForURL(`${base}/`);
   const state=await context.storageState();
   const panel=page.locator('#sasl-preview-panel');
   const button=name=>panel.getByRole('button',{name,exact:true});

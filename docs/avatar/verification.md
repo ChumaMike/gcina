@@ -28,8 +28,17 @@ state was changed. Baseline: `453072fa4023c872d72f33ee404120660bdc6029` on
 - The compact 160 × 190 rig demo on Intel UHD Graphics 617 (ANGLE/D3D11)
   rendered 29.84–30.10 fps across three four-second samples, with 11 draw calls
   per frame. No frames rendered during a one-second interval after Pause settled.
-  This is one Windows hardware result. The presentation device and physical
-  phones have not been tested.
+  The dashboard regression measured 30.1 fps and 11 draws per frame. These
+  measurements cover one Windows machine. Physical phones were not tested.
+- ESLint, TypeScript and all 17 rig, hand and speech unit tests passed. The
+  styled Windows Webpack production build passed with a temporary Tailwind
+  PostCSS adapter and cached official Google fonts. The default Windows
+  Turbopack build failed during CSS worker IPC. The app build configuration
+  stayed as committed.
+- Chrome dashboard regressions passed for desktop, touch/mobile/landscape,
+  keyboard, read highlights, reduced motion, WebGL loss and recovery, loading
+  cancellation and teardown. The dashboard speech double also passed replay
+  after Stop, highlight cleanup, selection cancellation and Escape teardown.
 
 ## Initial verification · 12 November 2026
 

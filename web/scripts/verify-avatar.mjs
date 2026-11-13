@@ -49,7 +49,7 @@ async function checkCompactLayout(page) {
     });
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
-    await page.goto(base);
+    await page.goto(`${base}/login`);
     await page.locator('input[type="password"]').fill(passcode);
     await page.getByRole('button', { name: 'Open my dashboard' }).click();
     await page.waitForURL(`${base}/`);
