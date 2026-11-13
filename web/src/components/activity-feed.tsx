@@ -7,7 +7,7 @@ import { formatAmount } from "@/lib/money";
 import type { AuditEvent, Invoice } from "@/lib/types";
 import { amountOf, dataOf, group, isPayment, ledgerRefusal, outcomeOf, type Group } from "@/lib/feed";
 import { cn } from "@/lib/utils";
-import { ActorChip, ExplorerLink, clock, timeAgo } from "./bits";
+import { ActorChip, ExplorerLink, ReceiptLink, clock, timeAgo } from "./bits";
 import { TxQr } from "./ledger-proof";
 import { ListenButton } from "./a11y/listen-button";
 import { useT } from "./a11y/prefs";
@@ -92,6 +92,7 @@ function InvoiceRow({ g, invoices, pending }: { g: Group; invoices: Invoice[] | 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-7">
           {paidEv.txHash && <TxQr hash={paidEv.txHash} size={56} />}
           {paidEv.txHash && <ExplorerLink hash={paidEv.txHash} />}
+          {paidEv.txHash && <ReceiptLink hash={paidEv.txHash} />}
           <Steps events={g.events} />
         </div>
       </li>

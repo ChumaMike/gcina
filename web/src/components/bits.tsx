@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ExternalLink, Loader2 } from "lucide-react";
+import { AlertTriangle, ExternalLink, Loader2, Receipt } from "lucide-react";
 import Image from "next/image";
 import { formatAmount, formatZar, txUrl } from "@/lib/money";
 import type { Actor, Amount, ApprovalStatus, InvoiceStatus, SupplierStatus } from "@/lib/types";
@@ -146,6 +146,24 @@ export function ExplorerLink({ hash, className }: { hash: string; className?: st
       )}
     >
       View on the XRP Ledger <ExternalLink className="size-3.5" aria-hidden="true" />
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
+  );
+}
+
+/** Link to the public receipt page, which a supplier can open without signing in. */
+export function ReceiptLink({ hash, className }: { hash: string; className?: string }) {
+  return (
+    <a
+      href={`/r/${hash}`}
+      target="_blank"
+      rel="noreferrer"
+      className={cn(
+        "inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring",
+        className,
+      )}
+    >
+      Receipt for the supplier <Receipt className="size-3.5" aria-hidden="true" />
       <span className="sr-only">(opens in a new tab)</span>
     </a>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { RateNote } from "@/components/rate";
 import { Bell, FileText, HelpCircle, Home, LogOut, SendHorizontal, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -121,6 +122,7 @@ export function AppShell({ children, mock }: { children: React.ReactNode; mock: 
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-56 sm:px-6 md:px-8 md:pt-8 md:pb-12">
         <JudgeBanner />
         {children}
+        <RateNote className="mt-8" />
       </main>
 
       {/* Phone bottom nav */}

@@ -4,7 +4,7 @@ import { Bot, ChevronRight, Copy, FlaskConical, Hand, RotateCcw, Send, ShieldAle
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ActorChip, ErrorNote, ExplorerLink, InvoiceChip, Money, PageHeader, clock, timeAgo } from "@/components/bits";
+import { ActorChip, ErrorNote, ExplorerLink, InvoiceChip, Money, PageHeader, ReceiptLink, clock, timeAgo } from "@/components/bits";
 import { useConfirm } from "@/components/confirm-sheet";
 import { TxQr } from "@/components/ledger-proof";
 import { InvoiceTwoViews } from "@/components/invoice-views";
@@ -278,6 +278,7 @@ function InvoiceDetail({ inv, audit }: { inv: Invoice; audit: AuditEvent[] | nul
             <div>
               <p className="font-semibold text-ok">Paid. Anyone can check it.</p>
               <ExplorerLink hash={tx} />
+              <ReceiptLink hash={tx} className="block" />
             </div>
           </div>
         )}

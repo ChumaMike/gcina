@@ -7,6 +7,7 @@ const JUDGE_PAGES = /^\/(?:approvals|how-it-works)?\/?$/;
 const JUDGE_APIS = /^\/api\/(?:policy\/|ledger\/agent$)/;
 
 // Optimistic gate: every page and API call needs the passcode cookie.
+// The one public page is /r/<hash>, a payment receipt built only from public ledger data.
 // The API route re-checks it, so this isn't the only line of defence.
 export async function proxy(req: NextRequest) {
   const role = await sessionRole(req.cookies.get(SESSION_COOKIE)?.value);
@@ -32,5 +33,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|_next/static|_next/image|favicon.ico|icon.svg|opengraph-image|photos/|robots.txt).*)"],
+  matcher: ["/((?!login|r/|_next/static|_next/image|favicon.ico|icon.svg|opengraph-image|photos/|robots.txt).*)"],
 };

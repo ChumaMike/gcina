@@ -1,7 +1,11 @@
 import type { Amount, Currency } from "./types";
 
-// CONTRACTS §2: fixed demo rates, always labelled "indicative".
-export const ZAR_PER_USD = 18;
+// Rand values are always labelled "indicative". The RLUSD rate starts at a fixed 18 and is
+// replaced by a live VALR quote when the app loads (components/rate.tsx); XRP stays fixed.
+let zarMilliPerUsd = 18_000n;
+export function setZarRate(randsPerUsd: number): void {
+  if (Number.isFinite(randsPerUsd) && randsPerUsd >= 10 && randsPerUsd <= 40) zarMilliPerUsd = BigInt(Math.round(randsPerUsd * 1000));
+}
 export const ZAR_PER_XRP = 40;
 const DROPS_PER_XRP = 1_000_000n;
 
@@ -51,7 +55,7 @@ export function formatShort(a: Amount): string {
 
 /** Indicative rand value in cents. */
 export function zarCents(a: Amount): bigint {
-  if (a.currency === "RLUSD") return toMinor(a) * BigInt(ZAR_PER_USD);
+  if (a.currency === "RLUSD") return (toMinor(a) * zarMilliPerUsd + 500n) / 1000n;
   return (toMinor(a) * BigInt(ZAR_PER_XRP) * 100n) / DROPS_PER_XRP;
 }
 
