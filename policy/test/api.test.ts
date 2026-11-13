@@ -25,6 +25,8 @@ test("agent token → 403 on every operator-only route", async () => {
     ["GET", "/audit"],
     ["GET", "/balances"],
     ["POST", "/admin/reset"],
+    ["GET", "/integrations/xero"],
+    ["PUT", "/integrations/xero", { tokens: "x" }],
   ];
   for (const [m, p, b] of routes) assert.equal((await h.call(m, p, "agent", b)).status, 403, `${m} ${p}`);
   assert.equal((await h.store.read()).policy.paused, false);
@@ -82,4 +84,15 @@ test("money: cents-exact, no floats", () => {
 test("SAST day boundary: 22:30 UTC is already tomorrow in South Africa", () => {
   assert.equal(sastDay(new Date("2026-11-12T21:59:00Z")), "2026-11-12");
   assert.equal(sastDay(new Date("2026-11-12T22:30:00Z")), "2026-11-13");
+});
+
+test("integrations: operator-only notebook that survives a demo reset", async () => {
+  const h = makeApp();
+  assert.equal((await h.call("GET", "/integrations/xero", "operator")).json, null);
+  assert.equal((await h.call("PUT", "/integrations/xero", "operator", { tenant: "demo" })).status, 200);
+  assert.equal((await h.call("PUT", "/integrations/xero", "operator", [1])).status, 400);
+  assert.equal((await h.call("GET", "/integrations/Bad_Name", "operator")).status, 404);
+  assert.equal((await h.call("POST", "/admin/reset", "operator")).status, 200);
+  assert.deepEqual((await h.call("GET", "/integrations/xero", "operator")).json, { tenant: "demo" });
+  assert.equal((await h.call("GET", "/integrations/xero", "agent")).status, 403);
 });

@@ -76,4 +76,6 @@ export type State = {
   payments: Payment[];
   inflight: InFlight[];
   audit: AuditEvent[];
+  /** Owner-side connections to other systems (e.g. the accounting package). Operator token only; the agent can never read these. */
+  integrations?: Record<string, unknown>;
 };

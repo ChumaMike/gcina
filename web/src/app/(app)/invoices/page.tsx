@@ -9,6 +9,7 @@ import { useConfirm } from "@/components/confirm-sheet";
 import { TxQr } from "@/components/ledger-proof";
 import { InvoiceTwoViews } from "@/components/invoice-views";
 import { useData } from "@/components/data-provider";
+import { XeroPanel } from "@/components/xero-panel";
 import { AnimatedList } from "@/components/ui/animated-list";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -107,6 +108,7 @@ export default function InvoicesPage() {
         </Button>
       </PageHeader>
       <ErrorNote message={errors.invoices} className="mb-4" />
+      <XeroPanel onImported={refresh} className="mb-6" />
 
       {!invoices && !errors.invoices && <Skeleton className="h-72 w-full rounded-3xl" />}
 

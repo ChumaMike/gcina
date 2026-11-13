@@ -2,6 +2,7 @@
 // forwards the operator endpoints the dashboard actually uses (CONTRACTS §3).
 import { cookies } from "next/headers";
 import { after, NextResponse, type NextRequest } from "next/server";
+import { wakeAgentThenSync } from "@/lib/agent-wake";
 import { callPolicy } from "@/lib/policy-client";
 import { SESSION_COOKIE, sessionRole } from "@/lib/session";
 
@@ -30,10 +31,8 @@ const JUDGE_ALLOWED: [string, RegExp][] = [
 
 const QUERY_KEYS = new Set(["status", "limit"]);
 
-// The agent is its own hosted service. It sleeps until there is work, so wake it when a bill
-// arrives or the owner approves a payment. The wake-up carries no data and no authority:
-// the agent reads its work from the policy service with its own token.
-const AGENT_URL = (process.env.AGENT_URL ?? "https://gcina-agent.vercel.app").replace(/\/$/, "");
+// A new bill or an owner approval wakes the hosted agent (lib/agent-wake.ts).
+export const maxDuration = 60;
 const WAKES_AGENT = /^\/(invoices|approvals\/[\w-]+\/approve)$/;
 
 async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
@@ -71,7 +70,8 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
   if (role === "judge" && /\/(approve|reject)$/.test(pathname)) body = { decidedBy: "A judge (demo)" };
   const res = await callPolicy(req.method, target, body);
   if (req.method === "POST" && res.status < 300 && WAKES_AGENT.test(pathname)) {
-    after(() => fetch(`${AGENT_URL}/run`, { method: "POST", signal: AbortSignal.timeout(58_000) }).catch(() => undefined));
+    const origin = req.nextUrl.origin;
+    after(() => wakeAgentThenSync(origin));
   }
   return NextResponse.json(res.body, { status: res.status, headers: { "Cache-Control": "no-store" } });
 }

@@ -592,12 +592,33 @@ export function createApp(d: AppDeps) {
     return c.json({ ...b, currency: d.currency });
   });
 
+  // ---- integrations (operator only): a small private notebook per connected system, e.g. accounting tokens.
+  // Nothing here is used by the payment rules, and the agent token can't read or write it.
+  const INTEGRATION = /^[a-z]{2,20}$/;
+  app.get("/integrations/:name", async (c) => {
+    need(c, "operator");
+    const name = c.req.param("name");
+    if (!INTEGRATION.test(name)) throw new HttpError(404, "Not found.");
+    return c.json((await d.store.read()).integrations?.[name] ?? null);
+  });
+  app.put("/integrations/:name", async (c) => {
+    need(c, "operator");
+    const name = c.req.param("name");
+    if (!INTEGRATION.test(name)) throw new HttpError(404, "Not found.");
+    const b = await body<unknown>(c);
+    if (b === null || typeof b !== "object" || Array.isArray(b) || JSON.stringify(b).length > 60_000) throw new HttpError(400, "Body must be a JSON object under 60 KB.");
+    await d.store.update((s) => {
+      s.integrations = { ...(s.integrations ?? {}), [name]: b };
+    });
+    return c.json({ ok: true });
+  });
+
   // ---- demo reset (operator) ----
   app.post("/admin/reset", async (c) => {
     need(c, "operator");
     await d.store.update((s) => {
       const fresh = seedState({ currency: d.currency, supplierA: d.addresses.supplierA, supplierB: d.addresses.supplierB, now: now() });
-      Object.assign(s, fresh);
+      Object.assign(s, fresh); // integrations are not in the seed, so connections survive a demo reset
       audit(s, { actor: "operator", kind: "store.reset", message: "Demo reset: invoices, approvals and payments cleared; limits back to defaults. Ledger history is untouched." }, now());
     });
     return c.json({ ok: true });
