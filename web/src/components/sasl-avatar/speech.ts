@@ -5,8 +5,10 @@
 export type SpeechStatus = "idle" | "starting" | "speaking" | "paused" | "error" | "unsupported";
 export type SpeechState = { status: SpeechStatus; word: number; message: string; timed: boolean };
 export type SpeechSettings = { voiceURI?: string; rate?: number };
-type SpeechPort = Pick<SpeechSynthesis, "speak" | "cancel" | "pause" | "resume" | "getVoices">;
+type SpeechPort = Pick<SpeechSynthesis, "speak" | "cancel" | "pause" | "resume" | "getVoices" | "paused" | "pending" | "speaking">;
 export const initialSpeech: SpeechState = { status: "idle", word: -1, message: "Audio plays only when you press Listen.", timed: false };
+const speakingMessage = "Reading aloud. Mouth movement is approximate.";
+const noTimingMessage = "Reading aloud. This voice does not provide word timing; all text stays visible.";
 
 export function preferredVoice(voices: SpeechSynthesisVoice[]) {
   return voices.find((v) => /^en[-_]ZA$/i.test(v.lang)) ?? voices.find((v) => /^en\b/i.test(v.lang) && v.localService) ?? voices.find((v) => /^en\b/i.test(v.lang)) ?? voices.find((v) => v.default) ?? voices[0];
@@ -21,15 +23,31 @@ export function createSpeechController(
   let generation = 0, disposed = false, active = false;
   let watchdog: ReturnType<typeof setTimeout> | undefined;
   let timing: ReturnType<typeof setTimeout> | undefined;
+  let timingUnavailable = false;
   let current: SpeechSynthesisUtterance | undefined;
   const publish = (next: Partial<SpeechState>) => { state = { ...state, ...next }; if (!disposed) notify(state); };
   const clearTimers = () => { clearTimeout(watchdog); clearTimeout(timing); };
+  const emptyPausedQueue = () => port?.paused && !port.pending && !port.speaking;
+  function showSpeaking() {
+    const token = generation;
+    publish({ status: "speaking", message: !state.timed && timingUnavailable ? noTimingMessage : speakingMessage });
+    if (state.timed || timingUnavailable) return;
+    timing = setTimeout(() => {
+      if (token !== generation || state.status !== "speaking" || state.timed) return;
+      timingUnavailable = true;
+      publish({ message: noTimingMessage });
+    }, 1200);
+  }
   function cancel() {
     generation++;
     clearTimers();
     if (current) current.onstart = current.onend = current.onerror = current.onboundary = current.onpause = current.onresume = null;
     current = undefined;
-    if (active) { active = false; port?.cancel(); }
+    if (!active) return;
+    active = false;
+    port?.cancel();
+    // Cancelling the queue can leave the shared synthesizer paused.
+    if (state.status === "paused" && emptyPausedQueue()) port?.resume();
   }
   function stop(message = initialSpeech.message) {
     cancel();
@@ -38,6 +56,7 @@ export function createSpeechController(
   function listen(text: string, settings: SpeechSettings = {}) {
     if (disposed || !port || !text.trim()) return;
     cancel();
+    timingUnavailable = false;
     const token = generation;
     const valid = () => !disposed && token === generation;
     const words = [...text.matchAll(/\S+/g)].map((m) => ({ start: m.index, end: m.index + m[0].length }));
@@ -53,17 +72,15 @@ export function createSpeechController(
       utterance.onstart = () => {
         if (!valid()) return;
         clearTimeout(watchdog);
-        publish({ status: "speaking", message: "Reading aloud. Mouth movement is approximate." });
-        timing = setTimeout(() => {
-          if (valid() && !state.timed) publish({ message: "Reading aloud. This voice does not provide word timing; all text stays visible." });
-        }, 1200);
+        showSpeaking();
       };
       utterance.onboundary = (event) => {
         if (!valid() || state.status !== "speaking" || event.name !== "word" || !Number.isInteger(event.charIndex) || event.charIndex < lastIndex || event.charIndex >= text.length) return;
         const word = words.findIndex((w) => event.charIndex >= w.start && event.charIndex < w.end);
         if (word < 0) return;
         lastIndex = event.charIndex;
-        publish({ word, timed: true, message: "Reading aloud. Mouth movement is approximate." });
+        clearTimeout(timing);
+        publish({ word, timed: true, message: speakingMessage });
       };
       utterance.onend = () => {
         if (!valid()) return;
@@ -82,7 +99,10 @@ export function createSpeechController(
         cancel();
         publish({ status: "error", word: -1, message: "The voice did not start. Check your browser’s speech voices or choose another voice." });
       }, 10000);
+      // Some engines ignore resume until an utterance has been queued.
+      const resumeAfterEnqueue = emptyPausedQueue();
       port.speak(utterance);
+      if (resumeAfterEnqueue && active && valid() && port.paused) port.resume();
     } catch {
       cancel(); publish({ status: "error", word: -1, message: "Read aloud could not start. Your selected text is still available." });
     }
@@ -91,8 +111,17 @@ export function createSpeechController(
     getState: () => state,
     listen,
     stop,
-    pause() { if (active && state.status === "speaking") { port?.pause(); publish({ status: "paused", message: "Reading paused." }); } },
-    resume() { if (active && state.status === "paused") { port?.resume(); publish({ status: "speaking", message: "Reading aloud. Mouth movement is approximate." }); } },
+    pause() {
+      if (!active || state.status !== "speaking") return;
+      clearTimeout(timing);
+      port?.pause();
+      if (active) publish({ status: "paused", message: "Reading paused." });
+    },
+    resume() {
+      if (!active || state.status !== "paused") return;
+      port?.resume();
+      if (active) showSpeaking();
+    },
     dispose() { disposed = true; cancel(); },
   };
 }

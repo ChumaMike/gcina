@@ -119,7 +119,8 @@ export function SaslPreview() {
     setPaused((value) => !value);
   };
   const stopVoice = () => {
-    voice.stop(); setVoiceUsed(false); setPaused(true); setCurrent(0);
+    voice.stop();
+    setPaused(true);
   };
 
   useEffect(() => {
@@ -247,7 +248,7 @@ export function SaslPreview() {
             <button type="button" onClick={togglePause} disabled={voice.speech.status === "starting"} aria-pressed={paused} className={`${button} ${paused ? selected : inactive}`}>
               {paused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}{paused ? "Resume" : "Pause"}
             </button>
-            <button type="button" onClick={replay} disabled={!words.length} aria-label={done ? "Replay text" : "Replay"} className={`${button} ${inactive}`}><RotateCcw className="size-3.5" aria-hidden="true" /> Replay</button>
+            <button type="button" onClick={replay} disabled={!words.length} aria-label={done && !voiceUsed ? "Replay text" : "Replay"} className={`${button} ${inactive}`}><RotateCcw className="size-3.5" aria-hidden="true" /> Replay</button>
             <button type="button" onClick={() => { if (speechActive) stopVoice(); setSlow((value) => !value); }} aria-pressed={slow} className={`${button} ${slow ? selected : inactive}`}><Snail className="size-3.5" aria-hidden="true" /> Slower</button>
             <button type="button" onClick={() => { setDemo((value) => !value); voice.resume(); setPaused(false); }} disabled={reduced} aria-pressed={demo && !reduced} aria-label={demo && !reduced ? "Stop rig demo" : "Try rig demo"} title={reduced ? "Rig motion is disabled by your reduced-motion preference" : "Inspect the rig with a fixed movement study"} className={`${button} ${demo && !reduced ? selected : inactive}`}><Hand className="size-3.5" aria-hidden="true" /> Rig demo</button>
           </div>

@@ -53,7 +53,14 @@ try {
   await button('Replay').click();await page.waitForTimeout(100);
   assert.deepEqual(await page.evaluate(()=>speechSynthesis.calls.slice(-2).map(c=>c.action)),['cancel','speak']);
   await panel.screenshot({path:path.join(output,'voice-controls-test-double.png')});
+  await page.evaluate(()=>speechSynthesis.boundary(0));
+  await page.waitForFunction(()=>CSS.highlights.has('sasl-word'));
   await button('Stop audio').click();assert.equal(await page.evaluate(()=>speechSynthesis.calls.at(-1).action),'cancel');
+  await page.waitForFunction(()=>!CSS.highlights.has('sasl-word'));
+  await button('Replay').click();
+  await panel.getByText('Reading aloud. Mouth movement is approximate.',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>speechSynthesis.calls.at(-1).text),selected,'replay after Stop must restart audio for this selection');
+  await button('Stop audio').click();
   await panel.getByText('Voice settings',{exact:true}).click();
   await panel.getByLabel('Installed voice').selectOption('us');await panel.getByLabel('Speech speed').selectOption('0.75');
   await button('Listen').click();await page.waitForTimeout(100);assert.deepEqual(await page.evaluate(()=>{const c=speechSynthesis.calls.at(-1);return[c.voice,c.rate]}),['us',.75]);

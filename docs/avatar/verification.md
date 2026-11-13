@@ -1,9 +1,37 @@
-# Avatar V2 verification · 12 November 2026
+# Avatar V2 verification
 
 Verified the actual standalone WebGL output and the production Next.js application
 using the existing dashboard's `USE_MOCK=1` mode. No production service or financial
 state was changed. Baseline: `453072fa4023c872d72f33ee404120660bdc6029` on
 `feat/polished-sasl-avatar`. Implementation branch: `feat/avatar-v2-voice`.
+
+## Windows Chrome follow-up · 13 November 2026
+
+- The updated standalone preview played the sample warning through Windows
+  Chrome 157 using Microsoft David (`en-US`). The 7.48-second utterance produced
+  thirteen native word-boundary events. The Windows output meter registered
+  speech with silence before and after playback. The host had three `en-US`
+  voices and no `en-ZA` voice. Voice naturalness was not assessed by ear.
+- Native pause, resume, replay from pause, replay after Stop, cancellation and
+  natural completion passed. Pausing for 1.3 seconds kept the status at
+  “Reading paused.” Rendered mouth pixels changed more than the forehead
+  during speech. Four additional controller regression tests passed.
+- The standalone desktop and 390/320px viewport checks passed in Windows
+  Chrome. Front, side, face and both hands rendered, and all ten digit controls
+  changed the corresponding hand. Both hands have five distinct digits in the
+  open pose. Palm-facing poses still show a pronounced wrist crease, and the
+  closed-pose captures do not establish collision clearance for every digit.
+- Reassigning 24 hem triangles to the teal uniform removed the skin-colored
+  patch in side view. The bundled GLB is 3,080,152 bytes. It retains 74,995 triangles
+  and its existing joint weights. The Blender source includes the matching
+  material rule. Verification used the packaged GLB directly.
+- The compact 160 × 190 rig demo on Intel UHD Graphics 617 (ANGLE/D3D11)
+  rendered 29.84–30.10 fps across three four-second samples, with 11 draw calls
+  per frame. No frames rendered during a one-second interval after Pause settled.
+  This is one Windows hardware result. The presentation device and physical
+  phones have not been tested.
+
+## Initial verification · 12 November 2026
 
 | Check | Result |
 |---|---|
@@ -35,7 +63,7 @@ state was changed. Baseline: `453072fa4023c872d72f33ee404120660bdc6029` on
 
 ## Hands, model and rendering
 
-The final GLB is **3,078,796 bytes**, **74,995 triangles**, **163 bones** and
+The initial GLB was **3,078,796 bytes**, with **74,995 triangles**, **163 bones** and
 **11 material primitives**. It loads on demand and needs no texture service or
 compression decoder. Source assets are licensed CC0; the exact inputs and build
 script are checked in. No application dependencies or lockfiles changed.

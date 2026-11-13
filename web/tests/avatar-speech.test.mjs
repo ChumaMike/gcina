@@ -4,9 +4,18 @@ import { createSpeechController, preferredVoice } from '../src/components/sasl-a
 const voices = [{ voiceURI: 'us', name: 'English US', lang: 'en-US', localService: true }, { voiceURI: 'za', name: 'English ZA', lang: 'en-ZA', localService: true }];
 function harness(list = voices) {
   const calls = [], states = [];
-  const port = { getVoices: () => list, speak: utterance => calls.push(['speak', utterance]), cancel: () => calls.push(['cancel']), pause: () => calls.push(['pause']), resume: () => calls.push(['resume']) };
+  const port = {
+    paused: false,
+    pending: false,
+    speaking: false,
+    getVoices: () => list,
+    speak(utterance) { this.pending = true; calls.push(['speak', utterance]); },
+    cancel() { this.pending = false; this.speaking = false; calls.push(['cancel']); },
+    pause() { this.paused = true; calls.push(['pause']); },
+    resume() { this.paused = false; calls.push(['resume']); },
+  };
   const controller = createSpeechController(port, state => states.push(state), text => ({ text }));
-  return { calls, states, controller, utterance: () => calls.filter(c => c[0] === 'speak').at(-1)[1] };
+  return { calls, states, port, controller, utterance: () => calls.filter(c => c[0] === 'speak').at(-1)[1] };
 }
 test('audio requires Listen; prefers installed en-ZA and honours voice/rate selection', () => {
   const h = harness();
@@ -52,6 +61,45 @@ test('stop, replacement and unmount invalidate late browser callbacks and cancel
   assert.equal(h.states.length, count);
   assert.deepEqual(h.calls.map(c => c[0]), ['speak', 'cancel', 'speak', 'cancel', 'speak', 'cancel']);
 });
+test('replay, stop and dispose clear the browser pause set by an owned utterance', () => {
+  const h = harness();
+  try {
+    h.controller.listen('Payment paused.'); h.utterance().onstart();
+    h.controller.pause();
+    assert.equal(h.port.paused, true);
+    h.controller.listen('Payment paused.');
+    assert.equal(h.port.paused, false);
+    assert.deepEqual(h.calls.slice(-3).map(c => c[0]), ['cancel', 'resume', 'speak']);
+
+    h.utterance().onstart(); h.controller.pause(); h.controller.stop();
+    assert.equal(h.port.paused, false);
+    assert.equal(h.port.pending, false);
+    h.controller.listen('A new warning.'); h.utterance().onstart(); h.controller.pause();
+    h.controller.dispose();
+    assert.equal(h.port.paused, false);
+  } finally { h.controller.dispose(); }
+});
+test('explicit playback can recover when an empty paused engine only resumes after enqueue', () => {
+  const h = harness();
+  const resume = h.port.resume;
+  h.port.resume = function () { if (this.pending) resume.call(this); };
+  try {
+    h.controller.listen('Original'); h.utterance().onstart(); h.controller.pause();
+    h.controller.listen('Replacement');
+    assert.equal(h.port.paused, false);
+    assert.deepEqual(h.calls.slice(-3).map(c => c[0]), ['cancel', 'speak', 'resume']);
+  } finally { h.controller.dispose(); }
+});
+test('stopping and disposing an inactive controller leave external speech alone', () => {
+  const h = harness();
+  h.port.paused = true;
+  h.port.pending = true;
+  h.controller.stop();
+  h.controller.dispose();
+  assert.deepEqual(h.calls, []);
+  assert.equal(h.port.paused, true);
+  assert.equal(h.port.pending, true);
+});
 test('no word boundaries keeps all text available without invented timing', context => {
   context.mock.timers.enable({ apis: ['setTimeout'] });
   const h = harness();
@@ -60,6 +108,21 @@ test('no word boundaries keeps all text available without invented timing', cont
     context.mock.timers.tick(1500);
     assert.equal(h.controller.getState().word, -1); assert.equal(h.controller.getState().timed, false);
     assert.match(h.controller.getState().message, /does not provide word timing/);
+  } finally { h.controller.dispose(); }
+});
+test('no-boundary notice waits until speech resumes and stays correct on a second pause', context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = harness();
+  try {
+    h.controller.listen('Payment paused. Review the supplier.'); h.utterance().onstart();
+    context.mock.timers.tick(500);
+    h.controller.pause(); context.mock.timers.tick(1500);
+    assert.equal(h.controller.getState().message, 'Reading paused.');
+    h.controller.resume(); context.mock.timers.tick(1500);
+    assert.match(h.controller.getState().message, /does not provide word timing/);
+    h.controller.pause(); h.controller.resume();
+    assert.match(h.controller.getState().message, /does not provide word timing/);
+    assert.equal(h.controller.getState().word, -1);
   } finally { h.controller.dispose(); }
 });
 test('unsupported, empty voice lists, errors and silent engines fail gracefully', context => {

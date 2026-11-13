@@ -138,7 +138,11 @@ for point,normal in [((0,0,6.05*SCALE),(0,0,1)),((2.3*SCALE,0,4.45*SCALE),(.65,0
     bmesh.ops.bisect_plane(bm,geom=list(bm.verts)+list(bm.edges)+list(bm.faces),dist=.00001,plane_co=point,plane_no=normal)
 for f in bm.faces:
     c=f.calc_center_median();x,y,z=c.x/SCALE,c.z/SCALE,-c.y/SCALE
-    f.material_index=1 if y<6.05 and (abs(x)<1.7 or ((abs(x)-2.3)*.65-(y-4.45)*.76<0)) else 0
+    # The widened hips can extend past the torso cutoff at the hem. Keep the
+    # entire lower edge covered while leaving the hands outside the shirt.
+    hem=y<.88 and abs(x)<2.4
+    uniform=y<6.05 and (abs(x)<1.7 or ((abs(x)-2.3)*.65-(y-4.45)*.76<0))
+    f.material_index=1 if hem or uniform else 0
 bm.to_mesh(body.data);bm.free()
 # Smooth tint across the lip surface, avoiding polygon-shaped material borders.
 colors=body.data.color_attributes.new(name='Complexion',type='FLOAT_COLOR',domain='CORNER')

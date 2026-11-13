@@ -13,9 +13,8 @@ animation and facial grammar require Deaf SASL experts and validated data.
 
 ## Open the interactive preview in Chrome
 
-**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/6359a7baf3664d5182ecbe3dc5bb92c2b8d0016c/docs/avatar/preview.html)** — no download required.
-This viewer runs the committed standalone HTML. The character and hand controls
-were checked in Chromium. The link is pinned to the tested implementation commit.
+**[Open the interactive browser preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ChumaMike/gcina/refs/heads/feat/avatar-v2-voice/docs/avatar/preview.html)**.
+This viewer runs the standalone HTML from the review branch.
 GitHub's file page cannot run HTML and reports that this bundled file is too large
 to display; use the browser preview above or download it using the instructions below.
 
@@ -115,12 +114,11 @@ controls available. Small/landscape screens can scroll the panel when necessary.
    (about 6–8 seconds). Written text remains on screen.
 3. Press **Rig demo** and briefly drag the avatar (about 3 seconds).
 
-Use the standalone sample if no warning is available in the dashboard. Before
-presenting, choose and audibly check a voice in Chrome on the presentation laptop.
-The managed Linux test browser had **no installed speech voices**, so audible
-native playback could not be verified there. The voice wiring, cancellation and
-word timing were tested with a deterministic browser speech double, and the
-native empty-voice failure path was tested separately.
+Use the standalone sample if no warning is available in the dashboard. Windows
+Chrome played it through an installed Microsoft English voice in about 7.5
+seconds. The system audio meter detected output and the browser reported word
+boundaries. Audibly check the voice on the presentation laptop before the demo.
+The Linux browser supplied the separate empty-voice and speech-double checks.
 
 ## Character and animation interfaces
 

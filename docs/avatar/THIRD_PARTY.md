@@ -4,7 +4,7 @@ The anatomical mesh, morph target, skeleton and vertex weights are MakeHuman
 community **CC0 1.0** graphical assets. Attribution is provided for transparency,
 although CC0 does not require it. Source files, licence, pinned revision and
 checksums are in [web/assets/avatar-source](../../web/assets/avatar-source/README.md).
-The GPL-licensed MakeHuman program is not bundled, executed or imported.
+The MakeHuman program is licensed under the GNU AGPL and is separate from these graphical assets.
 
 The garment shaping, hair construction, face accessories, Gcina shield,
 materials and conversion script are authored in this repository. Blender 4.3.2
