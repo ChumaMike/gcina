@@ -17,7 +17,8 @@
 
 import { Hand, Languages, RotateCcw, Snail, Volume2, VolumeX, X, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import * as THREE from "three";
+import type { Cue } from "./sasl-avatar/motion";
+import type { mountAvatar } from "./sasl-avatar/scene";
 import { usePrefs } from "@/components/a11y/prefs";
 
 const BLOCKS = "h1,h2,h3,h4,h5,h6,p,li,td,th,label,button,a,dt,dd,figcaption,legend,summary,[role=button],[data-sasl]";
@@ -146,57 +147,8 @@ function wordMs(w: string) {
   return core + (/[.,!?;:]$/.test(w) ? 220 : 0);
 }
 
-// ---------- made-up but consistent gestures ----------
-
-type ArmPose = { sx: number; sz: number; ex: number; ez: number; wy: number; curl: number[] };
-type Pose = { r: ArmPose; l: ArmPose; two: boolean; move: number; brow: number; spell: boolean };
-
-// finger curls (index, middle, ring, little) + thumb: open B, fist A, point 1, V, Y, C, flat O
-const SHAPES = [
-  [0, 0, 0, 0, 0.2],
-  [1, 1, 1, 1, 0.1],
-  [0, 1, 1, 1, 0.9],
-  [0, 0, 1, 1, 0.9],
-  [1, 1, 1, 0, 0],
-  [0.5, 0.5, 0.5, 0.5, 0.5],
-  [0.8, 0.8, 0.8, 0.8, 0.7],
-];
-const REST: ArmPose = { sx: 0.05, sz: 0.1, ex: -0.25, ez: 0, wy: 0, curl: [0.3, 0.35, 0.4, 0.4, 0.3] };
-const WEAK: ArmPose = { sx: -0.35, sz: 0.1, ex: -1.0, ez: 0, wy: 0.3, curl: [0.4, 0.4, 0.4, 0.4, 0.4] };
-const WAVE: ArmPose = { sx: -0.2, sz: 2.4, ex: 0, ez: 0, wy: 0, curl: [0, 0, 0, 0, 0.2] };
-
-function rng(word: string) {
-  let h = 2166136261;
-  for (const c of word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "")) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return () => {
-    h += 0x6d2b79f5;
-    let t = h;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const poses = new Map<string, Pose>();
-function poseFor(word: string): Pose {
-  const hit = poses.get(word);
-  if (hit) return hit;
-  const r = rng(word);
-  const spell = /\d/.test(word);
-  const two = !spell && r() < 0.45;
-  const shape = SHAPES[Math.floor(r() * SHAPES.length)];
-  const dom: ArmPose = spell
-    ? { sx: -1.25, sz: 0.25, ex: -1.2, ez: 0, wy: 0, curl: [0, 1, 1, 1, 0.9] }
-    : { sx: -0.7 - r() * 0.8, sz: -0.4 + r() * 0.65, ex: -0.4 - r() * 1.2, ez: 0, wy: (r() - 0.5) * 1.4, curl: shape };
-  const weak = two ? { ...dom, curl: r() < 0.6 ? shape : SHAPES[Math.floor(r() * SHAPES.length)] } : WEAK;
-  const p: Pose = { r: dom, l: weak, two, move: r(), brow: word.endsWith("?") ? 1 : 0, spell };
-  poses.set(word, p);
-  return p;
-}
-
 // ---------- component ----------
 
-type Cue = { word: string; start: number; dur: number };
 type VoiceNote = { tone: "info" | "warn"; text: string } | null;
 
 export function SaslPreview() {
@@ -221,9 +173,9 @@ export function SaslPreview() {
   const cue = useRef<Cue | null>(null);
   const waving = useRef(true);
   const speechDriven = useRef(false);
+  const speakingForAvatar = useRef(false);
   const mount = useRef<HTMLDivElement | null>(null);
-  const renderer = useRef<THREE.WebGLRenderer | null>(null);
-  const camera = useRef<THREE.PerspectiveCamera | null>(null);
+  const avatarScene = useRef<ReturnType<typeof mountAvatar> | null>(null);
   const translations = useRef(new Map<string, string>());
 
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
@@ -386,11 +338,13 @@ export function SaslPreview() {
     if (w === undefined) {
       cue.current = null;
       markWord(undefined);
+      avatarScene.current?.update();
       return;
     }
     const dur = wordMs(w) * (slow ? 1.7 : 1);
     cue.current = { word: w, start: performance.now(), dur };
     markWord(wordRefs.current[current]);
+    avatarScene.current?.update();
     if (speechDriven.current) return;
     const t = setTimeout(() => setCurrent((c) => c + 1), dur);
     return () => clearTimeout(t);
@@ -414,6 +368,11 @@ export function SaslPreview() {
       u.voice = voice;
       u.lang = voice.lang;
       u.rate = slow ? 0.78 : 1;
+      // The existing utterance supplies playback state to the character.
+      u.addEventListener("start", () => { if (!cancelled) speakingForAvatar.current = true; });
+      const stopMouth = () => { if (!cancelled) speakingForAvatar.current = false; };
+      u.addEventListener("end", stopMouth);
+      u.addEventListener("error", stopMouth);
       if (followWords) {
         // Map the voice's position back to the word on the page, so the highlight and the signer follow the voice.
         const starts: number[] = [];
@@ -502,6 +461,7 @@ export function SaslPreview() {
       cancelled = true;
       window.clearTimeout(watchdog);
       speechDriven.current = false;
+      speakingForAvatar.current = false;
       synth.cancel();
     };
     // `slow` and the label only matter for the next reading; don't restart mid-sentence for them.
@@ -510,330 +470,26 @@ export function SaslPreview() {
 
   // The 3D signer (sign mode only; voice-only mode never starts WebGL).
   useEffect(() => {
-    if (!on || !signing || !mount.current) return;
     const host = mount.current;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    let r: THREE.WebGLRenderer;
-    try {
-      r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    } catch {
-      host.textContent = "3D isn't available on this device.";
-      return;
-    }
-    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.toneMappingExposure = 1.05;
-    host.appendChild(r.domElement);
-    r.domElement.setAttribute("aria-hidden", "true");
-    r.domElement.style.display = "block";
-    renderer.current = r;
-
-    const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(32, 164 / 196, 0.1, 50);
-    cam.position.set(0, 0.5, 3.75);
-    cam.lookAt(0, 0.4, 0);
-    camera.current = cam;
-
-    // Studio lighting: warm key, soft fill, teal rim so the hands stand out against the background.
-    scene.add(new THREE.HemisphereLight(0xfff6ec, 0x1d3b38, 1.15));
-    const key = new THREE.DirectionalLight(0xffffff, 1.7);
-    key.position.set(2.2, 3, 4);
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffe2cc, 0.55);
-    fill.position.set(-3, 1, 2);
-    scene.add(fill);
-    const rim = new THREE.DirectionalLight(0x5eead4, 1.5);
-    rim.position.set(-1.5, 2.5, -3);
-    scene.add(rim);
-
-    const skin = new THREE.MeshPhysicalMaterial({ color: 0x8a5a3c, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xffc9a8), sheenRoughness: 0.6 });
-    const shirt = new THREE.MeshStandardMaterial({ color: 0x0f766e, roughness: 0.72 });
-    const collar = new THREE.MeshStandardMaterial({ color: 0xe6f4f1, roughness: 0.6 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x17171b, roughness: 0.92 });
-    const white = new THREE.MeshStandardMaterial({ color: 0xf6f4ee, roughness: 0.35 });
-    const iris = new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.25 });
-    const shine = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const lipMat = new THREE.MeshStandardMaterial({ color: 0x6e3030, roughness: 0.5 });
-    const mouthIn = new THREE.MeshStandardMaterial({ color: 0x2c0b0b, roughness: 0.9 });
-    const browMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.9 });
-    const mats: THREE.Material[] = [skin, shirt, collar, hairMat, white, iris, shine, lipMat, mouthIn, browMat];
-    const geos: THREE.BufferGeometry[] = [];
-    const g = <T extends THREE.BufferGeometry>(x: T) => (geos.push(x), x);
-
-    const body = new THREE.Group();
-    scene.add(body);
-
-    // Torso: a smooth lathe from waist to shoulders, flattened front-to-back.
-    const profile = [
-      [0.0, -0.62],
-      [0.29, -0.6],
-      [0.32, -0.3],
-      [0.35, 0.0],
-      [0.4, 0.22],
-      [0.38, 0.32],
-      [0.24, 0.42],
-      [0.11, 0.46],
-      [0.0, 0.47],
-    ].map(([x, y]) => new THREE.Vector2(x, y));
-    const torso = new THREE.Mesh(g(new THREE.LatheGeometry(profile, 40)), shirt);
-    torso.scale.z = 0.7;
-    body.add(torso);
-    const collarRing = new THREE.Mesh(g(new THREE.TorusGeometry(0.115, 0.026, 10, 32)), collar);
-    collarRing.rotation.x = Math.PI / 2;
-    collarRing.position.y = 0.45;
-    collarRing.scale.set(1, 0.85, 1);
-    body.add(collarRing);
-    const neck = new THREE.Mesh(g(new THREE.CylinderGeometry(0.085, 0.1, 0.2, 20)), skin);
-    neck.position.y = 0.53;
-    body.add(neck);
-
-    // Head.
-    const head = new THREE.Group();
-    head.position.y = 0.83;
-    body.add(head);
-    const skull = new THREE.Mesh(g(new THREE.SphereGeometry(0.27, 40, 28)), skin);
-    skull.scale.set(0.94, 1.08, 0.98);
-    head.add(skull);
-    const earGeo = g(new THREE.SphereGeometry(0.055, 16, 12));
-    for (const x of [-0.25, 0.25]) {
-      const ear = new THREE.Mesh(earGeo, skin);
-      ear.position.set(x, 0.0, -0.01);
-      ear.scale.set(0.5, 1, 0.75);
-      head.add(ear);
-    }
-    const nose = new THREE.Mesh(g(new THREE.SphereGeometry(0.042, 16, 12)), skin);
-    nose.position.set(0, -0.025, 0.255);
-    nose.scale.set(1, 0.85, 0.9);
-    head.add(nose);
-
-    // Short textured hair: a cap plus small curls spread over the top of the head.
-    const cap = new THREE.Mesh(g(new THREE.SphereGeometry(0.285, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2.15)), hairMat);
-    cap.scale.set(0.95, 1.08, 0.99);
-    cap.rotation.x = -0.18;
-    head.add(cap);
-    const curlGeo = g(new THREE.IcosahedronGeometry(0.034, 1));
-    const N = 90;
-    const curls = new THREE.InstancedMesh(curlGeo, hairMat, N);
-    const m4 = new THREE.Matrix4();
-    const tilt = new THREE.Vector3(1, 0, 0);
-    const shape = new THREE.Vector3(0.27, 0.293, 0.283);
-    let placed = 0;
-    for (let i = 0; i < N * 2 && placed < N; i++) {
-      const y = 1 - (i / (N * 2 - 1)) * 0.62;
-      const rr = Math.sqrt(1 - y * y);
-      const th = i * 2.399963;
-      const p = new THREE.Vector3(Math.cos(th) * rr, y, Math.sin(th) * rr).applyAxisAngle(tilt, -0.18);
-      if (p.z > 0.55 && p.y < 0.72) continue; // keep the forehead clear
-      p.multiply(shape);
-      m4.makeTranslation(p.x, p.y, p.z);
-      curls.setMatrixAt(placed++, m4);
-    }
-    curls.count = placed;
-    head.add(curls);
-
-    // Eyes (they blink), brows, mouth.
-    const eyes: THREE.Group[] = [];
-    const brows: THREE.Mesh[] = [];
-    const scleraGeo = g(new THREE.SphereGeometry(0.043, 20, 14));
-    const irisGeo = g(new THREE.SphereGeometry(0.025, 16, 12));
-    const shineGeo = g(new THREE.SphereGeometry(0.007, 8, 6));
-    const browGeo = g(new THREE.CapsuleGeometry(0.012, 0.065, 4, 8));
-    for (const x of [-0.092, 0.092]) {
-      const eye = new THREE.Group();
-      eye.position.set(x, 0.045, 0.218);
-      head.add(eye);
-      const sc = new THREE.Mesh(scleraGeo, white);
-      sc.scale.set(1, 0.92, 0.55);
-      eye.add(sc);
-      const ir = new THREE.Mesh(irisGeo, iris);
-      ir.position.z = 0.017;
-      ir.scale.z = 0.5;
-      eye.add(ir);
-      const sh = new THREE.Mesh(shineGeo, shine);
-      sh.position.set(0.008, 0.009, 0.03);
-      eye.add(sh);
-      eyes.push(eye);
-      const brow = new THREE.Mesh(browGeo, browMat);
-      brow.rotation.z = Math.PI / 2 + (x < 0 ? -0.08 : 0.08);
-      brow.position.set(x, 0.118, 0.236);
-      head.add(brow);
-      brows.push(brow);
-    }
-    const mouth = new THREE.Group();
-    mouth.position.set(0, -0.125, 0.232);
-    head.add(mouth);
-    const inner = new THREE.Mesh(g(new THREE.SphereGeometry(1, 20, 12)), mouthIn);
-    mouth.add(inner);
-    const smile = new THREE.Mesh(g(new THREE.TorusGeometry(0.052, 0.011, 8, 24, Math.PI)), lipMat);
-    smile.rotation.z = Math.PI;
-    smile.position.y = 0.022;
-    smile.scale.set(1, 0.55, 0.6);
-    mouth.add(smile);
-
-    // Arms with two-joint fingers.
-    const upperGeo = g(new THREE.CapsuleGeometry(0.082, 0.3, 6, 14));
-    const cuffGeo = g(new THREE.TorusGeometry(0.083, 0.014, 8, 20));
-    const foreGeo = g(new THREE.CapsuleGeometry(0.066, 0.28, 6, 14));
-    const palmGeo = g(new THREE.CapsuleGeometry(0.068, 0.07, 6, 14));
-    const segGeo = g(new THREE.CapsuleGeometry(0.021, 0.04, 4, 8));
-    const thumbGeo = g(new THREE.CapsuleGeometry(0.024, 0.045, 4, 8));
-
-    type Arm = { side: number; shoulder: THREE.Group; elbow: THREE.Group; hand: THREE.Group; fingers: [THREE.Group, THREE.Group][]; thumb: THREE.Group; cur: ArmPose };
-    const arm = (side: number): Arm => {
-      const shoulder = new THREE.Group();
-      shoulder.position.set(0.39 * side, 0.27, 0);
-      body.add(shoulder);
-      const upper = new THREE.Mesh(upperGeo, shirt);
-      upper.position.y = -0.2;
-      shoulder.add(upper);
-      const cuff = new THREE.Mesh(cuffGeo, collar);
-      cuff.rotation.x = Math.PI / 2;
-      cuff.position.y = -0.36;
-      shoulder.add(cuff);
-      const elbow = new THREE.Group();
-      elbow.position.y = -0.42;
-      shoulder.add(elbow);
-      const fore = new THREE.Mesh(foreGeo, skin);
-      fore.position.y = -0.18;
-      elbow.add(fore);
-      const hand = new THREE.Group();
-      hand.position.y = -0.38;
-      elbow.add(hand);
-      const palm = new THREE.Mesh(palmGeo, skin);
-      palm.position.y = -0.06;
-      palm.scale.set(1.05, 1, 0.45);
-      hand.add(palm);
-      const fingers = [-0.051, -0.017, 0.017, 0.051].map((x, i): [THREE.Group, THREE.Group] => {
-        const len = i === 1 ? 1.08 : i === 3 ? 0.82 : 1;
-        const knuckle = new THREE.Group();
-        knuckle.position.set(x * side, -0.135, 0);
-        hand.add(knuckle);
-        const prox = new THREE.Mesh(segGeo, skin);
-        prox.position.y = -0.036 * len;
-        prox.scale.y = len;
-        knuckle.add(prox);
-        const mid = new THREE.Group();
-        mid.position.y = -0.068 * len;
-        knuckle.add(mid);
-        const dist = new THREE.Mesh(segGeo, skin);
-        dist.position.y = -0.032 * len;
-        dist.scale.set(0.92, len * 0.9, 0.92);
-        mid.add(dist);
-        return [knuckle, mid];
-      });
-      const thumb = new THREE.Group();
-      thumb.position.set(-0.075 * side, -0.045, 0.012);
-      hand.add(thumb);
-      const tm = new THREE.Mesh(thumbGeo, skin);
-      tm.position.y = -0.045;
-      thumb.add(tm);
-      return { side, shoulder, elbow, hand, fingers, thumb, cur: { ...REST, curl: [...REST.curl] } };
+    if (!on || !signing || !host) return;
+    let closed = false;
+    const unavailable = () => {
+      if (!closed) host.textContent = "3D isn't available on this device.";
     };
-    const arms = [arm(-1), arm(1)];
-
-    const face = { open: 0.1, brow: 0 };
-    let blinkAt = performance.now() + 2500;
-    let raf = 0;
-    let last = performance.now();
-    const frame = () => {
-      const now = performance.now();
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const t = now / 1000;
-      const c = cue.current;
-      const pose = c ? poseFor(c.word) : null;
-      const p = c ? Math.min(1, Math.max(0, (now - c.start) / c.dur)) : 0;
-      const k = 1 - Math.exp(-dt * (reduce ? 40 : 11));
-
-      body.position.y = reduce ? 0 : Math.sin(t * 1.6) * 0.012;
-      torso.scale.x = reduce ? 1 : 1 + Math.sin(t * 1.6) * 0.006; // breathing
-      head.rotation.y = reduce ? 0 : pose ? Math.sin(t * 2.1) * 0.1 : Math.sin(t * 0.7) * 0.07;
-      head.rotation.x = pose && !reduce ? Math.sin(Math.PI * p) * 0.07 : 0;
-      head.rotation.z = reduce ? 0 : Math.sin(t * 0.5) * 0.02;
-
-      for (const a of arms) {
-        const signingThis = pose && (a.side > 0 || pose.two);
-        const tgt: ArmPose = pose ? (a.side > 0 ? pose.r : pose.l) : waving.current && a.side > 0 && !reduce ? WAVE : REST;
-        let msx = 0;
-        let msz = 0;
-        let mex = 0;
-        let mez = 0;
-        if (signingThis && !reduce) {
-          const env = Math.sin(Math.PI * p);
-          if (pose.spell) {
-            mex = -Math.abs(Math.sin(p * Math.PI * Math.max(2, c!.word.length))) * 0.18; // a small tap per character
-          } else if (pose.move < 0.34) {
-            msx = Math.sin(p * Math.PI * 4) * 0.13 * env; // small circles
-            msz = Math.cos(p * Math.PI * 4) * 0.1 * env;
-          } else if (pose.move < 0.67) {
-            mex = -Math.abs(Math.sin(p * Math.PI * 3)) * 0.3; // repeated taps
-          } else {
-            msz = (p - 0.5) * 0.55; // a sweep across the body
-          }
-        } else if (tgt === WAVE) {
-          mez = Math.sin(t * 6) * 0.35;
-        }
-        const cur = a.cur;
-        cur.sx += (tgt.sx + msx - cur.sx) * k;
-        cur.sz += (tgt.sz + msz - cur.sz) * k;
-        cur.ex += (tgt.ex + mex - cur.ex) * k;
-        cur.ez += (tgt.ez + mez - cur.ez) * k;
-        cur.wy += (tgt.wy - cur.wy) * k;
-        for (let i = 0; i < 5; i++) cur.curl[i] += (tgt.curl[i] - cur.curl[i]) * k;
-        a.shoulder.rotation.set(cur.sx, 0, a.side * cur.sz);
-        a.elbow.rotation.set(cur.ex, 0, cur.ez);
-        a.hand.rotation.set(-0.25, a.side * cur.wy, 0);
-        a.fingers.forEach(([kn, mid], i) => {
-          kn.rotation.x = -cur.curl[i] * 0.95;
-          mid.rotation.x = -cur.curl[i] * 1.15;
-        });
-        a.thumb.rotation.set(-cur.curl[4] * 1.1, 0, -a.side * (0.5 + cur.curl[4] * 0.4));
-      }
-
-      // Blinking: a quick 140 ms close-and-open every few seconds.
-      let lid = 1;
-      if (!reduce) {
-        const since = now - blinkAt;
-        if (since >= 140) blinkAt = now + 2600 + Math.random() * 2600;
-        else if (since >= 0) lid = Math.max(0.08, Math.abs(since - 70) / 70);
-      }
-      for (const e of eyes) e.scale.y = lid;
-
-      // Mouthing the word (Deaf signers often mouth along) and raised brows for questions.
-      const syll = c ? Math.max(1, Math.round(c.word.length / 3)) : 1;
-      const openT = pose && !reduce ? 0.25 + 0.75 * Math.abs(Math.sin(p * Math.PI * syll)) : 0.05;
-      face.open += (openT - face.open) * k;
-      face.brow += ((pose?.brow ?? 0) - face.brow) * k;
-      inner.scale.set(0.045, 0.006 + face.open * 0.034, 0.02);
-      smile.scale.set(1 - face.open * 0.25, 0.55 - face.open * 0.25, 0.6);
-      for (const b of brows) b.position.y = 0.118 + face.brow * 0.032;
-
-      r.render(scene, cam);
-      raf = requestAnimationFrame(frame);
-    };
-    frame();
-
+    import("./sasl-avatar/scene").then(({ mountAvatar }) => {
+      if (closed) return;
+      avatarScene.current = mountAvatar(host, () => ({
+        cue: cue.current,
+        waving: waving.current,
+        speaking: speakingForAvatar.current,
+      }), unavailable);
+    }).catch(unavailable);
     return () => {
-      cancelAnimationFrame(raf);
-      geos.forEach((x) => x.dispose());
-      mats.forEach((m) => m.dispose());
-      curls.dispose();
-      r.dispose();
-      r.domElement.remove();
-      renderer.current = null;
-      camera.current = null;
+      closed = true;
+      avatarScene.current?.dispose();
+      avatarScene.current = null;
     };
   }, [on, signing]);
-
-  // Resize the canvas without rebuilding the figure.
-  useEffect(() => {
-    const r = renderer.current;
-    const cam = camera.current;
-    if (!on || !signing || !r || !cam) return;
-    r.setSize(stage.w, stage.h);
-    cam.aspect = stage.w / stage.h;
-    cam.updateProjectionMatrix();
-  }, [on, signing, stage.w, stage.h]);
 
   const done = words.length > 0 && current >= words.length;
   const chip = "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium focus-visible:outline-3 focus-visible:outline-amber-400 disabled:opacity-40";
