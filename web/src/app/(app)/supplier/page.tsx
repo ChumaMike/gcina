@@ -5,9 +5,9 @@
 // old "invoice arrives" buttons posted; from there the agent finds it and works on it by itself,
 // and its answer comes back into the thread.
 
-import { CheckCheck, FileText, Paperclip, RotateCcw, SendHorizontal, ShieldAlert } from "lucide-react";
+import { Camera, CheckCheck, FileText, Loader2, Paperclip, RotateCcw, SendHorizontal, ShieldAlert } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-sheet";
 import { useData } from "@/components/data-provider";
@@ -29,6 +29,30 @@ const REPLY: Record<Outcome, { text: string; tone: "ok" | "warn" | "bad" | "busy
 
 const subjectOf = (raw: string) => raw.match(/^Subject:\s*(.+)$/m)?.[1]?.trim() ?? raw.split("\n").find((l) => l.trim())?.trim() ?? "Bill";
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("en-ZA", { timeZone: "Africa/Johannesburg", hour: "2-digit", minute: "2-digit", hour12: false });
+
+/** Photo → a JPEG no wider than 1600 px (keeps phone photos well under the upload limit). PDFs go as they are. */
+async function toUpload(file: File): Promise<{ mediaType: string; data: string }> {
+  const b64 = (buf: ArrayBuffer) => {
+    let out = "";
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(out);
+  };
+  if (file.type === "application/pdf") {
+    if (file.size > 3_000_000) throw new Error("That PDF is over 3 MB. Take a photo of the bill instead.");
+    return { mediaType: file.type, data: b64(await file.arrayBuffer()) };
+  }
+  if (!file.type.startsWith("image/")) throw new Error("Choose a photo or a PDF.");
+  const img = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+  if (!blob) throw new Error("Couldn't open that photo.");
+  return { mediaType: "image/jpeg", data: b64(await blob.arrayBuffer()) };
+}
 
 export default function SupplierPage() {
   const d = useData();
@@ -53,6 +77,24 @@ export default function SupplierPage() {
       return false;
     } finally {
       setSending(null);
+    }
+  };
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState(false);
+  const readPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setReading(true);
+    try {
+      const res = await fetch("/api/read-bill", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(await toUpload(file)) });
+      const j = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
+      if (!res.ok || !j.text) throw new Error(j.error ?? "Couldn't read that bill.");
+      setText(j.text);
+      toast.success("Bill read. Check the text, add your business name, then send.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setReading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
   const sendDraft = (x: DemoInvoice) => post(x.id, { id: x.id, supplierName: x.supplierName, rawText: x.rawText });
@@ -160,8 +202,12 @@ export default function SupplierPage() {
           <label className="sr-only" htmlFor="sup-name">Your business name</label>
           <input id="sup-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your business name" maxLength={80} className="h-11 rounded-xl border bg-background px-3 text-sm" />
           <div className="flex items-end gap-2">
+            <input ref={fileRef} type="file" accept="image/*,application/pdf" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void readPhoto(e.target.files?.[0])} />
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={reading || sending !== null} aria-label="Take a photo of a bill, or choose a PDF" className="flex size-11 shrink-0 items-center justify-center rounded-full border bg-background text-primary disabled:opacity-40">
+              {reading ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <Camera className="size-5" aria-hidden="true" />}
+            </button>
             <label className="sr-only" htmlFor="sup-text">Type or paste a bill</label>
-            <textarea id="sup-text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Type or paste your own bill…" rows={2} maxLength={6000} className="min-h-11 flex-1 resize-y rounded-2xl border bg-background px-3 py-2 text-sm" />
+            <textarea id="sup-text" value={text} onChange={(e) => setText(e.target.value)} placeholder={reading ? "Reading your bill…" : "Type or paste a bill, or tap the camera…"} rows={text.length > 200 ? 8 : 2} maxLength={6000} className="min-h-11 flex-1 resize-y rounded-2xl border bg-background px-3 py-2 text-sm" />
             <button type="submit" disabled={sending !== null || !name.trim() || !text.trim()} aria-label="Send this bill" className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40">
               <SendHorizontal className="size-5" aria-hidden="true" />
             </button>
