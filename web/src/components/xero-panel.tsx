@@ -137,7 +137,7 @@ export function XeroPanel({ onImported, className }: { onImported: () => void | 
                   <p className="text-sm text-muted-foreground tabular-nums">
                     {sym(b.currency)} {b.total}
                     {b.usd && b.currency !== "USD" && ` · about $ ${b.usd} RLUSD`}
-                    {b.po ? ` · order ${b.po}` : " · no order number"}
+                    {b.po ? ` · order ${b.po}` : " · approved in Xero"}
                     {b.due && ` · due ${b.due}`}
                   </p>
                   {b.imported?.error && <p className="text-sm text-danger">Couldn&apos;t record it in Xero yet: {b.imported.error}</p>}

@@ -277,19 +277,32 @@ export async function importBill(billId: string): Promise<XeroImport> {
   if (usd === null) throw new XeroError(`Gcina can only pay rand or US-dollar bills (this one is in ${currency || "an unknown currency"}).`);
   const number = bill.InvoiceNumber || bill.Reference || billId.slice(0, 8);
 
-  // The order: taken from Xero's own purchase orders, converted at the same locked rate as the bill.
-  const po = poIn(bill);
-  if (po && !orders.some((o) => o.poNumber === po)) {
+  // The order on record. If the bill names a Xero purchase order, that order is used (converted at the same
+  // locked rate). Otherwise the order is the bill's own approval in Xero: only bills someone has approved for
+  // payment there (status AUTHORISED) are listed, and that approval is what the agent matches against.
+  let order = poIn(bill);
+  if (order && !orders.some((o) => o.poNumber === order)) {
+    let poUsd: number | null = null;
+    let found: XeroPo | undefined;
     try {
-      const found = (await xero<{ PurchaseOrders?: XeroPo[] }>(s, "GET", `/PurchaseOrders/${encodeURIComponent(po)}`)).PurchaseOrders?.[0];
-      const poUsd = found && found.Status !== "DELETED" && matchSupplier(found.Contact?.Name ?? "", suppliers)?.id === supplier.id ? toUsdCents(found.Total ?? 0, found.CurrencyCode ?? "", rate.rate) : null;
-      if (poUsd !== null) {
-        await callPolicy("POST", "/purchase-orders", { poNumber: po, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(poUsd) }, description: `From Xero (${found!.CurrencyCode} ${money(cents(found!.Total ?? 0))})` });
-      }
+      found = (await xero<{ PurchaseOrders?: XeroPo[] }>(s, "GET", `/PurchaseOrders/${encodeURIComponent(order)}`)).PurchaseOrders?.[0];
+      poUsd = found && found.Status !== "DELETED" && matchSupplier(found.Contact?.Name ?? "", suppliers)?.id === supplier.id ? toUsdCents(found.Total ?? 0, found.CurrencyCode ?? "", rate.rate) : null;
     } catch {
-      // No such order in Xero (or no permission to read orders): the agent will say it can't match one, and ask the owner.
+      // No such order in Xero, or this app can't read purchase orders.
+    }
+    if (poUsd !== null) {
+      await callPolicy("POST", "/purchase-orders", { poNumber: order, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(poUsd) }, description: `Purchase order in Xero (${found!.CurrencyCode} ${money(cents(found!.Total ?? 0))})` });
+    } else {
+      order = null;
     }
   }
+  if (!order) {
+    order = `XERO-${number.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 24)}`;
+    if (!orders.some((o) => o.poNumber === order)) {
+      await callPolicy("POST", "/purchase-orders", { poNumber: order, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(usd) }, description: `Bill approved for payment in Xero (${currency} ${money(cents(bill.AmountDue ?? 0))})` });
+    }
+  }
+  const po = order;
 
   const sym = currency === "ZAR" ? "R" : "$";
   const lines = (bill.LineItems ?? []).slice(0, 12).map((l) => `  ${(l.Description ?? "Item").replace(/\s+/g, " ").slice(0, 70).padEnd(72)}${sym} ${money(cents(l.LineAmount ?? 0))}`);
