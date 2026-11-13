@@ -127,7 +127,7 @@ On-ledger guardrail setup on `AGENT_ACCOUNT` ([`rGnmtEMk…V6hq`](https://testne
 | Folder | What | Run |
 |---|---|---|
 | [`ledger/`](ledger) | xrpl.js helpers, testnet setup, quorum proof | `cd ledger && pnpm install && pnpm setup-testnet` (idempotent: funds accounts, SignerList, master key off, RLUSD trust lines, writes gitignored env files) · `pnpm prove-quorum` |
-| [`policy/`](policy) | Policy co-signer HTTP service (Hono, port 8787) | `cd policy && pnpm install && pnpm start` · tests: `pnpm test` (39 rule-engine tests) · every route with curl: [`policy/README.md`](policy/README.md) |
+| [`policy/`](policy) | Policy co-signer HTTP service (Hono, port 8787) | `cd policy && pnpm install && pnpm start` · tests: `pnpm test` (74 tests: rules, auth split, security review) · every route with curl: [`policy/README.md`](policy/README.md) |
 | [`agent/`](agent) | The AP agent (Node + Claude API) | `cd agent && pnpm install` · `pnpm agent watch` (polls every 5 s) or `pnpm agent once` · the fooled agent: `pnpm agent once --compromised` · play the email inbox: `pnpm inbox reset` / `pnpm inbox inv-001 …` (needs `ANTHROPIC_API_KEY`, `AGENT_SIGNER_SEED`, `AGENT_TOKEN`, `POLICY_URL` in gitignored `agent/.env`) |
 | [`web/`](web) | Next.js operator dashboard (port 3000) | `cd web && pnpm install && pnpm dev` (needs `POLICY_URL`, `OPERATOR_TOKEN`, `DASHBOARD_PASSCODE` in `web/.env.local`; `USE_MOCK=1` runs on sample data) |
 | [`docs/research/`](docs/research) | Problem evidence, customer, competitors, regulation, XRPL fit | |
@@ -182,6 +182,17 @@ They automate accounts payable and add fraud checks inside their own platform, a
 Each building block exists elsewhere; Gcina's contribution is the combination, with spending authority kept outside
 the agent. Competitor detail: [`docs/research/03-competitors.md`](docs/research/03-competitors.md).
 
+## Added on Friday 13 Nov
+
+| What | Where | Notes |
+|---|---|---|
+| **Public payment receipt** | `/r/<transaction hash>` (no sign-in) | Built only from public ledger data: amount, pay-to address, the two signers, the bill number from the memo. A supplier can check it against any explorer. |
+| **Live rand rate** | every rand figure | VALR's public RLUSD/ZAR market price, cached 5 minutes, labelled indicative. |
+| **Bills from the books** | Invoices → "Bills from your books (Xero)" | OAuth to a Xero **demo company** only. A bill is handed to the agent like any emailed bill; the matching Xero purchase order becomes the order on record; after the ledger settles it, Gcina records the payment on the bill in Xero with the receipt link. Tokens sit in the rules service's operator-only store; the agent can't read them. |
+| **Photo or PDF of a bill** | Send a bill → camera button | The agent service transcribes it; the text is then untrusted input like any other bill (same checks, same hidden-instruction detection). |
+| **Locked wake-up** | agent service | The dashboard and the agent share a secret; without it nobody else can wake the agent or use the document reader. |
+| **CI** | `.github/workflows/ci.yml` | Typecheck for every package, the rules tests, lint for the web app. |
+
 ## Testnet demo vs production path (honest)
 
 | Today (hackathon) | Production path |
@@ -192,9 +203,9 @@ the agent. Competitor detail: [`docs/research/03-competitors.md`](docs/research/
 | Policy signer key in a server env var | Policy key in an HSM / KMS on separate infrastructure from the agent |
 | Demo passcode on the dashboard | Proper owner login + phone approval with device binding |
 | JSON / Postgres store | Hardened store, POPIA: operator agreement (s21), a lawful basis for sending invoice data to the LLM provider (s72), redaction |
-| Fixed indicative rate (R 18/USD) | Live quote at payment time |
+| Rand figures are **indicative**, from VALR's public RLUSD/ZAR market price (falls back to a fixed R 18); no rands move | Quote locked at payment time by the licensed conversion partner |
 | Cooling-off on newly approved accounts set to 0 for the demo | 24 h cooling-off, owner passkey/2FA, WhatsApp/SMS alert on any limit or supplier change |
-| Supplier register typed in on the dashboard | Import from Xero/Sage; bank account verification (AVS-R) before an address is approved |
+| Supplier register typed in on the dashboard. Open bills and purchase orders can be read from a **Xero demo company**, and the ledger payment is recorded back on the bill in Xero (demo companies only, enforced in code) | Xero/Sage for real organisations; bank account verification (AVS-R) before an address is approved |
 
 **Same engine, next markets:** it protects any money one person controls for many: supplier runs today; stokvel
 payouts and stipend registers next (stokvels: ~11 million members, ~R50 billion a year, NASASA estimate); cross-border
