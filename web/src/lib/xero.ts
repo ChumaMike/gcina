@@ -160,6 +160,8 @@ async function walletAccount(s: XeroState): Promise<{ id: string; name: string }
 // ---- bills ----
 type XeroBill = {
   InvoiceID: string;
+  Type?: string;
+  Status?: string;
   InvoiceNumber?: string;
   Reference?: string;
   Contact?: { Name?: string };
@@ -260,6 +262,8 @@ export async function importBill(billId: string): Promise<XeroImport> {
   const s = await load();
   const bill = (await xero<{ Invoices?: XeroBill[] }>(s, "GET", `/Invoices/${encodeURIComponent(billId)}`)).Invoices?.[0];
   if (!bill) throw new XeroError("That bill isn't in Xero any more.");
+  // Fail closed: only a supplier bill that someone has approved for payment in Xero may be handed to the agent.
+  if (bill.Type !== "ACCPAY" || bill.Status !== "AUTHORISED") throw new XeroError("Only bills approved for payment in Xero can be sent to Gcina.");
   const [suppliers, invoices, orders, rate] = await Promise.all([
     policyGet<Supplier[]>("/suppliers"),
     policyGet<Invoice[]>("/invoices"),
@@ -280,26 +284,36 @@ export async function importBill(billId: string): Promise<XeroImport> {
   // The order on record. If the bill names a Xero purchase order, that order is used (converted at the same
   // locked rate). Otherwise the order is the bill's own approval in Xero: only bills someone has approved for
   // payment there (status AUTHORISED) are listed, and that approval is what the agent matches against.
-  let order = poIn(bill);
-  if (order && !orders.some((o) => o.poNumber === order)) {
-    let poUsd: number | null = null;
-    let found: XeroPo | undefined;
-    try {
-      found = (await xero<{ PurchaseOrders?: XeroPo[] }>(s, "GET", `/PurchaseOrders/${encodeURIComponent(order)}`)).PurchaseOrders?.[0];
-      poUsd = found && found.Status !== "DELETED" && matchSupplier(found.Contact?.Name ?? "", suppliers)?.id === supplier.id ? toUsdCents(found.Total ?? 0, found.CurrencyCode ?? "", rate.rate) : null;
-    } catch {
-      // No such order in Xero, or this app can't read purchase orders.
+  const cited = poIn(bill);
+  let order: string | null = null;
+  if (cited) {
+    // The bill names a purchase order. It counts only if that order is already on record or can be read from
+    // Xero for the same supplier. If it can't be verified, no order is made up: the agent will stop and say so.
+    if (orders.some((o) => o.poNumber === cited)) order = cited;
+    else {
+      try {
+        const found = (await xero<{ PurchaseOrders?: XeroPo[] }>(s, "GET", `/PurchaseOrders/${encodeURIComponent(cited)}`)).PurchaseOrders?.[0];
+        const poUsd = found && (found.Status === "AUTHORISED" || found.Status === "BILLED") && matchSupplier(found.Contact?.Name ?? "", suppliers)?.id === supplier.id ? toUsdCents(found.Total ?? 0, found.CurrencyCode ?? "", rate.rate) : null;
+        if (poUsd !== null) {
+          const made = await callPolicy("POST", "/purchase-orders", { poNumber: cited, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(poUsd) }, description: `Purchase order in Xero (${found!.CurrencyCode} ${money(cents(found!.Total ?? 0))})` });
+          if (made.status < 300) order = cited;
+        }
+      } catch {
+        // Not found in Xero, or this app can't read purchase orders: leave it unmatched.
+      }
     }
-    if (poUsd !== null) {
-      await callPolicy("POST", "/purchase-orders", { poNumber: order, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(poUsd) }, description: `Purchase order in Xero (${found!.CurrencyCode} ${money(cents(found!.Total ?? 0))})` });
+  } else {
+    // No purchase order named. The order on record is the bill's own approval in Xero (checked above), keyed by
+    // Xero's bill id, which the supplier can't choose. An existing record is reused only if it is this supplier and amount.
+    const id = `XERO-${billId.replace(/[^0-9a-f]/gi, "").slice(0, 12).toUpperCase()}`;
+    const existing = orders.find((o) => o.poNumber === id);
+    if (existing) {
+      if (existing.supplierId !== supplier.id || existing.amount.currency !== "RLUSD" || existing.amount.value !== money(usd)) throw new XeroError("This bill no longer matches the order Gcina recorded for it. Check it in Xero.");
+      order = id;
     } else {
-      order = null;
-    }
-  }
-  if (!order) {
-    order = `XERO-${number.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 24)}`;
-    if (!orders.some((o) => o.poNumber === order)) {
-      await callPolicy("POST", "/purchase-orders", { poNumber: order, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(usd) }, description: `Bill approved for payment in Xero (${currency} ${money(cents(bill.AmountDue ?? 0))})` });
+      const made = await callPolicy("POST", "/purchase-orders", { poNumber: id, supplierId: supplier.id, amount: { currency: "RLUSD", value: money(usd) }, description: `Bill ${number} approved for payment in Xero (${currency} ${money(cents(bill.AmountDue ?? 0))})` });
+      if (made.status >= 300) throw new XeroError("Couldn't record the order for this bill.");
+      order = id;
     }
   }
   const po = order;
@@ -314,7 +328,7 @@ export async function importBill(billId: string): Promise<XeroImport> {
     `Bill to:     ${s.orgName ?? "the business"}`,
     `Invoice no:  ${number}`,
     `Date:        ${bill.DateString?.slice(0, 10) ?? ""}`,
-    `Your order:  ${po ?? "none given"}`,
+    `Your order:  ${po ?? (cited ? `${cited} (not found in our records)` : "none given")}`,
     "",
     "Items on the bill",
     ...lines,
